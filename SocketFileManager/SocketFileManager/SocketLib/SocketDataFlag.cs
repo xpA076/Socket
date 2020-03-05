@@ -1,0 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SocketFileManager.SocketLib
+{
+    public enum SocketDataFlag : int
+    {
+        None = 0,
+        RequestFile,
+        RequestJson,
+
+        DirectoryRequest,
+        DirectoryResponse,
+        DirectoryException,
+
+        DownloadBiasRequest,
+        DownloadStreamRequest,
+        DownloadAllowed,
+        DownloadDenied,
+
+        UploadBiasRequest,
+        UploadStreamRequest,
+        UploadAllowed,
+        UploadDenied,
+
+        DeleteRequest,
+        DeleteAllowed,
+        DeleteDenied,
+
+        RemoteRunRequest,
+        RemoteRunAllowed,
+        RemoteRunDenied,
+
+        ConnectionCheck,
+        ConnectionResponse,
+
+        StreamRequest,
+        StreamBiasRequest,
+        StreamResponse,
+
+        DisconnectRequest,
+    };
+}
