@@ -5,13 +5,16 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SocketFileManager.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="400" d:DesignWidth="450"
       Title="PageConnect">
     <Grid>
-        <StackPanel Orientation="Vertical" VerticalAlignment="Center" Width="300">
-            <TextBlock Text="Server IP :" FontSize="24" Margin="0 0 0 10" TextAlignment="Center"  Foreground="#BBB"/>
-            <TextBox FontSize="24" Margin="10" Background="#444" TextAlignment="Center" Foreground="#CCC"/>
-            <Button Content="Connect" FontSize="24" Margin="10" Width="150" Background="#444" Foreground="#4A4" Cursor="Hand"/>
+        <StackPanel Orientation="Vertical" Margin="80" Width="300">
+            <TextBlock Text="Server IP :" FontSize="20" Margin="0 0 0 10" TextAlignment="Center"  Foreground="#BBB"/>
+            <TextBox x:Name="TextIP" FontSize="24" Margin="20" Padding="3" Background="#444" 
+                     TextAlignment="Center" Foreground="#CCC"/>
+            <Button x:Name="ButtonConnect" Content="Connect" Margin="30" Padding="3"
+                    FontFamily="Segoe UI" FontSize="20" Width="150" Background="#444" Foreground="#CCC" Cursor="Hand"/>
+            <Button x:Name="btn1" Content="btn1" Background="#111" Foreground="#eee"/>
         </StackPanel>
     </Grid>
 </Page>

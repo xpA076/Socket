@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="ServerWindow" Height="200" Width="400"
         WindowStyle="None" Background="{x:Null}" AllowsTransparency="True"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize" Loaded="Window_Loaded">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40" />
@@ -44,9 +44,9 @@
                 </TextBlock>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="1">
-            
+        <Grid Grid.Row="1" Background="#42424e">
+            <TextBlock x:Name="Text" Text="" Foreground="#BBB" FontSize="20"
+                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
         </Grid>
-
     </Grid>
 </Window>

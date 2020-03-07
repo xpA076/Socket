@@ -1,3 +1,6 @@
 /SocketFileManager/.vs
 /SocketFileManager/SocketFileManager/obj
+/SocketServerConsole/.vs
+/SocketServerConsole/SocketServerConsole/obj
 /.vscode
+/temp

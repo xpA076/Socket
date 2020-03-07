@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using SocketFileManager.Pages;
+using SocketFileManager.SocketLib;
 
 namespace SocketFileManager
 {
@@ -35,6 +37,23 @@ namespace SocketFileManager
             this.SidebarCode.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarCode_MouseLeftDown);
             this.SidebarServer.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarServer_MouseLeftDown);
             // Pages
+            this.pages = new Dictionary<string, object>()
+            {
+                { "Connect", new PageConnect(this) },
+                { "Browser", new PageBrowser(this) },
+                { "Download", new PageDownload() },
+                { "Code", new PageCode() },
+            };
+            RedirectPage("Connect");
+            // Load configurations
+            Config.LoadConfig();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            var a = this.Icon;
+            this.TitleIcon.Source = this.Icon;
+            //RedirectPage("Connect");
         }
 
         #region 标题栏行为
@@ -42,7 +61,7 @@ namespace SocketFileManager
         {
             this.DragMove();
         }
-
+            
         private void WindowMinimize_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
@@ -52,58 +71,74 @@ namespace SocketFileManager
         {
             this.Close();
         }
+
+        public void SetTitle(string title)
+        {
+            this.Title.Text = title;
+        }
         #endregion
 
         #region 侧边栏行为
-        private Dictionary<string, Page> pages = new Dictionary<string, Page>()
-        {
-            { "Connect", new PageConnect() },
-            { "Browser", new PageBrowser() },
-            { "Download", new PageDownload() },
-            { "Code", new PageCode() },
-        };
+        private Dictionary<string, object> pages;
         private void SidebarConnect_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            SidebarFocus(this.SidebarConnect);
-            this.MainContent.Content = new Frame() { Content = pages["Connect"] };
+            RedirectPage("Connect");
         }
         private void SidebarBrowser_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            SidebarFocus(this.SidebarBrowser);
-            this.MainContent.Content = new Frame() { Content = pages["Browser"] };
+            RedirectPage("Browser");
         }
         private void SidebarDownload_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            SidebarFocus(this.SidebarDownload);
-            this.MainContent.Content = new Frame() { Content = pages["Download"] };
+            RedirectPage("Download");
         }
         private void SidebarCode_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            SidebarFocus(this.SidebarCode);
-            this.MainContent.Content = new Frame() { Content = pages["Code"] };
+            RedirectPage("Code");
         }
         private void SidebarServer_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            //SidebarFocus(this.SidebarCode);
-            //this.MainContent.Content = new Frame() { Content = pages["Code"] };
             Window server = new ServerWindow();
             server.Show();
+            this.Close();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            SidebarConnect_MouseLeftDown(null, null);
-        }
-
-        private void SidebarFocus(TextBlock block)
+        public void RedirectPage(string pageName)
         {
             this.SidebarConnect.Background = this.SidebarGrid.Background;
             this.SidebarBrowser.Background = this.SidebarGrid.Background;
             this.SidebarDownload.Background = this.SidebarGrid.Background;
             this.SidebarCode.Background = this.SidebarGrid.Background;
-            block.Background = this.MainGrid.Background;
+            TextBlock block = null;
+            switch (pageName)
+            {
+                case "Connect":
+                    block = this.SidebarConnect;
+                    break;
+                case "Browser":
+                    block = this.SidebarBrowser;
+                    break;
+                case "Download":
+                    block = this.SidebarDownload;
+                    break;
+                case "Code":
+                    block = this.SidebarCode;
+                    break;
+            }
+            block.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+            this.MainContent.Content = new Frame() { Content = this.pages[pageName] };
         }
         #endregion
+
+
+        public IPAddress ServerIP { get; set; } = null;
+        public int serverPort;
+
+        public void ListFiles()
+        {
+            ((PageBrowser)this.pages["Browser"]).ListFiles();
+        }
+
     }
 }
 ;

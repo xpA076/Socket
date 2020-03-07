@@ -5,21 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SocketFileManager"
         mc:Ignorable="d"
-        Title="MainWindow" Height="440" Width="800"
+        Title="MainWindow" Height="440" Width="600"
         WindowStyle="None" Background="{x:Null}" AllowsTransparency="True"
-        ResizeMode="NoResize" Loaded="Window_Loaded">
+        ResizeMode="NoResize" Loaded="Window_Loaded" Icon="icon.ico">
     <Window.Resources>
         <Style x:Key="SidebarButton" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="Padding" Value="15" />
             <Setter Property="TextAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="#adafb2" />
+            <Setter Property="Foreground" Value="#ccc" />
             <Setter Property="Cursor" Value="Hand" />
+            <!--
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#2c2a38"></Setter>
+                    <Setter Property="Background" Value="#1e1e1e"></Setter>
                 </Trigger>
             </Style.Triggers>
+            -->
         </Style>
     </Window.Resources>
     
@@ -28,8 +30,11 @@
             <RowDefinition Height="40" />
             <RowDefinition />
         </Grid.RowDefinitions>
-        <Grid x:Name="Topbar" Grid.Row="0" Background="#343442" >
-            <!--<TextBlock Text="RemoteFileManager" Margin="5" FontSize="15" Foreground="#BBB"></TextBlock>-->
+        <Grid x:Name="Topbar" Grid.Row="0" Background="#3c3c3c" >
+            <!--
+            <TextBlock Text="RemoteFileManager" Margin="5" FontSize="12" VerticalAlignment="Center" Foreground="#BBB" />
+            -->
+            <Image x:Name="TitleIcon" Source="icon.ico" HorizontalAlignment="Left" Margin="15 7 0 7"/>
             <TextBlock x:Name="Title" Text="Connected IP : none" Width="300" 
                        VerticalAlignment="Center" TextAlignment="Left"
                        FontSize="15"
@@ -61,11 +66,11 @@
         </Grid>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="150" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
 
-            <Grid Grid.Column="0" x:Name="SidebarGrid" Background="#42424e">
+            <Grid Grid.Column="0" x:Name="SidebarGrid" Background="#252526">
                 <StackPanel Orientation="Vertical">
                     <TextBlock x:Name="SidebarConnect" Text="Connect" Style="{StaticResource SidebarButton}" />
                     <TextBlock x:Name="SidebarBrowser" Text="Browser" Style="{StaticResource SidebarButton}" />
@@ -74,8 +79,10 @@
                     <TextBlock x:Name="SidebarServer" Text="Server" Style="{StaticResource SidebarButton}" />
                 </StackPanel>
             </Grid>
-            <Grid Grid.Column="1" x:Name="MainGrid" Background="#2c2a38">
-                <!--<Frame x:Name="MainFrame" Source="Page1.xaml" NavigationUIVisibility="Hidden" />-->
+            <Grid Grid.Column="1" x:Name="MainGrid" Background="#1e1e1e">
+                <!--
+                    <Frame x:Name="MainFrame" Source="Pages/PageConnect.xaml" NavigationUIVisibility="Hidden" />
+                -->
                 <ContentControl x:Name="MainContent" />
 
 

@@ -34,8 +34,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
@@ -56,6 +60,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Config.cs" />
+    <Compile Include="Models\FileViewModel.cs" />
     <Compile Include="Pages\PageBrowser.xaml.cs">
       <DependentUpon>PageBrowser.xaml</DependentUpon>
     </Compile>
@@ -71,11 +77,14 @@
     <Compile Include="ServerWindow.xaml.cs">
       <DependentUpon>ServerWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SocketLib\FileClass.cs" />
+    <Compile Include="SocketLib\SokcetFileClass.cs" />
     <Compile Include="SocketLib\HB32Encoding.cs" />
     <Compile Include="SocketLib\HB32Header.cs" />
+    <Compile Include="SocketLib\SocketClient.cs" />
     <Compile Include="SocketLib\SocketDataFlag.cs" />
+    <Compile Include="SocketLib\Handles.cs" />
     <Compile Include="SocketLib\SocketIO.cs" />
+    <Compile Include="SocketLib\SocketServer.cs" />
     <Page Include="IconFontStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -139,6 +148,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

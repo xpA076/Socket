@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using SocketFileManager.SocketLib;
+
 namespace SocketFileManager.Pages
 {
     /// <summary>
@@ -20,9 +22,61 @@ namespace SocketFileManager.Pages
     /// </summary>
     public partial class PageConnect : Page
     {
+        private MainWindow parent = null;
+
         public PageConnect()
         {
             InitializeComponent();
+            this.ButtonConnect.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonConnect_MouseLeftDown);
+            this.TextIP.Text = Config.LastConnect;
+
+            this.btn1.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(btn1d);
+        }
+
+        private void btn1d(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
+        public PageConnect(MainWindow parent):this()
+        {
+            this.parent = parent;
+            //InitializeComponent();
+        }
+
+        private void ButtonConnect_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        {
+            //parent.SidebarBrowser_MouseLeftDown(null,null);
+            //MessageBox.Show(this.TextIP.Text);
+            try
+            {
+                SocketClient s = new SocketClient(this.TextIP.Text, Config.ServerPort, (ex) => {
+                    this.ButtonConnect.Dispatcher.BeginInvoke(new Action(()=> {
+                        this.ButtonConnect.Content = "Connect";
+                    }));
+                    MessageBox.Show(ex.Message);
+                });
+                this.ButtonConnect.Content = "Connecting ...";
+                s.AsyncConnect(()=> {
+                    s.Close();
+                    // 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
+                    this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
+                        Config.LastConnect = this.TextIP.Text;
+                        this.parent.ServerIP = System.Net.IPAddress.Parse(this.TextIP.Text);
+                        this.ButtonConnect.Content = "Connect";
+                        this.parent.SetTitle("Connected IP : " + this.TextIP.Text);
+                        //this.parent.RedirectPage("Browser");
+                        //this.parent.ListFiles();
+                    }));
+                });
+            }
+            catch(Exception ex)
+            {
+                this.ButtonConnect.Content = "Connect";
+                MessageBox.Show(ex.Message);
+                return;
+            }
+
         }
     }
 }

@@ -5,10 +5,33 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SocketFileManager.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="400" d:DesignWidth="450"
       Title="PageBrowser">
 
     <Grid>
-        <TextBlock Text="Browser" FontSize="20" Width="200" Height="100" Foreground="White"/>
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="Remote directory:" FontSize="16" Foreground="#f1f1f1"
+                       Margin="50 30 50 0" HorizontalAlignment="Left"/>
+            <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#f1f1f1"
+                       Margin="50 0 50 0" MaxWidth="350" HorizontalAlignment="Left"
+                       TextWrapping="Wrap"/>
+            <ListBox x:Name="ListBoxFile" Height="200" Margin="30 10 30 0" Background="#222">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Height="Auto" Margin="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="100" />
+                            </Grid.ColumnDefinitions>
+                            <WrapPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" Foreground="#CCC"/>
+                                <TextBlock Text="{Binding Size}" Foreground="#aaa"/>
+                            </WrapPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
     </Grid>
 </Page>
