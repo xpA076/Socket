@@ -7,10 +7,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
+using SocketServerConsole;
 
 namespace SocketLib
 {
-    public abstract class SocketIO
+    public class SocketIO
     {
         /// <summary>
         /// 循环操作socket接收数据写入buffer, 收不到数据抛出异常
@@ -20,9 +21,9 @@ namespace SocketLib
         /// <param name="buffer">缓冲区</param>
         /// <param name="size">receive 字节数, 为零则接收buffer长度字节</param>
         /// <param name="offset">buffer写入字节偏移</param>
-        private void ReceiveBuffer(Socket socket, byte[] buffer, int size = 0, int offset = 0)
+        private void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
         {
-            int _size = (size == 0) ? buffer.Length : size;
+            int _size = (size == -1) ? buffer.Length : size;
             int zeroReceiveCount = 0;
             int rec = 0;
             int _rec;
@@ -31,7 +32,7 @@ namespace SocketLib
             if (_rec == 0) { zeroReceiveCount++; }
             rec += _rec;
             
-            while (rec != size)
+            while (rec != _size)
             {
                 _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
                 if (_rec == 0) { zeroReceiveCount++; }
@@ -42,6 +43,28 @@ namespace SocketLib
         }
 
         #region Socket 字节流 发送 与 接收
+
+        /// <summary>
+        /// Receive socket 只接收包头
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header"></param>
+        public void ReceiveHeader(Socket socket, out HB32Header header)
+        {
+            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
+            ReceiveBuffer(socket, bytes_header);
+            header = HB32Header.ReadFromBytes(bytes_header);
+        }
+
+        /// <summary>
+        /// Send socket 只发送包头
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header"></param>
+        public void SendHeader(Socket socket, HB32Header header)
+        {
+            socket.Send(header.GetBytes(), HB32Encoding.HeaderSize, SocketFlags.None);
+        }
 
         /// <summary>
         /// Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
@@ -56,23 +79,6 @@ namespace SocketLib
             byte[] _bytes_data = new byte[HB32Encoding.DataSize];
             ReceiveBuffer(socket,_bytes_data);
             bytes_data = _bytes_data;
-        }
-
-        /// <summary>
-        /// Receive socket 只接收包头
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        public void ReceiveHeader(Socket socket, out HB32Header header)
-        {
-            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
-            ReceiveBuffer(socket, bytes_header);
-            header = HB32Header.ReadFromBytes(bytes_header);
-        }
-
-        public void SendHeader(Socket socket, HB32Header header)
-        {
-            socket.Send(header.GetBytes(), HB32Encoding.HeaderSize, SocketFlags.None);
         }
 
         // 发送 Socket 数据包, 过长的 byte流 会被拆开发送, 包头的count,length等参数会视byte长度被修改
@@ -115,19 +121,13 @@ namespace SocketLib
         // 当包头Flag为指定几种 SocketDataFlag 时，直接返回空byte数组
         public void ReceiveBytes(Socket socket, out HB32Header header, out byte[] bytes)
         {
-            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
-            int rec = socket.Receive(bytes_header, 0, HB32Encoding.HeaderSize, SocketFlags.None);
-            while (rec != HB32Encoding.HeaderSize)
-            {
-                rec += socket.Receive(bytes_header, rec, bytes_header.Length - rec, SocketFlags.None);
-            }
             // 通过包头判断byte流长度, 确定byte数组大小 包数量 等基本信息
-            header = HB32Header.ReadFromBytes(bytes_header);
+            ReceiveHeader(socket, out header);
             // 此时 socket 只接收了HB32Header包头长度的字节
             // 当包头Flag为指定几种 SocketDataFlag 时 :
             // *** 这几种flag代表client只发了不带数据的包头过来 ***
             // 函数应直接返回空byte数组
-            if (header.Flag == SocketDataFlag.DownloadStreamRequest)
+            if (((int)header.Flag & 0x100) >0)
             {
                 bytes = new byte[0];
                 return;
@@ -139,35 +139,22 @@ namespace SocketLib
                 if (i == header.PackageCount - 1)
                 {
                     // 读取缓冲区中有效数据
-                    rec = socket.Receive(bytes, offset, header.ValidByteLength, SocketFlags.None);
-                    while (rec != header.ValidByteLength)
+                    if (header.ValidByteLength > 0)
                     {
-                        rec += socket.Receive(bytes, offset + rec, header.ValidByteLength - rec, SocketFlags.None);
+                        ReceiveBuffer(socket, bytes, header.ValidByteLength, offset);
                     }
                     // 读取缓冲区中剩余的无效数据
-                    while (rec != HB32Encoding.DataSize)
-                    {
-                        rec += socket.Receive(new byte[HB32Encoding.DataSize - rec], 0, HB32Encoding.DataSize - rec, SocketFlags.None);
-                    }
+                    ReceiveBuffer(socket, new byte[HB32Encoding.DataSize - header.ValidByteLength]);
                 }
                 else
                 {
                     // 读取缓冲区数据
-                    rec = socket.Receive(bytes, offset, header.ValidByteLength, SocketFlags.None);
-                    while (rec != HB32Encoding.DataSize)
-                    {
-                        rec += socket.Receive(bytes, offset + rec, HB32Encoding.DataSize - rec, SocketFlags.None);
-                    }
-                    offset += rec;
+                    ReceiveBuffer(socket, bytes, header.ValidByteLength, offset);
+                    offset += header.ValidByteLength;
                     // 发送 StreamRequset header
                     SendHeader(socket, new HB32Header { Flag = SocketDataFlag.StreamRequest });
                     // 读取下一个包头
-                    rec = socket.Receive(bytes_header, 0, bytes_header.Length, SocketFlags.None);
-                    while (rec != HB32Encoding.HeaderSize)
-                    {
-                        rec += socket.Receive(bytes_header, rec, bytes_header.Length - rec, SocketFlags.None);
-                    }
-                    header = HB32Header.ReadFromBytes(bytes_header);
+                    ReceiveHeader(socket, out header);
                 }
             }
         }
@@ -195,18 +182,16 @@ namespace SocketLib
 
         // 请求对方本地 path 路径下的 Directory 列表 ( path为空则请求盘符信息 )
         // 列表请求异常则返回null, message输出异常信息
-        public SokcetFileClass[] RequestDirectory(Socket socket, string path, out string message)
+        public SokcetFileClass[] RequestDirectory(Socket socket, string path)
         {
             SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DirectoryRequest }, path);
             ReceiveBytes(socket, out HB32Header header, out byte[] bytes);
             if (header.Flag != SocketDataFlag.DirectoryResponse)
             {
-                message = Encoding.UTF8.GetString(bytes);
-                return null;
+                throw new Exception(Encoding.UTF8.GetString(bytes));
             }
-            SendBytes(socket, new HB32Header { Flag = SocketDataFlag.StreamRequest }, new byte[0]);
+            SendHeader(socket, new HB32Header { Flag = SocketDataFlag.StreamRequest });
             ReceiveJson(socket, out header, out SokcetFileClass[] fileClasses);
-            message = "";
             return fileClasses;
         }
 
@@ -223,10 +208,11 @@ namespace SocketLib
             }
             catch (Exception ex)
             {
-                SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DirectoryException }, ex.Message);
+                SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DirectoryException }, 
+                    "Directory response exception from server: " + ex.Message);
                 return;
             }
-            ReceiveBytes(socket, out HB32Header _header, out byte[] _bytes);
+            ReceiveHeader(socket, out HB32Header _header);
             SendJson(socket, new HB32Header { Flag = SocketDataFlag.DirectoryResponse }, fileClasses);
         }
 
@@ -311,7 +297,7 @@ namespace SocketLib
             while (bytesRead != 0)
             {
                 // recv
-                ReceiveHeader(socket, SocketDataFlag.DownloadStreamRequest, out HB32Header temp_header);
+                ReceiveHeader(socket, out HB32Header temp_header);
                 // read
                 fileBytes = new byte[HB32Encoding.DataSize];
                 bytesRead = remoteStream.Read(fileBytes, 0, HB32Encoding.DataSize);

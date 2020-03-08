@@ -10,61 +10,74 @@ using System.Diagnostics;
 
 namespace SocketFileManager.SocketLib
 {
-    public abstract class SocketIO
+    public class SocketIO
     {
+        /// <summary>
+        /// 循环操作socket接收数据写入buffer, 收不到数据抛出异常
+        /// 字节流发送与接收应调用此方法
+        /// </summary>
+        /// <param name="socket">socket</param>
+        /// <param name="buffer">缓冲区</param>
+        /// <param name="size">receive 字节数, 为零则接收buffer长度字节</param>
+        /// <param name="offset">buffer写入字节偏移</param>
+        private void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
+        {
+            int _size = (size == -1) ? buffer.Length : size;
+            int zeroReceiveCount = 0;
+            int rec = 0;
+            int _rec;
+
+            _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
+            if (_rec == 0) { zeroReceiveCount++; }
+            rec += _rec;
+
+            while (rec != _size)
+            {
+                _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
+                if (_rec == 0) { zeroReceiveCount++; }
+                rec += _rec;
+
+                if (zeroReceiveCount > 2) { throw new Exception("Buffer receive error: cannot receive package"); }
+            }
+        }
+
         #region Socket 字节流 发送 与 接收
 
-        // Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
-        public void ReceivePackage(Socket socket, out HB32Header header, out byte[] bytes_data)
-        {
-            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
-            byte[] _bytes_data = new byte[HB32Encoding.DataSize];
-            int rec = socket.Receive(bytes_header, 0, HB32Encoding.HeaderSize, SocketFlags.None);
-            while (rec != HB32Encoding.HeaderSize)
-            {
-                rec += socket.Receive(bytes_header, rec, bytes_header.Length - rec, SocketFlags.None);
-            }
-            header = HB32Header.ReadFromBytes(bytes_header);
-            rec = socket.Receive(_bytes_data, 0, HB32Encoding.DataSize, SocketFlags.None);
-            while (rec != HB32Encoding.DataSize)
-            {
-                rec += socket.Receive(_bytes_data, rec, _bytes_data.Length - rec, SocketFlags.None);
-            }
-            bytes_data = _bytes_data;
-        }
-
-        public void ReceivePackage(Socket socket, SocketDataFlag matchFlag, out HB32Header header, out byte[] bytes_data)
-        {
-            ReceivePackage(socket, out header, out bytes_data);
-            if (header.Flag != matchFlag)
-            {
-                throw (new Exception("Invalid socket stream header: cannot match " + matchFlag.ToString()));
-            }
-        }
-        // 只接收包头
+        /// <summary>
+        /// Receive socket 只接收包头
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header"></param>
         public void ReceiveHeader(Socket socket, out HB32Header header)
         {
             byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
-            int rec = socket.Receive(bytes_header, 0, HB32Encoding.HeaderSize, SocketFlags.None);
-            while (rec != HB32Encoding.HeaderSize)
-            {
-                rec += socket.Receive(bytes_header, rec, bytes_header.Length - rec, SocketFlags.None);
-            }
+            ReceiveBuffer(socket, bytes_header);
             header = HB32Header.ReadFromBytes(bytes_header);
         }
 
-        public void ReceiveHeader(Socket socket, SocketDataFlag matchFlag, out HB32Header header)
-        {
-            ReceiveHeader(socket, out header);
-            if (header.Flag != matchFlag)
-            {
-                throw (new Exception("Invalid socket header: cannot match " + matchFlag.ToString()));
-            }
-        }
-
+        /// <summary>
+        /// Send socket 只发送包头
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header"></param>
         public void SendHeader(Socket socket, HB32Header header)
         {
             socket.Send(header.GetBytes(), HB32Encoding.HeaderSize, SocketFlags.None);
+        }
+
+        /// <summary>
+        /// Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header">输出包头</param>
+        /// <param name="bytes_data"></param>
+        public void ReceivePackage(Socket socket, out HB32Header header, out byte[] bytes_data)
+        {
+            ReceiveHeader(socket, out header);
+
+            byte[] _bytes_data = new byte[HB32Encoding.DataSize];
+            ReceiveBuffer(socket, _bytes_data);
+            bytes_data = _bytes_data;
         }
 
         // 发送 Socket 数据包, 过长的 byte流 会被拆开发送, 包头的count,length等参数会视byte长度被修改
@@ -91,7 +104,7 @@ namespace SocketFileManager.SocketLib
                 // 若当前数据包之后还有数据包, 在等待对方 发送StreamRequest包头 后发送
                 if (offset + HB32Encoding.DataSize < bytes.Length)
                 {
-                    ReceiveHeader(socket, SocketDataFlag.StreamRequest, out HB32Header response_header);
+                    ReceiveHeader(socket, out HB32Header response_header);
                 }
                 header.PackageIndex++;
             }
@@ -107,19 +120,13 @@ namespace SocketFileManager.SocketLib
         // 当包头Flag为指定几种 SocketDataFlag 时，直接返回空byte数组
         public void ReceiveBytes(Socket socket, out HB32Header header, out byte[] bytes)
         {
-            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
-            int rec = socket.Receive(bytes_header, 0, HB32Encoding.HeaderSize, SocketFlags.None);
-            while (rec != HB32Encoding.HeaderSize)
-            {
-                rec += socket.Receive(bytes_header, rec, bytes_header.Length - rec, SocketFlags.None);
-            }
             // 通过包头判断byte流长度, 确定byte数组大小 包数量 等基本信息
-            header = HB32Header.ReadFromBytes(bytes_header);
+            ReceiveHeader(socket, out header);
             // 此时 socket 只接收了HB32Header包头长度的字节
             // 当包头Flag为指定几种 SocketDataFlag 时 :
             // *** 这几种flag代表client只发了不带数据的包头过来 ***
             // 函数应直接返回空byte数组
-            if (header.Flag == SocketDataFlag.DownloadStreamRequest)
+            if (((int)header.Flag & 0x100) > 0)
             {
                 bytes = new byte[0];
                 return;
@@ -131,35 +138,22 @@ namespace SocketFileManager.SocketLib
                 if (i == header.PackageCount - 1)
                 {
                     // 读取缓冲区中有效数据
-                    rec = socket.Receive(bytes, offset, header.ValidByteLength, SocketFlags.None);
-                    while (rec != header.ValidByteLength)
+                    if (header.ValidByteLength > 0)
                     {
-                        rec += socket.Receive(bytes, offset + rec, header.ValidByteLength - rec, SocketFlags.None);
+                        ReceiveBuffer(socket, bytes, header.ValidByteLength, offset);
                     }
                     // 读取缓冲区中剩余的无效数据
-                    while (rec != HB32Encoding.DataSize)
-                    {
-                        rec += socket.Receive(new byte[HB32Encoding.DataSize - rec], 0, HB32Encoding.DataSize - rec, SocketFlags.None);
-                    }
+                    ReceiveBuffer(socket, new byte[HB32Encoding.DataSize - header.ValidByteLength]);
                 }
                 else
                 {
                     // 读取缓冲区数据
-                    rec = socket.Receive(bytes, offset, header.ValidByteLength, SocketFlags.None);
-                    while (rec != HB32Encoding.DataSize)
-                    {
-                        rec += socket.Receive(bytes, offset + rec, HB32Encoding.DataSize - rec, SocketFlags.None);
-                    }
-                    offset += rec;
+                    ReceiveBuffer(socket, bytes, header.ValidByteLength, offset);
+                    offset += header.ValidByteLength;
                     // 发送 StreamRequset header
                     SendHeader(socket, new HB32Header { Flag = SocketDataFlag.StreamRequest });
                     // 读取下一个包头
-                    rec = socket.Receive(bytes_header, 0, bytes_header.Length, SocketFlags.None);
-                    while (rec != HB32Encoding.HeaderSize)
-                    {
-                        rec += socket.Receive(bytes_header, rec, bytes_header.Length - rec, SocketFlags.None);
-                    }
-                    header = HB32Header.ReadFromBytes(bytes_header);
+                    ReceiveHeader(socket, out header);
                 }
             }
         }
@@ -187,18 +181,16 @@ namespace SocketFileManager.SocketLib
 
         // 请求对方本地 path 路径下的 Directory 列表 ( path为空则请求盘符信息 )
         // 列表请求异常则返回null, message输出异常信息
-        public SokcetFileClass[] RequestDirectory(Socket socket, string path, out string message)
+        public SokcetFileClass[] RequestDirectory(Socket socket, string path)
         {
             SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DirectoryRequest }, path);
             ReceiveBytes(socket, out HB32Header header, out byte[] bytes);
             if (header.Flag != SocketDataFlag.DirectoryResponse)
             {
-                message = Encoding.UTF8.GetString(bytes);
-                return null;
+                throw new Exception(Encoding.UTF8.GetString(bytes));
             }
-            SendBytes(socket, new HB32Header { Flag = SocketDataFlag.StreamRequest }, new byte[0]);
+            SendHeader(socket, new HB32Header { Flag = SocketDataFlag.StreamRequest });
             ReceiveJson(socket, out header, out SokcetFileClass[] fileClasses);
-            message = "";
             return fileClasses;
         }
 
@@ -215,10 +207,11 @@ namespace SocketFileManager.SocketLib
             }
             catch (Exception ex)
             {
-                SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DirectoryException }, ex.Message);
+                SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DirectoryException },
+                    "Directory response exception from server: " + ex.Message);
                 return;
             }
-            ReceiveBytes(socket, out HB32Header _header, out byte[] _bytes);
+            ReceiveHeader(socket, out HB32Header _header);
             SendJson(socket, new HB32Header { Flag = SocketDataFlag.DirectoryResponse }, fileClasses);
         }
 
@@ -303,7 +296,7 @@ namespace SocketFileManager.SocketLib
             while (bytesRead != 0)
             {
                 // recv
-                ReceiveHeader(socket, SocketDataFlag.DownloadStreamRequest, out HB32Header temp_header);
+                ReceiveHeader(socket, out HB32Header temp_header);
                 // read
                 fileBytes = new byte[HB32Encoding.DataSize];
                 bytesRead = remoteStream.Read(fileBytes, 0, HB32Encoding.DataSize);
@@ -331,7 +324,7 @@ namespace SocketFileManager.SocketLib
             remoteStream.Seek((long)header.I2 * (1 << 30) + (long)header.I3, SeekOrigin.Begin);
             while (true)
             {
-                ReceivePackage(socket, SocketDataFlag.StreamRequest, out HB32Header recv_header, out byte[] recv_bytes);
+                ReceivePackage(socket, out HB32Header recv_header, out byte[] recv_bytes);
                 remoteStream.Write(recv_bytes, 0, recv_header.ValidByteLength);
                 SendHeader(socket, new HB32Header { Flag = SocketDataFlag.UploadAllowed });
                 if (recv_header.ValidByteLength == 0) { break; }
@@ -342,7 +335,7 @@ namespace SocketFileManager.SocketLib
         public void FileDelete(Socket socket, string remotePath)
         {
             SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DeleteRequest }, remotePath);
-            ReceivePackage(socket, SocketDataFlag.DeleteAllowed, out HB32Header header, out byte[] temp);
+            ReceivePackage(socket, out HB32Header header, out byte[] temp);
         }
 
         public void FileDeleteResponse(Socket socket, byte[] bytes)

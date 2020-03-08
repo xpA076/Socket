@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Threading;
 
 using SocketFileManager.SocketLib;
 
@@ -30,13 +31,9 @@ namespace SocketFileManager.Pages
             this.ButtonConnect.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonConnect_MouseLeftDown);
             this.TextIP.Text = Config.LastConnect;
 
-            this.btn1.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(btn1d);
+            
         }
 
-        private void btn1d(object sender, MouseButtonEventArgs e)
-        {
-
-        }
 
         public PageConnect(MainWindow parent):this()
         {
@@ -65,8 +62,9 @@ namespace SocketFileManager.Pages
                         this.parent.ServerIP = System.Net.IPAddress.Parse(this.TextIP.Text);
                         this.ButtonConnect.Content = "Connect";
                         this.parent.SetTitle("Connected IP : " + this.TextIP.Text);
-                        //this.parent.RedirectPage("Browser");
-                        //this.parent.ListFiles();
+                        this.parent.RedirectPage("Browser");
+                        System.Threading.Thread.Sleep(100);
+                        this.parent.ListFiles();
                     }));
                 });
             }

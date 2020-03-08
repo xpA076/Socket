@@ -7,31 +7,66 @@
       mc:Ignorable="d" 
       d:DesignHeight="400" d:DesignWidth="450"
       Title="PageBrowser">
+    <Page.Resources>
+        <Style x:Key="PageButton" TargetType="Button">
+            <Setter Property="Margin" Value="10" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Width" Value="120" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="#f1f1f1" />
+            <Setter Property="Background" Value="#2d2d2d" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="0" BorderBrush="Black" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3e3e3e" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Page.Resources>
 
     <Grid>
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="Remote directory:" FontSize="16" Foreground="#f1f1f1"
-                       Margin="50 30 50 0" HorizontalAlignment="Left"/>
-            <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#f1f1f1"
-                       Margin="50 0 50 0" MaxWidth="350" HorizontalAlignment="Left"
-                       TextWrapping="Wrap"/>
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="400">
+                    <TextBlock Text="Remote directory:" FontSize="14" Foreground="#eee"
+                       Margin="30 20 50 0" HorizontalAlignment="Left"/>
+                    <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#ccc"
+                       Margin="40 10 50 0" Width="350" HorizontalAlignment="Left"
+                       TextWrapping="Wrap" FontFamily="Calibri"/>
+                </StackPanel>
+                <Button x:Name="ButtonRefresh" Content="&#xe615;" FontFamily="/Resources/#iconfont"
+                        Width="30" Height="30" Margin="0 30 0 0"
+                        Style="{StaticResource PageButton}"/>
+            </StackPanel>
+            
             <ListBox x:Name="ListBoxFile" Height="200" Margin="30 10 30 0" Background="#222">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid Height="Auto" Margin="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20" />
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="100" />
-                            </Grid.ColumnDefinitions>
                             <WrapPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" Foreground="#CCC"/>
-                                <TextBlock Text="{Binding Size}" Foreground="#aaa"/>
+                                <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" Foreground="#CCC" Width="250"/>
+                                <TextBlock Text="{Binding Size}" Foreground="#aaa" Margin="10 0 0 0"/>
                             </WrapPanel>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button x:Name="ButtonBack" Content="Back" Style="{StaticResource PageButton}"/>
+                <Button x:Name="ButtonOpen" Content="Open" Style="{StaticResource PageButton}"/>
+                <Button x:Name="ButtonDownload" Content="Download" Style="{StaticResource PageButton}"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

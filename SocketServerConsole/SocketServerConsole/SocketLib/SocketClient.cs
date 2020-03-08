@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace SocketLib
 {
+    /*
     public class SocketClient : SocketIO
     {
         public Socket client = null;
@@ -127,6 +128,7 @@ namespace SocketLib
 
         #endregion
         */
+        /*
         /// <summary>
         /// 获取 server 指定path下的文件列表
         /// </summary>
@@ -182,5 +184,5 @@ namespace SocketLib
         }
 
     }
-
+    */
 }

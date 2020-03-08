@@ -58,7 +58,7 @@ namespace SocketLib
                     Thread th_receive = new Thread(ReceiveData);
                     th_receive.IsBackground = true;
                     th_receive.Start(client);
-                    Thread.Sleep(100);
+                    Thread.Sleep(50);
                 }
             }
 
@@ -83,6 +83,7 @@ namespace SocketLib
                     {
                         case SocketDataFlag.DirectoryRequest:
                             ResponseDirectory(client, bytes);
+                            Display.TimeWriteLine("Directory request");
                             break;
                         case SocketDataFlag.DownloadBiasRequest:
                             FileDownloadResponse(client, header, bytes);
@@ -119,6 +120,7 @@ namespace SocketLib
                         // 远程 client 主机关闭连接
                         case 10054:
                             client.Close();
+                            Display.WriteLine("connection closed (remote closed)");
                             return;
                         // Socket 超时
                         case 10060:
@@ -133,14 +135,16 @@ namespace SocketLib
                 catch (Exception ex)
                 {
                     error_count++;
+                    if(ex.Message.Contains("Buffer receive error: cannot receive package"))
+                    {
+                        client.Close();
+                        Display.TimeWriteLine("connection closed (buffer received none)");
+                        return;
+                    }
                     if (ex.Message.Contains("Invalid socket header"))
                     {
                         client.Close();
-                        return;
-                    }
-                    else if (ex.Message.Contains("Incalid socket stream header"))
-                    {
-                        client.Close();
+                        Display.TimeWriteLine("connection closed : " + ex.Message);
                         return;
                     }
                     Display.WriteLine("Server exception :" + ex.Message);
@@ -148,6 +152,7 @@ namespace SocketLib
                     continue;
                 }
             }
+            Display.WriteLine("Connection closed: error count 5");
         }
 
 

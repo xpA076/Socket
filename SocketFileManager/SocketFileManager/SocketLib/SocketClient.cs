@@ -13,7 +13,6 @@ namespace SocketFileManager.SocketLib
     public class SocketClient : SocketIO
     {
         public Socket client = null;
-        public Socket server = null;
 
         protected IPAddress Hostip;
         protected int Port;
@@ -37,96 +36,7 @@ namespace SocketFileManager.SocketLib
             Port = port;
             asyncExceptionCallback = c;
         }
-        /*
-        #region SocketIO 中函数封装
-
-        public void ReceivePackage(out HB32Header header, out byte[] bytes_data)
-        {
-            ReceivePackage(client, out header, out bytes_data);
-        }
-
-        public void SendBytes(HB32Header header, byte[] bytes)
-        {
-            SendBytes(client, header, bytes);
-        }
-
-        public void SendBytes(HB32Header header, string str)
-        {
-            SendBytes(client, header, str);
-        }
-
-        public void ReceiveBytes(out HB32Header header, out byte[] bytes)
-        {
-            ReceiveBytes(client, out header, out bytes);
-        }
-
-        public void SendJson(HB32Header header, object obj)
-        {
-            SendJson(client, header, obj);
-        }
-
-        public void ReceiveJson<T>(out HB32Header header, out T obj)
-        {
-            ReceiveJson(client, out header, out obj);
-        }
-
-        public void Disconnect()
-        {
-            Disconnect(client);
-        }
-
-        public FileClass[] RequestDirectory(string path, out string message)
-        {
-            return RequestDirectory(client, path, out message);
-        }
-
-        public void ResponseDirectory(byte[] bytes)
-        {
-            ResponseDirectory(client, bytes);
-        }
-
-        public void FileDownload(string remotePath, string localPath)
-        {
-            FileDownload(client, remotePath, localPath);
-        }
-
-        public void FileDownloadResponse(byte[] bytes)
-        {
-            FileDownloadResponse(client, bytes);
-        }
-
-        public void FileUpload(string remotePath, string localPath)
-        {
-            FileUpload(client, remotePath, localPath);
-        }
-
-        public void FileUploadResponse(byte[] bytes)
-        {
-            FileUploadResponse(client, bytes);
-        }
-
-        public void FileDelete(string remotePath)
-        {
-            FileDelete(client, remotePath);
-        }
-
-        public void FileDeleteResponse(byte[] bytes)
-        {
-            FileDeleteResponse(client, bytes);
-        }
-
-        public void RemoteRunRequest(string remotePath)
-        {
-            RemoteRunRequest(client, remotePath);
-        }
-
-        public void RemoteRunResponse(byte[] bytes)
-        {
-            RemoteRunResponse(client, bytes);
-        }
-
-        #endregion
-        */
+        
         /// <summary>
         /// 获取 server 指定path下的文件列表
         /// </summary>
@@ -134,9 +44,7 @@ namespace SocketFileManager.SocketLib
         /// <returns></returns>
         public SokcetFileClass[] RequestDirectory(string path)
         {
-            SokcetFileClass[] files = RequestDirectory(client, path, out string message);
-            if (!string.IsNullOrEmpty(message)) { throw new Exception(message); }
-            return files;
+            return RequestDirectory(client, path);
         }
 
 
@@ -178,7 +86,12 @@ namespace SocketFileManager.SocketLib
 
         public void Close()
         {
-            client.Close();
+            try
+            {
+                //SendHeader(client, new HB32Header() { Flag = SocketDataFlag.DisconnectRequest });
+                client.Close();
+            }
+            catch (Exception) {; }
         }
 
     }

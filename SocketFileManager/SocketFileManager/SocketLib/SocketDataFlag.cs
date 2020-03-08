@@ -9,15 +9,13 @@ namespace SocketFileManager.SocketLib
     public enum SocketDataFlag : int
     {
         None = 0,
-        RequestFile,
-        RequestJson,
 
         DirectoryRequest,
         DirectoryResponse,
         DirectoryException,
 
         DownloadBiasRequest,
-        DownloadStreamRequest,
+        DownloadStreamRequest = 0x101,
         DownloadAllowed,
         DownloadDenied,
 
@@ -38,6 +36,6 @@ namespace SocketFileManager.SocketLib
         StreamBiasRequest,
         StreamResponse,
 
-        DisconnectRequest,
+        DisconnectRequest = 0x100,
     };
 }

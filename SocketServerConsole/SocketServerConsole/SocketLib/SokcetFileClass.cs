@@ -12,6 +12,7 @@ namespace SocketLib
         public long Length { get; set; } = 0;
         public bool IsDirectory { get; set; } = false;
 
+        [System.Web.Script.Serialization.ScriptIgnore]
         public string Size
         {
             get
@@ -22,7 +23,7 @@ namespace SocketLib
                     double size = (double)(Length >> 20) / 1024;
                     return size.ToString("0.00") + " G";
                 }
-                else if((Length & (1 << 20)) > 0)
+                else if ((Length & (1 << 20)) > 0)
                 {
                     double size = (double)(Length >> 10) / 1024;
                     return size.ToString("0.00") + " M";
@@ -34,7 +35,7 @@ namespace SocketLib
                 }
                 else
                 {
-                    return Size.ToString() + " B";
+                    return Length.ToString() + " B";
                 }
 
             }
