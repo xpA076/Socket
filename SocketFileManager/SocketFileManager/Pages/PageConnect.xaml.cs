@@ -60,6 +60,7 @@ namespace SocketFileManager.Pages
                     this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
                         Config.LastConnect = this.TextIP.Text;
                         this.parent.ServerIP = System.Net.IPAddress.Parse(this.TextIP.Text);
+                        this.parent.ServerPort = Config.ServerPort;
                         this.ButtonConnect.Content = "Connect";
                         this.parent.SetTitle("Connected IP : " + this.TextIP.Text);
                         this.parent.RedirectPage("Browser");

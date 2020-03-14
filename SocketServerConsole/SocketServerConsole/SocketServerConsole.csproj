@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="Display.cs" />
+    <Compile Include="PointerRecord.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SocketLib\Handles.cs" />

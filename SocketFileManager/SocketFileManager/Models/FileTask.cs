@@ -4,26 +4,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocketFileManager.SocketLib
+namespace SocketFileManager.Models
 {
-    public class SokcetFileClass
+    public class FileTask
     {
-        public string Name { get; set; }
-        public long Length { get; set; } = 0;
         public bool IsDirectory { get; set; } = false;
+        public string Type { get; set; } = "download";
+        public string RemotePath { get; set; }
+        public string LocalPath { get; set; }
+        public long Length { get; set; } = 0;
+        public int FinishedPackage { get; set; } = 0;
+        /// <summary>
+        /// 向 sever 发送请求后取得 server 提供的 filestrem id
+        /// </summary>
+        public int ServerId { get; set; } = -1;
 
-        [System.Web.Script.Serialization.ScriptIgnore]
         public string Size
         {
             get
             {
-                if (IsDirectory) { return ""; }
+                if (IsDirectory) return "";
                 if ((Length / (1 << 30)) > 0)
                 {
                     double size = (double)(Length >> 20) / 1024;
                     return size.ToString("0.00") + " G";
                 }
-                else if((Length / (1 << 20)) > 0)
+                else if ((Length / (1 << 20)) > 0)
                 {
                     double size = (double)(Length >> 10) / 1024;
                     return size.ToString("0.00") + " M";
@@ -40,16 +46,13 @@ namespace SocketFileManager.SocketLib
             }
         }
 
-        public static int Compare(SokcetFileClass f1, SokcetFileClass f2)
+        public string Status
         {
-            if (f1.IsDirectory == f2.IsDirectory)
+            get
             {
-                return f1.Name.CompareTo(f2.Name);
-            }
-            else
-            {
-                return f1.IsDirectory ? -1 : 1;
+                return "--";
             }
         }
+
     }
 }

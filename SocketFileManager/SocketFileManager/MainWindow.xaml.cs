@@ -16,6 +16,8 @@ using System.Windows.Shapes;
 
 using SocketFileManager.Pages;
 using SocketFileManager.SocketLib;
+using SocketFileManager.Models;
+using System.IO;
 
 namespace SocketFileManager
 {
@@ -35,13 +37,13 @@ namespace SocketFileManager
             this.SidebarBrowser.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarBrowser_MouseLeftDown);
             this.SidebarDownload.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarDownload_MouseLeftDown);
             this.SidebarCode.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarCode_MouseLeftDown);
-            this.SidebarServer.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarServer_MouseLeftDown);
+            this.SidebarSetting.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(SidebarSetting_MouseLeftDown);
             // Pages
             this.pages = new Dictionary<string, object>()
             {
                 { "Connect", new PageConnect(this) },
                 { "Browser", new PageBrowser(this) },
-                { "Download", new PageDownload() },
+                { "Download", new PageDownload(this) },
                 { "Code", new PageCode() },
             };
             RedirectPage("Connect");
@@ -96,11 +98,9 @@ namespace SocketFileManager
         {
             RedirectPage("Code");
         }
-        private void SidebarServer_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        private void SidebarSetting_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            Window server = new ServerWindow();
-            server.Show();
-            this.Close();
+
         }
 
         public void RedirectPage(string pageName)
@@ -132,13 +132,67 @@ namespace SocketFileManager
 
 
         public IPAddress ServerIP { get; set; } = null;
-        public int serverPort;
+        public int ServerPort = Config.ServerPort;
 
         public void ListFiles()
         {
             ((PageBrowser)this.pages["Browser"]).ListFiles();
         }
 
+        public SokcetFileClass[] RequestDirectory(string path)
+        {
+            SokcetFileClass[] fileClasses = null;
+            SocketClient client = new SocketClient(this.ServerIP, this.ServerPort);
+            try
+            {
+                client.Connect();
+                fileClasses = client.RequestDirectory(path);
+                client.Close();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show("Requesting remote directory [" + path + "] failure : " + ex.Message);
+            }
+            return fileClasses;
+        }
+
+        #region 下载
+        /*
+        public void AddDirectoryDownloadTask(FileTask dirTask)
+        {
+            if (!Directory.Exists(dirTask.LocalPath))
+            {
+                DirectoryInfo dirInfo = new DirectoryInfo(dirTask.LocalPath);
+                dirInfo.Create();
+            }
+            SokcetFileClass[] files = RequestDirectory(dirTask.RemotePath);
+            foreach(SokcetFileClass f in files)
+            {
+                if (f.IsDirectory)
+                {
+                    AddDirectoryDownloadTask(new FileTask
+                    {
+                        RemotePath = dirTask.RemotePath + "\\" + f.Name,
+                        LocalPath = dirTask.LocalPath + "\\" + f.Name,
+                    });
+                }
+                else
+                {
+                    AddDownloadTask(new FileTask
+                    {
+                        RemotePath = dirTask.RemotePath + "\\" + f.Name,
+                        LocalPath = dirTask.LocalPath + "\\" + f.Name,
+                        Length = f.Length
+                    });
+                }
+            }
+        }
+        */
+
+        public void AddDownloadTask(FileTask downloadTask)
+        {
+            ((PageDownload)this.pages["Download"]).AddDownloadTask(downloadTask);
+        }
+        #endregion
     }
 }
-;

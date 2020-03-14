@@ -5,11 +5,113 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SocketFileManager.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="400" d:DesignWidth="450"
       Title="PageDownload">
+    <Page.Resources>
+        <Style x:Key="PageButton" TargetType="Button">
+            <Setter Property="Margin" Value="10" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Width" Value="120" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="#f1f1f1" />
+            <Setter Property="Background" Value="#2d2d2d" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="0" BorderBrush="Black" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3e3e3e" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TextStatus" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Foreground" Value="#bbb" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Width" Value="160" />
+        </Style>
+        
+    </Page.Resources>
 
     <Grid>
-        <TextBlock Text="Download" FontSize="20" Width="200" Height="100" Foreground="White"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="160"/>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <StackPanel Orientation="Vertical" Margin="20 20 20 0">
+                <TextBlock Text="Transfer status : " TextWrapping="Wrap" Foreground="#ccc"/>
+                <ListBox x:Name="ListBoxTask" Height="100" Margin="0 10 0 10" Background="#222">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="Auto" Margin="0">
+                                <WrapPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding RemotePath}" ToolTip="{Binding Name}" 
+                                               Foreground="#CCC" Width="310"/>
+                                    <TextBlock Text="{Binding Size}" 
+                                               Foreground="#aaa" Width="50" Margin="10 0 0 0"/>
+                                    <TextBlock Text="{Binding Status}" 
+                                               Foreground="#aaa" Width="50" Margin="10 0 0 0"/>
+                                </WrapPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="0" Grid.Column="0">
+                <StackPanel VerticalAlignment="Center" Margin="40 0 0 0">
+                    <TextBlock Text="Currrent progress: " Style="{StaticResource TextStatus}"/>
+                    <TextBlock Text="        56.23 %" Style="{StaticResource TextStatus}"/>
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Row="0" Grid.Column="1">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Total progress: " Style="{StaticResource TextStatus}" />
+                    <TextBlock Text="    132.12 M / 19.56 G" 
+                               Style="{StaticResource TextStatus}" Width="180"/>
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="0">
+                <StackPanel VerticalAlignment="Center" Margin="40 0 0 0">
+                    <TextBlock Text="Speed: " Style="{StaticResource TextStatus}" />
+                    <TextBlock Text="        1.26 M/s" Style="{StaticResource TextStatus}"/>
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="1">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Time remaining: " Style="{StaticResource TextStatus}" />
+                    <TextBlock Text="        1: 05: 23" Style="{StaticResource TextStatus}"/>
+                </StackPanel>
+            </Grid>
+
+        </Grid>
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <Button x:Name="ButtonPause" Content="Pause" Style="{StaticResource PageButton}"/>
+                <Button x:Name="ButtonStart" Content="Start" Style="{StaticResource PageButton}"/>
+                <Button x:Name="ButtonDownload" Content="---" Style="{StaticResource PageButton}"/>
+            </StackPanel>
+        </Grid>
+        
 
     </Grid>
 </Page>

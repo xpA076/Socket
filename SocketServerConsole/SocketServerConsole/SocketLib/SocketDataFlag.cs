@@ -14,10 +14,12 @@ namespace SocketLib
         DirectoryResponse,
         DirectoryException,
 
-        DownloadBiasRequest,
-        DownloadStreamRequest = 0x101,
+        DownloadRequest,
         DownloadAllowed,
         DownloadDenied,
+
+        DownloadPackageRequest = 0x101,
+        DownloadPackageResponse,
 
         UploadBiasRequest,
         UploadStreamRequest,

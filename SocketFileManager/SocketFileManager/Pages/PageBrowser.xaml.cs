@@ -1,4 +1,6 @@
 ﻿using SocketFileManager.SocketLib;
+using SocketFileManager.Models;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,11 +10,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.IO;
 
 namespace SocketFileManager.Pages
 {
@@ -22,6 +26,9 @@ namespace SocketFileManager.Pages
     public partial class PageBrowser : Page
     {
         private MainWindow parent;
+        private FolderBrowserDialog dialog = new FolderBrowserDialog();
+        private SokcetFileClass[] fileClasses;
+
         public PageBrowser(MainWindow parent)
         {
             this.parent = parent;
@@ -60,9 +67,31 @@ namespace SocketFileManager.Pages
 
         private void ButtonDownload_Click(object sender, MouseButtonEventArgs e)
         {
+            if (this.ListBoxFile.SelectedIndex < 0) { return; }
+            bool isDir = fileClasses[this.ListBoxFile.SelectedIndex].IsDirectory;
+            string name = fileClasses[this.ListBoxFile.SelectedIndex].Name;
 
+            DialogResult result = System.Windows.Forms.MessageBox.Show(
+                "Are you sure to download " + (isDir ? "folder" : "file") + " : " + name + " ?",
+                "Download", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            if(result == DialogResult.No) { return; }
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                string localPath = dialog.SelectedPath;
+                //System.Windows.Forms.MessageBox.Show(localPath);
+                this.parent.AddDownloadTask(new FileTask
+                {
+                    IsDirectory = isDir,
+                    Type = "download",
+                    RemotePath = RemoteDirectory + "\\" + name,
+                    LocalPath = localPath + "\\" + name,
+                    Length = fileClasses[this.ListBoxFile.SelectedIndex].Length,
+                });
+            }
         }
 
+        
         private List<string> remoteDirs = new List<string>();
         private string RemoteDirectory
         {
@@ -71,30 +100,24 @@ namespace SocketFileManager.Pages
                 string dir = "";
                 for(int i = 0; i < remoteDirs.Count; ++i)
                 {
-                    dir += remoteDirs[i] + "\\";
-                    //if (i != remoteDirs.Count - 1) { dir += "\\"; }
+                    dir += remoteDirs[i];
+                    if (i != remoteDirs.Count - 1) { dir += "\\"; }
                 }
                 return dir;
             }
         }
-        private SokcetFileClass[] fileClasses;
+        
 
-        public bool ListFiles(string path = "")
+        /// <summary>
+        /// 应该能判断请求是否成功的，现在只返回true
+        /// </summary>
+        /// <returns></returns>
+        public bool ListFiles()
         {
-            SocketClient client = new SocketClient(this.parent.ServerIP, Config.ServerPort);
-            try
-            {
-                client.Connect();
-                fileClasses = client.RequestDirectory(RemoteDirectory);
-                client.Close();
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show("Requesting remote directory [" + path + "] failure : " + ex.Message);
-                return false;
-            }
+            fileClasses = this.parent.RequestDirectory(RemoteDirectory);
             this.ListBoxFile.ItemsSource = fileClasses;
-            this.TextRemoteDirectory.Text = RemoteDirectory;
+            this.TextRemoteDirectory.Text = RemoteDirectory +
+                (string.IsNullOrEmpty(RemoteDirectory) ? "" : "\\");
             return true;
         }
 

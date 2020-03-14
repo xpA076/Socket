@@ -76,7 +76,7 @@
                     <TextBlock x:Name="SidebarBrowser" Text="Browser" Style="{StaticResource SidebarButton}" />
                     <TextBlock x:Name="SidebarDownload" Text="Download" Style="{StaticResource SidebarButton}" />
                     <TextBlock x:Name="SidebarCode" Text="Code" Style="{StaticResource SidebarButton}" />
-                    <TextBlock x:Name="SidebarServer" Text="Server" Style="{StaticResource SidebarButton}" />
+                    <TextBlock x:Name="SidebarSetting" Text="Setting" Style="{StaticResource SidebarButton}" />
                 </StackPanel>
             </Grid>
             <Grid Grid.Column="1" x:Name="MainGrid" Background="#1e1e1e">

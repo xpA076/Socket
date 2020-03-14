@@ -9,7 +9,7 @@ namespace SocketLib
     public class HB32Header
     {
         public SocketDataFlag Flag { get; set; } = 0;
-        public int Format { get; set; } = 0;
+        public int I1 { get; set; } = 0;
         public int I2 { get; set; } = 0;
         public int I3 { get; set; } = 0;
         public int PackageCount { get; set; } = 1;
@@ -20,7 +20,7 @@ namespace SocketLib
         public void WriteToBytes(byte[] bytes)
         {
             EncodeInt((int)Flag, bytes, 0);
-            EncodeInt((int)Format, bytes, 4);
+            EncodeInt((int)I1, bytes, 4);
             EncodeInt(I2, bytes, 8);
             EncodeInt(I3, bytes, 12);
             EncodeInt(PackageCount, bytes, 16);
@@ -41,7 +41,7 @@ namespace SocketLib
             return new HB32Header()
             {
                 Flag = (SocketDataFlag)DecodeInt(bytes, 0),
-                Format = DecodeInt(bytes, 4),
+                I1 = DecodeInt(bytes, 4),
                 I2 = DecodeInt(bytes, 8),
                 I3 = DecodeInt(bytes, 12),
                 PackageCount = DecodeInt(bytes, 16),

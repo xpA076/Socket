@@ -271,41 +271,14 @@ namespace SocketLib
         #region 文件传输: 下载 上传 删除 (路径创建与删除)
 
 
-        public void FileDownloadResponse(Socket socket, HB32Header header, byte[] bytes)
+        public void FileDownloadResponse(Socket socket, byte[] bytes)
         {
-            FileStream remoteStream;
-            try
-            {
-                string path = Encoding.UTF8.GetString(bytes);
-                remoteStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-            }
-            catch (Exception ex)
-            {
-                SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, ex.Message);
-                return;
-            }
-            int bytesRead;
-            byte[] fileBytes;
-            // seek
-            remoteStream.Seek((long)header.I2 * (1 << 30) + (long)header.I3, SeekOrigin.Begin);
-            // read
-            fileBytes = new byte[HB32Encoding.DataSize];
-            bytesRead = remoteStream.Read(fileBytes, 0, HB32Encoding.DataSize);
-            // send
-            SendHeader(socket, new HB32Header { Flag = SocketDataFlag.DownloadAllowed, ValidByteLength = bytesRead });
-            socket.Send(fileBytes, HB32Encoding.DataSize, SocketFlags.None);
-            while (bytesRead != 0)
-            {
-                // recv
-                ReceiveHeader(socket, out HB32Header temp_header);
-                // read
-                fileBytes = new byte[HB32Encoding.DataSize];
-                bytesRead = remoteStream.Read(fileBytes, 0, HB32Encoding.DataSize);
-                // send
-                SendHeader(socket, new HB32Header { Flag = SocketDataFlag.DownloadAllowed, ValidByteLength = bytesRead });
-                socket.Send(fileBytes, HB32Encoding.DataSize, SocketFlags.None);
-            }
-            remoteStream.Close();
+            string path = Encoding.UTF8.GetString(bytes);
+            string[] response = new string[2];
+            IPAddress host = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).FirstOrDefault();
+            response[0] = host.ToString();
+            response[1] = Config.ServerDownloadPort.ToString();
+            SendJson(socket, new HB32Header { Flag = SocketDataFlag.DownloadAllowed }, response);
         }
 
 
@@ -353,7 +326,6 @@ namespace SocketLib
             }
             SendBytes(socket, new HB32Header { Flag = SocketDataFlag.DeleteAllowed }, new byte[0]);
         }
-
         #endregion
 
     }

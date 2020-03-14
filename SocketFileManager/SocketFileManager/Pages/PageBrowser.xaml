@@ -36,37 +36,44 @@
     </Page.Resources>
 
     <Grid>
-        <StackPanel Orientation="Vertical">
-            <StackPanel Orientation="Horizontal">
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="400">
-                    <TextBlock Text="Remote directory:" FontSize="14" Foreground="#eee"
-                       Margin="30 20 50 0" HorizontalAlignment="Left"/>
-                    <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#ccc"
-                       Margin="40 10 50 0" Width="350" HorizontalAlignment="Left"
-                       TextWrapping="Wrap" FontFamily="Calibri"/>
-                </StackPanel>
-                <Button x:Name="ButtonRefresh" Content="&#xe615;" FontFamily="/Resources/#iconfont"
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="100" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="400">
+                        <TextBlock Text="Remote directory:" FontSize="14" Foreground="#eee" 
+                                   Margin="30 20 50 0" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#ccc"
+                                   Margin="40 10 0 0" Width="350" HorizontalAlignment="Left"
+                                   TextWrapping="Wrap" FontFamily="Calibri"/>
+                    </StackPanel>
+                    <Button x:Name="ButtonRefresh" Content="&#xe615;" FontFamily="/Resources/#iconfont"
                         Width="30" Height="30" Margin="0 30 0 0"
                         Style="{StaticResource PageButton}"/>
+                </StackPanel>
+                <ListBox x:Name="ListBoxFile" Height="200" Margin="30 10 30 0" Background="#222">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="Auto" Margin="0">
+                                <WrapPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" Foreground="#CCC" Width="280"/>
+                                    <TextBlock Text="{Binding Size}" Foreground="#aaa" Margin="10 0 0 0"/>
+                                </WrapPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </StackPanel>
-            
-            <ListBox x:Name="ListBoxFile" Height="200" Margin="30 10 30 0" Background="#222">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Height="Auto" Margin="0">
-                            <WrapPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" Foreground="#CCC" Width="250"/>
-                                <TextBlock Text="{Binding Size}" Foreground="#aaa" Margin="10 0 0 0"/>
-                            </WrapPanel>
-                        </Grid>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        </Grid>
+        <Grid Grid.Row="1">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top">
                 <Button x:Name="ButtonBack" Content="Back" Style="{StaticResource PageButton}"/>
                 <Button x:Name="ButtonOpen" Content="Open" Style="{StaticResource PageButton}"/>
                 <Button x:Name="ButtonDownload" Content="Download" Style="{StaticResource PageButton}"/>
             </StackPanel>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Page>
