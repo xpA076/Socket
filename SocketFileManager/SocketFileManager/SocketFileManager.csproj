@@ -64,6 +64,8 @@
     <Compile Include="Config.cs" />
     <Compile Include="Models\FileTask.cs" />
     <Compile Include="Models\FileViewModel.cs" />
+    <Compile Include="Models\ProgressViewModel.cs" />
+    <Compile Include="Models\TransferRecord.cs" />
     <Compile Include="Pages\PageBrowser.xaml.cs">
       <DependentUpon>PageBrowser.xaml</DependentUpon>
     </Compile>

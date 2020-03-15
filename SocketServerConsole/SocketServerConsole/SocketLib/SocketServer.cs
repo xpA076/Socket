@@ -119,11 +119,13 @@ namespace SocketLib
                             {
                                 try
                                 {
+                                    FileInfo fif = new FileInfo(path);
                                     FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
                                     PointerRecord record = new PointerRecord
                                     {
                                         Pointer = fs,
                                         ServerPath = path,
+                                        Length = fif.Length,
                                     };
                                     int id;
                                     lock (this)
@@ -141,13 +143,19 @@ namespace SocketLib
                             }
                             break;
                         case SocketDataFlag.DownloadPackageRequest:
-                            PointerRecord rec = pointers[header.I1];
-                            FileStream serverStream = rec.Pointer;
+                            PointerRecord prc = pointers[header.I1];
+                            FileStream serverStream = prc.Pointer;
+                            if (header.I2 == -1)
+                            {
+                                serverStream.Close();
+                                pointers.Remove(header.I1);
+                                break;
+                            }
                             long begin = (long)header.I2 * HB32Encoding.DataSize;
                             int length = HB32Encoding.DataSize; // 有效byte长度
-                            if (((long)header.I2 + 1) * HB32Encoding.DataSize > rec.Length)
+                            if (begin + HB32Encoding.DataSize > prc.Length)
                             {
-                                length = (int)(rec.Length - (long)header.I2 * HB32Encoding.DataSize);
+                                length = (int)(prc.Length - begin);
                             }
                             byte[] readBytes = new byte[length];
                             lock (serverStream)

@@ -138,56 +138,23 @@ namespace SocketFileManager
         {
             ((PageBrowser)this.pages["Browser"]).ListFiles();
         }
-
+        /// <summary>
+        /// 向 server 请求文件列表
+        /// 异常: socket连接异常
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns> SocketFileClass Array </returns>
         public SokcetFileClass[] RequestDirectory(string path)
         {
             SokcetFileClass[] fileClasses = null;
             SocketClient client = new SocketClient(this.ServerIP, this.ServerPort);
-            try
-            {
-                client.Connect();
-                fileClasses = client.RequestDirectory(path);
-                client.Close();
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show("Requesting remote directory [" + path + "] failure : " + ex.Message);
-            }
+            client.Connect();
+            fileClasses = client.RequestDirectory(path);
+            client.Close();
             return fileClasses;
         }
 
         #region 下载
-        /*
-        public void AddDirectoryDownloadTask(FileTask dirTask)
-        {
-            if (!Directory.Exists(dirTask.LocalPath))
-            {
-                DirectoryInfo dirInfo = new DirectoryInfo(dirTask.LocalPath);
-                dirInfo.Create();
-            }
-            SokcetFileClass[] files = RequestDirectory(dirTask.RemotePath);
-            foreach(SokcetFileClass f in files)
-            {
-                if (f.IsDirectory)
-                {
-                    AddDirectoryDownloadTask(new FileTask
-                    {
-                        RemotePath = dirTask.RemotePath + "\\" + f.Name,
-                        LocalPath = dirTask.LocalPath + "\\" + f.Name,
-                    });
-                }
-                else
-                {
-                    AddDownloadTask(new FileTask
-                    {
-                        RemotePath = dirTask.RemotePath + "\\" + f.Name,
-                        LocalPath = dirTask.LocalPath + "\\" + f.Name,
-                        Length = f.Length
-                    });
-                }
-            }
-        }
-        */
 
         public void AddDownloadTask(FileTask downloadTask)
         {

@@ -109,12 +109,21 @@ namespace SocketFileManager.Pages
         
 
         /// <summary>
-        /// 应该能判断请求是否成功的，现在只返回true
+        /// 获取 server 文件列表
         /// </summary>
-        /// <returns></returns>
+        /// <returns>请求是否成功 bool 值</returns>
         public bool ListFiles()
         {
-            fileClasses = this.parent.RequestDirectory(RemoteDirectory);
+            try
+            {
+                fileClasses = this.parent.RequestDirectory(RemoteDirectory);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show("Requesting remote directory [" +
+                    RemoteDirectory + "] failure : " + ex.Message);
+                return false;
+            }
             this.ListBoxFile.ItemsSource = fileClasses;
             this.TextRemoteDirectory.Text = RemoteDirectory +
                 (string.IsNullOrEmpty(RemoteDirectory) ? "" : "\\");

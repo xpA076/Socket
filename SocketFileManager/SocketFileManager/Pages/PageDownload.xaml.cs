@@ -31,39 +31,68 @@ namespace SocketFileManager.Pages
         {
             this.parent = parent;
             InitializeComponent();
-            this.ListBoxTask.ItemsSource = fileTasks;
+            this.ListBoxTask.ItemsSource = transfer.FileTasks;
+            this.GridProgress.DataContext = progressView;
         }
 
-        private List<FileTask> fileTasks = new List<FileTask>();
-        private int currentTaskIndex;
+        #region 下载和 UI 相关 private 变量
+        private bool showCurrentPercent = true;
+        private bool showTotalPercent = true;
+
+        private ProgressViewModel progressView = new ProgressViewModel();
+
+        private TransferRecord transfer = new TransferRecord();
+
+        //private List<FileTask> fileTasks = new List<FileTask>();
+        //private int currentTaskIndex;
+        /*
+        private Dictionary<string, long> byteCount = new Dictionary<string, long>()
+        {
+            { "total_length", 0 },
+
+            { "current_length", 0 },
+            { "current_finished", 0 },
+
+            { "task_addup", 0}, 
+            { "last_time", 0 }, // 上次更新时间
+            { "new_bytes", 0 }, // 上次更新以后传输字节数
+        };
+        
+        /// <summary>
+        /// packageRecord[0] : 当前最后一个 package index
+        /// packageRecord[1] : 当前 task 需要的总 package
+        /// </summary>
+        private Dictionary<string, int> packageRecord = new Dictionary<string, int>()
+        {
+            { "last", -1 },
+            { "total", 0 },
+        };
+        */
         private FileStream localFileStream = null;
+        #endregion
 
         public int SmallFileLimit = 4 * 1024 * 1024;
         public int ThreadLimit = 10;
 
         private bool isDownloading = false;
-        
-        private FileTask CurrentTask
-        {
-            get
-            {
-                return fileTasks[currentTaskIndex];
-            }
-        }
 
-
+        /// <summary>
+        /// browser 页面添加任务响应事件
+        /// </summary>
+        /// <param name="downloadTask">文件/文件夹任务</param>
         public void AddDownloadTask(FileTask downloadTask)
         {
-            lock (fileTasks)
+            lock (this.transfer)
             {
-                fileTasks.Add(downloadTask);
-                if (!isDownloading)
-                {
-                    // 启动下载
-                    Thread th = new Thread(Download);
-                    th.IsBackground = true;
-                    th.Start();
-                }
+                transfer.AddTask(downloadTask);
+                transfer.TotalLength += downloadTask.Length;
+            }
+            if (!isDownloading)
+            {
+                // 启动下载
+                Thread th = new Thread(Download);
+                th.IsBackground = true;
+                th.Start();
             }
         }
 
@@ -74,16 +103,24 @@ namespace SocketFileManager.Pages
         {
             isDownloading = true;
             // 界面更新 0%
-            // do sth
+            //UpdateProgerss(0);
             // 直到 currentTaskIndex 指向最后，代表所有任务完成
-            while (currentTaskIndex < fileTasks.Count)
+            while (!transfer.IsFinished())
             {
                 // 界面更新当前任务
-                // do sth
-                DownloadSingleTask(fileTasks[currentTaskIndex]);
+                if (!transfer.CurrentTask.IsDirectory)
+                {
+                    UpdateTaskProgress();
+                }
+                // 启动下载
+                DownloadSingleTask(transfer.CurrentTask);
             }
             // 界面更新 100%
-            // do sth
+            allFin = allLen;
+            curFin = curLen;
+            UpdateUI(false);
+            transfer.Clear();
+            isDownloading = false;
         }
 
         /// <summary>
@@ -103,10 +140,16 @@ namespace SocketFileManager.Pages
                     DirectoryInfo dirInfo = new DirectoryInfo(task.LocalPath);
                     dirInfo.Create();
                 }
-                SokcetFileClass[] files = this.parent.RequestDirectory(task.RemotePath);
-                lock (this.fileTasks)
+                SokcetFileClass[] files;
+                try { files = this.parent.RequestDirectory(task.RemotePath); }
+                catch (Exception)
                 {
-                    this.fileTasks.RemoveAt(currentTaskIndex);
+                    task.Status = "denied";
+                    return;
+                }
+                lock (this.transfer)
+                {
+                    this.transfer.FileTasks.RemoveAt(transfer.CurrentTaskIndex);
                     List<FileTask> tasks = new List<FileTask>();
                     foreach (SokcetFileClass f in files)
                     {
@@ -119,11 +162,13 @@ namespace SocketFileManager.Pages
                             Length = f.Length,
                         });
                     }
-                    this.fileTasks.InsertRange(currentTaskIndex, tasks);
+                    this.transfer.FileTasks.InsertRange(transfer.CurrentTaskIndex, tasks);
                 }
                 return;
             }
             #endregion
+
+            task.Status = "downloading";
 
             #region 单线程下载
             if (task.Length <= SmallFileLimit)
@@ -138,7 +183,7 @@ namespace SocketFileManager.Pages
                             Flag = SocketDataFlag.DownloadRequest,
                             I3 = 1, // I3 = 1 代表小文件下载
                         },
-                        fileTasks[0].RemotePath);
+                        task.RemotePath);
                     client.ReceiveBytes(client.client, out HB32Header header, out byte[] bytes);
                     client.Close();
                     if (header.Flag != SocketDataFlag.DownloadAllowed)
@@ -146,14 +191,16 @@ namespace SocketFileManager.Pages
                         throw new Exception(Encoding.UTF8.GetString(bytes));
                     }
                     File.WriteAllBytes(task.LocalPath, bytes);
-                    currentTaskIndex++;
+                    this.transfer.AddFinishedBytes(bytes.Length);
+                    task.Status = "success";
+                    transfer.CurrentTaskIndex++;
                     return;
                 }
                 catch (Exception ex)
                 {
-                    // todo: task status 改为 fail 再返回
+                    task.Status = "failed";
                     System.Windows.Forms.MessageBox.Show(ex.Message);
-                    currentTaskIndex++;
+                    transfer.CurrentTaskIndex++;
                     return;
                 }
             }
@@ -167,7 +214,7 @@ namespace SocketFileManager.Pages
                 client.Connect();
                 client.SendBytes(client.client,
                     new HB32Header { Flag = SocketDataFlag.DownloadRequest },
-                    fileTasks[0].RemotePath);
+                    task.RemotePath);
                 client.ReceiveBytes(client.client, out HB32Header header, out byte[] bytes);
                 client.Close();
                 if (header.Flag != SocketDataFlag.DownloadAllowed)
@@ -178,18 +225,19 @@ namespace SocketFileManager.Pages
             }
             catch (Exception ex)
             {
-                // todo: task status 改为 fail 再返回
                 System.Windows.Forms.MessageBox.Show(ex.Message);
+                task.Status = "failed";
+                transfer.CurrentTaskIndex++;
                 return;
             }
 
             // 启动下载子线程
             task.ServerId = int.Parse(response);
             localFileStream = new FileStream(task.LocalPath, FileMode.OpenOrCreate, FileAccess.Write);
-            lock (this.packageRecord)
+            lock (this.transfer)
             {
-                packageRecord[0] = -1;
-                packageRecord[1] = (int)(task.Length / HB32Encoding.DataSize) +
+                transfer.LastPackage = -1;
+                transfer.TotalPackage = (int)(task.Length / HB32Encoding.DataSize) +
                     (task.Length % HB32Encoding.DataSize > 0 ? 1 : 0);
             }
             Thread[] threads = new Thread[ThreadLimit];
@@ -198,14 +246,27 @@ namespace SocketFileManager.Pages
                 threads[i] = new Thread(DownloadThreadUnit);
                 threads[i].IsBackground = true;
                 threads[i].Start();
+                Thread.Sleep(50);
             }
             for (int i = 0; i < ThreadLimit; ++i)
             {
+                // 阻塞至子线程工作完毕
                 threads[i].Join();
             }
+            // 请求server端关闭并释放文件
+            SocketClient sc = GetConnectedSocketClient();
+            sc.SendHeader(sc.client,
+                new HB32Header
+                {
+                    Flag = SocketDataFlag.DownloadPackageRequest,
+                    I1 = transfer.CurrentTask.ServerId,
+                    I2 = -1,
+                });
+            sc.Close();
             localFileStream.Close();
             localFileStream = null;
-            currentTaskIndex++;
+            task.Status = "success";
+            transfer.CurrentTaskIndex++;
             #endregion
         }
 
@@ -215,7 +276,7 @@ namespace SocketFileManager.Pages
         /// </summary>
         private void DownloadThreadUnit()
         {
-            int id = fileTasks[currentTaskIndex].ServerId;
+            int id = transfer.CurrentTask.ServerId;
             SocketClient client = GetConnectedSocketClient();
             for (int package = GetPackageIndex(); package != -1; package = GetPackageIndex())
             {
@@ -236,6 +297,10 @@ namespace SocketFileManager.Pages
                             localFileStream.Seek((long)package * HB32Encoding.DataSize, SeekOrigin.Begin);
                             localFileStream.Write(bytes, 0, header.ValidByteLength);
                         }
+                        lock (this.transfer)
+                        {
+                            transfer.AddFinishedBytes(header.ValidByteLength);
+                        }
                         break;
                     }
                     catch (Exception)
@@ -244,6 +309,7 @@ namespace SocketFileManager.Pages
                     }
                 }
             }
+            client.Close();
         }
 
         /// <summary>
@@ -267,28 +333,112 @@ namespace SocketFileManager.Pages
                 }
             }
         }
-        /// <summary>
-        /// packageRecord[0] : 当前最后一个 package index
-        /// packageRecord[1] : 当前 task 需要的总 package
-        /// </summary>
-        private int[] packageRecord = new int[2];
+
         /// <summary>
         /// 申请获取任务package index, 任务完成则返回 -1
+        /// 根据 package 数目更新 UI
         /// </summary>
         /// <returns> package index </returns>
         private int GetPackageIndex()
         {
-            lock (this.packageRecord)
+            lock (this.transfer)
             {
-                if (packageRecord[0] == packageRecord[1])
+                if (transfer.LastPackage + 1 == transfer.TotalPackage)
                 {
                     return -1;
                 }
                 else
                 {
-                    packageRecord[0]++;
-                    return packageRecord[0];
+                    transfer.LastPackage++;
+                    if (transfer.AllowUpdate()) { UpdateUI(); }
+                    return transfer.LastPackage;
                 }
+            }
+        }
+
+        /// <summary>
+        /// 在启动每个新任务前调用
+        /// </summary>
+        /// <param name="currentTask"></param>
+        private void UpdateTaskProgress()
+        {
+            lock (this.transfer)
+            {
+                transfer.RecordNewTask();
+            }
+            UpdateUI();
+        }
+
+
+        private long curFin;
+        private long curLen;
+        private long allFin;
+        private long allLen;
+        /// <summary>
+        /// 更新 UI
+        /// </summary>
+        /// <param name="getData"> 是否从 TransferRecord 中获取数据更新 speed 等时间信息 </param>
+        private void UpdateUI(bool getData = true)
+        {
+            if (getData)
+            {
+                double speed;
+                lock (transfer)
+                {
+                    curFin = transfer.CurrentFinished;
+                    curLen = transfer.CurrentLength;
+                    allFin = transfer.TotalFinished;
+                    allLen = transfer.TotalLength;
+                    speed = transfer.GetSpeed();
+                }
+                int seconds = (int)((allLen - allFin) / speed);
+                progressView.Speed = num2text(speed).PadLeft(18, ' ') + "/s";
+                progressView.TimeRemaining = (seconds / 3600).ToString().PadLeft(10, ' ') +
+                    ": " + (seconds % 3600 / 60).ToString().PadLeft(2, '0') +
+                    ": " + (seconds % 60).ToString().PadLeft(2, '0');
+            }
+            if (showCurrentPercent)
+            {
+                progressView.CurrentProgress =
+                    ((double)curFin * 100 / curLen).ToString("0.00").PadLeft(16, ' ') + " %";
+            }
+            else
+            {
+                progressView.CurrentProgress =
+                    num2text(curFin).PadLeft(12, ' ') + "/" + num2text(curLen);
+            }
+            if (showTotalPercent)
+            {
+                progressView.TotalProgress =
+                    ((double)allFin * 100 / allLen).ToString("0.00").PadLeft(16, ' ') + " %";
+            }
+            else
+            {
+                progressView.TotalProgress =
+                    num2text(allFin).PadLeft(12, ' ') + "/" + num2text(allLen);
+            }
+        }
+
+        private string num2text(double num)
+        {
+            if (num > 1 << 30)
+            {
+                double d = num / (1 << 30);
+                return d.ToString("0.00") + " G";
+            }
+            else if (num > 1 << 20)
+            {
+                double d = num / (1 << 20);
+                return d.ToString("0.00") + " M";
+            }
+            else if (num > 1 << 10)
+            {
+                double d = num / (1 << 10);
+                return d.ToString("0.00") + " K";
+            }
+            else
+            {
+                return num.ToString("0.00") + " B";
             }
         }
     }

@@ -56,11 +56,11 @@
                             <Grid Height="Auto" Margin="0">
                                 <WrapPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding RemotePath}" ToolTip="{Binding Name}" 
-                                               Foreground="#CCC" Width="310"/>
+                                               Foreground="#CCC" Width="260"/>
                                     <TextBlock Text="{Binding Size}" 
-                                               Foreground="#aaa" Width="50" Margin="10 0 0 0"/>
+                                               Foreground="#aaa" Width="60" Margin="10 0 0 0"/>
                                     <TextBlock Text="{Binding Status}" 
-                                               Foreground="#aaa" Width="50" Margin="10 0 0 0"/>
+                                               Foreground="#aaa" Width="70" Margin="10 0 0 0"/>
                                 </WrapPanel>
                             </Grid>
                         </DataTemplate>
@@ -68,7 +68,7 @@
                 </ListBox>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Name="GridProgress">
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />
@@ -80,26 +80,33 @@
             <Grid Grid.Row="0" Grid.Column="0">
                 <StackPanel VerticalAlignment="Center" Margin="40 0 0 0">
                     <TextBlock Text="Currrent progress: " Style="{StaticResource TextStatus}"/>
-                    <TextBlock Text="        56.23 %" Style="{StaticResource TextStatus}"/>
+                    <TextBlock x:Name="TextCurrentProgress" 
+                               Text="{Binding CurrentProgress}" 
+                               Style="{StaticResource TextStatus}"/>
                 </StackPanel>
             </Grid>
             <Grid Grid.Row="0" Grid.Column="1">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Total progress: " Style="{StaticResource TextStatus}" />
-                    <TextBlock Text="    132.12 M / 19.56 G" 
+                    <TextBlock x:Name="TextTotalProgress" 
+                               Text="{Binding TotalProgress}" 
                                Style="{StaticResource TextStatus}" Width="180"/>
                 </StackPanel>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="0">
                 <StackPanel VerticalAlignment="Center" Margin="40 0 0 0">
                     <TextBlock Text="Speed: " Style="{StaticResource TextStatus}" />
-                    <TextBlock Text="        1.26 M/s" Style="{StaticResource TextStatus}"/>
+                    <TextBlock x:Name="TextSpeed" 
+                               Text="{Binding Speed}" 
+                               Style="{StaticResource TextStatus}"/>
                 </StackPanel>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="1">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Time remaining: " Style="{StaticResource TextStatus}" />
-                    <TextBlock Text="        1: 05: 23" Style="{StaticResource TextStatus}"/>
+                    <TextBlock x:Name="TextTimeRemain" 
+                               Text="{Binding TimeRemaining}" 
+                               Style="{StaticResource TextStatus}"/>
                 </StackPanel>
             </Grid>
 

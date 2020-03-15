@@ -218,7 +218,7 @@ namespace SocketLib
 
         // 获取本地指定路径下文件与文件夹列表
         // 异常： DirectoryNotFoundException, SecurityException
-        private static SokcetFileClass[] GetDirectoryAndFiles(string path)
+        private SokcetFileClass[] GetDirectoryAndFiles(string path)
         {
             List<SokcetFileClass> list = new List<SokcetFileClass>();
             if (string.IsNullOrEmpty(path))
@@ -251,19 +251,45 @@ namespace SocketLib
 
                 foreach (DirectoryInfo directoryInfo in directoryInfos)
                 {
-                    list.Add(new SokcetFileClass { Name = directoryInfo.Name, IsDirectory = true });
+                    try
+                    {
+                        long len = GetDirectoryLength(directoryInfo.FullName);
+                        list.Add(new SokcetFileClass
+                        {
+                            Name = directoryInfo.Name,
+                            Length = len,
+                            IsDirectory = true,
+                        });
+                    }
+                    catch (Exception) {; }
                 }
-
                 foreach (FileInfo fileInfo in fileInfos)
                 {
-                    list.Add(new SokcetFileClass { Name = fileInfo.Name, Length = fileInfo.Length, IsDirectory = false });
+                    list.Add(new SokcetFileClass {
+                        Name = fileInfo.Name,
+                        Length = fileInfo.Length,
+                        IsDirectory = false,
+                    });
                 }
-
                 list.Sort(SokcetFileClass.Compare);
                 return list.ToArray();
             }
         }
 
+        private long GetDirectoryLength(string path)
+        {
+            long length = 0;
+            DirectoryInfo info = new DirectoryInfo(path);
+            foreach(FileInfo fi in info.GetFiles())
+            {
+                length += fi.Length;
+            }
+            foreach(DirectoryInfo di in info.GetDirectories())
+            {
+                length += GetDirectoryLength(di.FullName);
+            }
+            return length;
+        }
 
         #endregion
 

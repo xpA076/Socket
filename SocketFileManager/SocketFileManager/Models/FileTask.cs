@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SocketFileManager.Models
 {
-    public class FileTask
+    public class FileTask: INotifyPropertyChanged
     {
         public bool IsDirectory { get; set; } = false;
         public string Type { get; set; } = "download";
@@ -46,13 +47,20 @@ namespace SocketFileManager.Models
             }
         }
 
+        private string status = "--";
         public string Status
         {
             get
             {
-                return "--";
+                return status;
+            }
+            set
+            {
+                status = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Status"));
             }
         }
 
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }
