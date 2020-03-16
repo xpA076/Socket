@@ -14,5 +14,7 @@ namespace SocketServerConsole
         public string ServerPath { get; set; }
 
         public long Length { get; set; }
+
+        public DateTime LastTime { get; set; }
     }
 }

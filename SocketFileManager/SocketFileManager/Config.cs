@@ -12,6 +12,11 @@ namespace SocketFileManager
     public static class Config
     {
         public static int ServerPort { get; private set; }
+
+        public static int ThreadLimit { get; set; } = 10;
+
+        public static long SmallFileLimit { get; set; } = 4 * 1024 * 1024;
+
         public static string LastConnect {
             get {
                 try
@@ -50,6 +55,8 @@ namespace SocketFileManager
                 root.Add(server);
                 XElement connection = new XElement("connection");
                 connection.SetElementValue("lastConnect", "");
+                connection.SetElementValue("threadLimit", ThreadLimit.ToString());
+                connection.SetElementValue("smallFileLimit", SmallFileLimit.ToString());
                 root.Add(connection);
                 root.Save(configPath);
             }
@@ -58,6 +65,8 @@ namespace SocketFileManager
                 XDocument doc = XDocument.Load(configPath);
                 XElement root = doc.Root;
                 ServerPort = int.Parse(root.Element("server").Element("serverPort").Value);
+                ThreadLimit = int.Parse(root.Element("connection").Element("threadLimit").Value);
+                SmallFileLimit = long.Parse(root.Element("connection").Element("smallFileLimit").Value);
             }
         }
     }

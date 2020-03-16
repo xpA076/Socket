@@ -77,7 +77,7 @@
                 <ColumnDefinition />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <Grid Grid.Row="0" Grid.Column="0">
+            <Grid Grid.Row="0" Grid.Column="0" Cursor="Hand" Name="GridCurrentProgress">
                 <StackPanel VerticalAlignment="Center" Margin="40 0 0 0">
                     <TextBlock Text="Currrent progress: " Style="{StaticResource TextStatus}"/>
                     <TextBlock x:Name="TextCurrentProgress" 
@@ -85,7 +85,7 @@
                                Style="{StaticResource TextStatus}"/>
                 </StackPanel>
             </Grid>
-            <Grid Grid.Row="0" Grid.Column="1">
+            <Grid Grid.Row="0" Grid.Column="1" Cursor="Hand" Name="GridTotalProgress">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Total progress: " Style="{StaticResource TextStatus}" />
                     <TextBlock x:Name="TextTotalProgress" 

@@ -103,43 +103,50 @@ namespace SocketLib
                                 }, 
                                 smallFileBytes);
                             }
-                            bool hasMatch = false;
                             lock (pointers)
                             {
-                                foreach (PointerRecord p in pointers.Values)
+                                List<int> ids = new List<int>(pointers.Keys);
+                                for(int i = 0; i < ids.Count; ++i)
                                 {
-                                    if (p.ServerPath == path) { hasMatch = true; }
-                                }
-                            }
-                            if (hasMatch)
-                            {
-                                SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, "path repeated");
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    FileInfo fif = new FileInfo(path);
-                                    FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-                                    PointerRecord record = new PointerRecord
+                                    PointerRecord p = pointers[ids[i]];
+                                    if (p.ServerPath == path)
                                     {
-                                        Pointer = fs,
-                                        ServerPath = path,
-                                        Length = fif.Length,
-                                    };
-                                    int id;
-                                    lock (this)
-                                    {
-                                        this.lastId++;
-                                        id = this.lastId;
+                                        // 若该 FileStream 不在使用中 (10s空闲) 则释放
+                                        if ((DateTime.Now - p.LastTime).Seconds > 10)
+                                        {
+                                            p.Pointer.Close();
+                                            pointers.Remove(ids[i]);
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, "file occupied");
+                                        }
                                     }
-                                    pointers.Add(id, record);
-                                    SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadAllowed }, id.ToString());
                                 }
-                                catch (Exception ex)
+                            }
+                            try
+                            {
+                                FileInfo fif = new FileInfo(path);
+                                FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                                PointerRecord record = new PointerRecord
                                 {
-                                    SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, ex.Message);
+                                    Pointer = fs,
+                                    ServerPath = path,
+                                    Length = fif.Length,
+                                };
+                                int id;
+                                lock (this)
+                                {
+                                    this.lastId++;
+                                    id = this.lastId;
                                 }
+                                pointers.Add(id, record);
+                                SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadAllowed }, id.ToString());
+                            }
+                            catch (Exception ex)
+                            {
+                                SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, ex.Message);
                             }
                             break;
                         case SocketDataFlag.DownloadPackageRequest:
@@ -163,6 +170,7 @@ namespace SocketLib
                                 serverStream.Seek(begin, SeekOrigin.Begin);
                                 serverStream.Read(readBytes, 0, length);
                             }
+                            prc.LastTime = DateTime.Now;
                             SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadPackageResponse }, readBytes);
                             break;
                             /*

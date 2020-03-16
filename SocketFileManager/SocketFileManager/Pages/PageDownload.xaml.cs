@@ -34,6 +34,8 @@ namespace SocketFileManager.Pages
             // buttons
             this.ButtonPause.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonPause_Click);
             this.ButtonStart.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonStart_Click);
+            this.GridCurrentProgress.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(GridCurrentProgress_Click);
+            this.GridTotalProgress.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(GridTotalProgress_Click);
             this.ListBoxTask.ItemsSource = transfer.FileTasks;
             this.GridProgress.DataContext = progressView;
         }
@@ -74,11 +76,19 @@ namespace SocketFileManager.Pages
         private FileStream localFileStream = null;
         #endregion
 
-        public int SmallFileLimit = 4 * 1024 * 1024;
-        public int ThreadLimit = 10;
-
         private bool isDownloading = false;
         private bool stopDownloading = false;
+
+        private void GridCurrentProgress_Click(object sender, MouseButtonEventArgs e)
+        {
+            showCurrentPercent = !showCurrentPercent;
+            UpdateUI(false);
+        }
+        private void GridTotalProgress_Click(object sender, MouseButtonEventArgs e)
+        {
+            showTotalPercent = !showTotalPercent;
+            UpdateUI(false);
+        }
 
         private void ButtonPause_Click(object sender, MouseButtonEventArgs e)
         {
@@ -219,7 +229,7 @@ namespace SocketFileManager.Pages
             task.Status = "download";
 
             #region 单线程下载
-            if (task.Length <= SmallFileLimit)
+            if (task.Length <= Config.SmallFileLimit)
             {
                 try
                 {
@@ -290,15 +300,15 @@ namespace SocketFileManager.Pages
                     (task.Length % HB32Encoding.DataSize > 0 ? 1 : 0);
             }
             */
-            Thread[] threads = new Thread[ThreadLimit];
-            for (int i = 0; i < ThreadLimit; ++i)
+            Thread[] threads = new Thread[Config.ThreadLimit];
+            for (int i = 0; i < Config.ThreadLimit; ++i)
             {
                 threads[i] = new Thread(DownloadThreadUnit);
                 threads[i].IsBackground = true;
                 threads[i].Start();
                 Thread.Sleep(50);
             }
-            for (int i = 0; i < ThreadLimit; ++i)
+            for (int i = 0; i < Config.ThreadLimit; ++i)
             {
                 // 阻塞至子线程工作完毕
                 threads[i].Join();
@@ -504,6 +514,4 @@ namespace SocketFileManager.Pages
             }
         }
     }
-
-
 }
