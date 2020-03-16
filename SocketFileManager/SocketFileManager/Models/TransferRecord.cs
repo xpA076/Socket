@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,9 @@ namespace SocketFileManager.Models
         public long updateLengthThres = 1 * 1024 * 1024; // 刷新界面最小字节数
         public int updateTimeThres = 500; // 刷新界面最短时间间隔
 
-        public List<FileTask> FileTasks = new List<FileTask>();
+        // 这里要用 ObservableCollection 不能用 List
+        // 实现引用不变内容改变下的实时显示
+        public ObservableCollection<FileTask> FileTasks = new ObservableCollection<FileTask>();
         public int CurrentTaskIndex = 0; // CurrentTaskIndex 一直指向当前未完成的第一个任务
 
         private long taskAddup = 0; // 当前任务以前任务总byte数

@@ -147,28 +147,32 @@ namespace SocketFileManager.Pages
                     task.Status = "denied";
                     return;
                 }
-                lock (this.transfer)
-                {
-                    this.transfer.FileTasks.RemoveAt(transfer.CurrentTaskIndex);
-                    List<FileTask> tasks = new List<FileTask>();
-                    foreach (SokcetFileClass f in files)
+                this.Dispatcher.Invoke(new Action(() => {
+                    lock (this.transfer)
                     {
-                        tasks.Add(new FileTask
+                        this.transfer.FileTasks.RemoveAt(transfer.CurrentTaskIndex);
+                        List<FileTask> tasks = new List<FileTask>();
+                        int bias = transfer.CurrentTaskIndex;
+                        for (int i = 0; i < files.Length; ++i)
                         {
-                            IsDirectory = f.IsDirectory,
-                            Type = "download",
-                            RemotePath = task.RemotePath + "\\" + f.Name,
-                            LocalPath = task.LocalPath + "\\" + f.Name,
-                            Length = f.Length,
-                        });
+                            SokcetFileClass f = files[i];
+                            this.transfer.FileTasks.Insert(bias + i, new FileTask
+                            {
+                                IsDirectory = f.IsDirectory,
+                                Type = "download",
+                                RemotePath = task.RemotePath + "\\" + f.Name,
+                                LocalPath = task.LocalPath + "\\" + f.Name,
+                                Length = f.Length,
+                            });
+                        }
                     }
-                    this.transfer.FileTasks.InsertRange(transfer.CurrentTaskIndex, tasks);
-                }
+                }));
+
                 return;
             }
             #endregion
 
-            task.Status = "downloading";
+            task.Status = "download";
 
             #region 单线程下载
             if (task.Length <= SmallFileLimit)

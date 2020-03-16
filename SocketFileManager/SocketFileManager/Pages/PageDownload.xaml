@@ -55,12 +55,12 @@
                         <DataTemplate>
                             <Grid Height="Auto" Margin="0">
                                 <WrapPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding RemotePath}" ToolTip="{Binding Name}" 
-                                               Foreground="#CCC" Width="260"/>
-                                    <TextBlock Text="{Binding Size}" 
+                                    <TextBlock Text="{Binding RemotePath}" ToolTip="{Binding RemotePath}" 
+                                               Foreground="#CCC" Width="260" />
+                                    <TextBlock Text="{Binding Size}" ToolTip="{Binding Size}"
                                                Foreground="#aaa" Width="60" Margin="10 0 0 0"/>
-                                    <TextBlock Text="{Binding Status}" 
-                                               Foreground="#aaa" Width="70" Margin="10 0 0 0"/>
+                                    <TextBlock Text="{Binding Status}" ToolTip="{Binding Status}"
+                                               Foreground="#aaa" Width="60" Margin="0"/>
                                 </WrapPanel>
                             </Grid>
                         </DataTemplate>
