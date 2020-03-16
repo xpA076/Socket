@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using SocketFileManager.SocketLib;
+
 namespace SocketFileManager.Models
 {
     public class FileTask: INotifyPropertyChanged
@@ -14,7 +16,19 @@ namespace SocketFileManager.Models
         public string RemotePath { get; set; }
         public string LocalPath { get; set; }
         public long Length { get; set; } = 0;
-        public int FinishedPackage { get; set; } = 0;
+        private string status = "--";
+
+        /// <summary>
+        /// socket 包计数, 已申请过的最后一个包索引值
+        /// </summary>
+        public int LastPackage { get; set; } = -1;
+        public int TotalPackage
+        {
+            get
+            {
+                return (int)(Length / HB32Encoding.DataSize) + (Length % HB32Encoding.DataSize > 0 ? 1 : 0);
+            }
+        }
         /// <summary>
         /// 向 sever 发送请求后取得 server 提供的 filestrem id
         /// </summary>
@@ -47,7 +61,7 @@ namespace SocketFileManager.Models
             }
         }
 
-        private string status = "--";
+        
         public string Status
         {
             get

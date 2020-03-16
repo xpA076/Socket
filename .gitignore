@@ -1,6 +1,8 @@
 /SocketFileManager/.vs
 /SocketFileManager/SocketFileManager/obj
+/SocketFileManager/SocketFileManager/bin/Debug
 /SocketServerConsole/.vs
 /SocketServerConsole/SocketServerConsole/obj
+/SocketServerConsole/SocketServerConsole/bin/Debug
 /.vscode
 /temp

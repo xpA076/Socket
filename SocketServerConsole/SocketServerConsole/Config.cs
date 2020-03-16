@@ -36,7 +36,7 @@ namespace SocketServerConsole
             get
             {
                 string dir = System.Environment.CurrentDirectory;
-                return System.Environment.CurrentDirectory + "\\SocketFileManager.config";
+                return System.Environment.CurrentDirectory + "\\SocketServerConsole.config";
             }
         }
 

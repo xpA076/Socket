@@ -31,6 +31,9 @@ namespace SocketFileManager.Pages
         {
             this.parent = parent;
             InitializeComponent();
+            // buttons
+            this.ButtonPause.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonPause_Click);
+            this.ButtonStart.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonStart_Click);
             this.ListBoxTask.ItemsSource = transfer.FileTasks;
             this.GridProgress.DataContext = progressView;
         }
@@ -75,6 +78,38 @@ namespace SocketFileManager.Pages
         public int ThreadLimit = 10;
 
         private bool isDownloading = false;
+        private bool stopDownloading = false;
+
+        private void ButtonPause_Click(object sender, MouseButtonEventArgs e)
+        {
+            lock (this.transfer)
+            {
+                transfer.Save();
+            }
+            stopDownloading = true;
+        }
+
+        private void ButtonStart_Click(object sender, MouseButtonEventArgs e)
+        {
+            lock (this.transfer)
+            {
+                transfer = new TransferRecord();
+                transfer.Load(); 
+            }
+            if (this.parent.ServerIP == null)
+            {
+                this.parent.ServerIP = System.Net.IPAddress.Parse(Config.LastConnect);
+            }
+            if (!isDownloading)
+            {
+                // 启动下载
+                Thread th = new Thread(Download);
+                th.IsBackground = true;
+                th.Start();
+            }
+        }
+
+
 
         /// <summary>
         /// browser 页面添加任务响应事件
@@ -110,10 +145,20 @@ namespace SocketFileManager.Pages
                 // 界面更新当前任务
                 if (!transfer.CurrentTask.IsDirectory)
                 {
+                    // Directory 有大小, 若对 directory 任务更新UI会导致任务大小重复计算
+                    transfer.RecordNewTask();
                     UpdateTaskProgress();
                 }
                 // 启动下载
                 DownloadSingleTask(transfer.CurrentTask);
+                if (stopDownloading)
+                {
+                    stopDownloading = false;
+                    isDownloading = false;
+                    return;
+                }
+                // 完成下载
+                transfer.FinishCurrentTask();
             }
             // 界面更新 100%
             allFin = allLen;
@@ -167,7 +212,6 @@ namespace SocketFileManager.Pages
                         }
                     }
                 }));
-
                 return;
             }
             #endregion
@@ -238,12 +282,14 @@ namespace SocketFileManager.Pages
             // 启动下载子线程
             task.ServerId = int.Parse(response);
             localFileStream = new FileStream(task.LocalPath, FileMode.OpenOrCreate, FileAccess.Write);
+            /*
             lock (this.transfer)
             {
                 transfer.LastPackage = -1;
                 transfer.TotalPackage = (int)(task.Length / HB32Encoding.DataSize) +
                     (task.Length % HB32Encoding.DataSize > 0 ? 1 : 0);
             }
+            */
             Thread[] threads = new Thread[ThreadLimit];
             for (int i = 0; i < ThreadLimit; ++i)
             {
@@ -257,6 +303,8 @@ namespace SocketFileManager.Pages
                 // 阻塞至子线程工作完毕
                 threads[i].Join();
             }
+            localFileStream.Close();
+            localFileStream = null;
             // 请求server端关闭并释放文件
             SocketClient sc = GetConnectedSocketClient();
             sc.SendHeader(sc.client,
@@ -267,8 +315,13 @@ namespace SocketFileManager.Pages
                     I2 = -1,
                 });
             sc.Close();
-            localFileStream.Close();
-            localFileStream = null;
+
+            if (stopDownloading)
+            {
+                task.Status = "pause";
+                return;
+            }
+
             task.Status = "success";
             transfer.CurrentTaskIndex++;
             #endregion
@@ -286,6 +339,11 @@ namespace SocketFileManager.Pages
             {
                 while (true)
                 {
+                    if (stopDownloading)
+                    {
+                        client.Close();
+                        return;
+                    }
                     try
                     {
                         client.SendHeader(client.client,
@@ -347,15 +405,15 @@ namespace SocketFileManager.Pages
         {
             lock (this.transfer)
             {
-                if (transfer.LastPackage + 1 == transfer.TotalPackage)
+                if (transfer.CurrentTask.LastPackage + 1 == transfer.CurrentTask.TotalPackage)
                 {
                     return -1;
                 }
                 else
                 {
-                    transfer.LastPackage++;
+                    transfer.CurrentTask.LastPackage++;
                     if (transfer.AllowUpdate()) { UpdateUI(); }
-                    return transfer.LastPackage;
+                    return transfer.CurrentTask.LastPackage;
                 }
             }
         }
