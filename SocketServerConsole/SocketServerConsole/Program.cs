@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -15,6 +16,29 @@ namespace SocketServerConsole
     {
         static void Main(string[] args)
         {
+         
+            /*
+            
+            FileStream fs = new FileStream("4096-0.dat", FileMode.OpenOrCreate, FileAccess.Write);
+            byte[] bytes = new byte[4096];
+
+            for(int i = 0; i < 4 * 256; ++i)
+            {
+                for (int i0 = 0; i0 < 4096; ++i0)
+                {
+                    bytes[i0] = (byte)(i % 256);
+                }
+                fs.Write(bytes, 0, 4096);
+            }
+            fs.Close();
+            */
+
+
+
+
+
+
+
             Config.LoadConfig();
 
             string name = Dns.GetHostName();
@@ -43,6 +67,7 @@ namespace SocketServerConsole
                 th_listen.IsBackground = true;
                 th_listen.Start();
                 Console.ReadLine();
+                
             }
             catch (Exception ex)
             {

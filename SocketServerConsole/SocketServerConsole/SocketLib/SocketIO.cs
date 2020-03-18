@@ -34,7 +34,7 @@ namespace SocketLib
             
             while (rec != _size)
             {
-                _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
+                _rec = socket.Receive(buffer, offset + rec, _size - rec, SocketFlags.None);
                 if (_rec == 0) { zeroReceiveCount++; }
                 rec += _rec;
 
@@ -295,17 +295,6 @@ namespace SocketLib
 
         // TODO 文件byte传输部分还没有写
         #region 文件传输: 下载 上传 删除 (路径创建与删除)
-
-
-        public void FileDownloadResponse(Socket socket, byte[] bytes)
-        {
-            string path = Encoding.UTF8.GetString(bytes);
-            string[] response = new string[2];
-            IPAddress host = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).FirstOrDefault();
-            response[0] = host.ToString();
-            response[1] = Config.ServerDownloadPort.ToString();
-            SendJson(socket, new HB32Header { Flag = SocketDataFlag.DownloadAllowed }, response);
-        }
 
 
         public void FileUploadResponse(Socket socket, HB32Header header, byte[] bytes)

@@ -24,7 +24,7 @@ namespace SocketFileManager.Models
             }
         }
 
-        public long updateLengthThres = 1 * 1024 * 1024; // 刷新界面最小字节数
+        public long updateLengthThres = 128 * 1024; // 刷新界面最小字节数
         public int updateTimeThres = 500; // 刷新界面最短时间间隔
 
         // 这里要用 ObservableCollection 不能用 List
@@ -38,7 +38,7 @@ namespace SocketFileManager.Models
         public long CurrentLength { get; set; } = 0;
         public long CurrentFinished
         {
-            get { return (CurrentTask.LastPackage + 1) * HB32Encoding.DataSize; }
+            get { return (long)(CurrentTask.LastPackage + 1) * HB32Encoding.DataSize; }
         }
 
 
@@ -172,7 +172,8 @@ namespace SocketFileManager.Models
             taskAddup = long.Parse(len.Element("taskAddup").Value);
             CurrentTaskIndex = int.Parse(root.Element("index").Element("current").Value);
             XElement tasks = root.Element("taskCollection");
-            foreach(XElement task in tasks.Elements("task"))
+            //FileTasks = new ObservableCollection<FileTask>();
+            foreach (XElement task in tasks.Elements("task"))
             {
                 FileTask fileTask = new FileTask();
                 fileTask.IsDirectory = bool.Parse(task.Element("isDir").Value);

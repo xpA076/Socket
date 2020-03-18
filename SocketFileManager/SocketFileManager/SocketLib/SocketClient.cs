@@ -56,8 +56,8 @@ namespace SocketFileManager.SocketLib
         {
             IPEndPoint ipe = new IPEndPoint(Hostip, Port);
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.SendTimeout = 3000;
-            client.ReceiveTimeout = 3000;
+            client.SendTimeout = Config.SocketSendTimeOut;
+            client.ReceiveTimeout = Config.SocketReceiveTimeOut;
             client.BeginConnect(ipe, asyncResult => {
                 try
                 {
@@ -78,8 +78,8 @@ namespace SocketFileManager.SocketLib
         {
             IPEndPoint ipe = new IPEndPoint(Hostip, Port);
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.SendTimeout = 3000;
-            client.ReceiveTimeout = 3000;
+            client.SendTimeout = Config.SocketSendTimeOut;
+            client.ReceiveTimeout = Config.SocketReceiveTimeOut;
             client.Connect(ipe);
             //client.Blocking = true;
         }

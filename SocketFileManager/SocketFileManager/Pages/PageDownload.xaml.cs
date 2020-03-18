@@ -104,7 +104,8 @@ namespace SocketFileManager.Pages
             lock (this.transfer)
             {
                 transfer = new TransferRecord();
-                transfer.Load(); 
+                transfer.Load();
+                this.ListBoxTask.ItemsSource = transfer.FileTasks;
             }
             if (this.parent.ServerIP == null)
             {
@@ -372,6 +373,7 @@ namespace SocketFileManager.Pages
                         lock (this.transfer)
                         {
                             transfer.AddFinishedBytes(header.ValidByteLength);
+                            if (transfer.AllowUpdate()) { UpdateUI(); }
                         }
                         break;
                     }
@@ -422,7 +424,7 @@ namespace SocketFileManager.Pages
                 else
                 {
                     transfer.CurrentTask.LastPackage++;
-                    if (transfer.AllowUpdate()) { UpdateUI(); }
+                    
                     return transfer.CurrentTask.LastPackage;
                 }
             }
@@ -437,8 +439,8 @@ namespace SocketFileManager.Pages
             lock (this.transfer)
             {
                 transfer.RecordNewTask();
+                UpdateUI();
             }
-            UpdateUI();
         }
 
 
@@ -455,14 +457,11 @@ namespace SocketFileManager.Pages
             if (getData)
             {
                 double speed;
-                lock (transfer)
-                {
-                    curFin = transfer.CurrentFinished;
-                    curLen = transfer.CurrentLength;
-                    allFin = transfer.TotalFinished;
-                    allLen = transfer.TotalLength;
-                    speed = transfer.GetSpeed();
-                }
+                curFin = transfer.CurrentFinished;
+                curLen = transfer.CurrentLength;
+                allFin = transfer.TotalFinished;
+                allLen = transfer.TotalLength;
+                speed = transfer.GetSpeed();
                 int seconds = (int)((allLen - allFin) / speed);
                 progressView.Speed = num2text(speed).PadLeft(18, ' ') + "/s";
                 progressView.TimeRemaining = (seconds / 3600).ToString().PadLeft(10, ' ') +

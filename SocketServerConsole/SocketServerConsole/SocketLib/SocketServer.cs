@@ -17,7 +17,7 @@ namespace SocketLib
         public Socket server = null;
 
         private IPAddress Hostip;
-        private int Port = 12138;
+        private int Port = Config.ServerPort;
 
         public SocketServer(IPAddress ip)
         {
@@ -76,8 +76,8 @@ namespace SocketLib
         public void ReceiveData(object acceptSocketObject)
         {
             Socket client = (Socket)acceptSocketObject;
-            client.SendTimeout = 3000;
-            client.ReceiveTimeout = 3000;
+            client.SendTimeout = Config.SocketSendTimeOut;
+            client.ReceiveTimeout = Config.SocketReceiveTimeOut;
             int error_count = 0;
             while (flag_receive & error_count < 5)
             {
@@ -168,7 +168,8 @@ namespace SocketLib
                             lock (serverStream)
                             {
                                 serverStream.Seek(begin, SeekOrigin.Begin);
-                                serverStream.Read(readBytes, 0, length);
+                                int readlen = serverStream.Read(readBytes, 0, length);
+                                if (readlen != length) { Display.TimeWriteLine("package " + header.I2.ToString() + " length error"); }
                             }
                             prc.LastTime = DateTime.Now;
                             SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadPackageResponse }, readBytes);

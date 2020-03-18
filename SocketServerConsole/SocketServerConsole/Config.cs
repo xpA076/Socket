@@ -11,25 +11,11 @@ namespace SocketServerConsole
     public static class Config
     {
         public static int ServerPort { get; private set; }
-        public static int ServerDownloadPort { get; private set; }
-        public static string LastConnect
-        {
-            get
-            {
-                try
-                {
-                    XDocument doc = XDocument.Load(configPath);
-                    return doc.Root.Element("connection").Element("lastConnect").Value;
-                }
-                catch (Exception) { return ""; }
-            }
-            set
-            {
-                XDocument doc = XDocument.Load(configPath);
-                doc.Root.Element("connection").SetElementValue("lastConnect", value);
-                doc.Save(configPath);
-            }
-        }
+
+        public static int SocketSendTimeOut { get; set; } = 3000;
+
+        public static int SocketReceiveTimeOut { get; set; } = 3000;
+
 
         private static string configPath
         {
@@ -46,16 +32,15 @@ namespace SocketServerConsole
             {
                 // default config
                 ServerPort = 12138;
-                ServerDownloadPort = 12139;
                 // create xml donfig
                 XDocument doc = new XDocument();
                 XElement root = new XElement("socketFileManagerConfig");
                 XElement server = new XElement("server");
                 server.SetElementValue("serverPort", ServerPort);
-                server.SetElementValue("serverDownloadPort", ServerDownloadPort);
                 root.Add(server);
                 XElement connection = new XElement("connection");
-                connection.SetElementValue("lastConnect", "");
+                connection.SetElementValue("socketSendTimeout", SocketSendTimeOut.ToString());
+                connection.SetElementValue("socketReceiveTimeout", SocketReceiveTimeOut.ToString());
                 root.Add(connection);
                 root.Save(configPath);
             }
@@ -64,7 +49,8 @@ namespace SocketServerConsole
                 XDocument doc = XDocument.Load(configPath);
                 XElement root = doc.Root;
                 ServerPort = int.Parse(root.Element("server").Element("serverPort").Value);
-                ServerDownloadPort = int.Parse(root.Element("server").Element("serverDownloadPort").Value);
+                SocketSendTimeOut = int.Parse(root.Element("connection").Element("socketSendTimeout").Value);
+                SocketReceiveTimeOut = int.Parse(root.Element("connection").Element("socketReceiveTimeout").Value);
             }
         }
     }

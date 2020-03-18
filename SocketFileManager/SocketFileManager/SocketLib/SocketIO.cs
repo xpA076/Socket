@@ -18,14 +18,14 @@ namespace SocketFileManager.SocketLib
         /// </summary>
         /// <param name="socket">socket</param>
         /// <param name="buffer">缓冲区</param>
-        /// <param name="size">receive 字节数, 为零则接收buffer长度字节</param>
+        /// <param name="size">receive 字节数, 为 -1 则接收buffer长度字节</param>
         /// <param name="offset">buffer写入字节偏移</param>
         private void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
         {
             int _size = (size == -1) ? buffer.Length : size;
             int zeroReceiveCount = 0;
-            int rec = 0;
-            int _rec;
+            int rec = 0;    // 函数内累计接收字节数
+            int _rec;       // 单个 Socket.Receive 调用接收字节数
 
             _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
             if (_rec == 0) { zeroReceiveCount++; }
@@ -33,7 +33,7 @@ namespace SocketFileManager.SocketLib
 
             while (rec != _size)
             {
-                _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
+                _rec = socket.Receive(buffer, offset + rec, _size - rec, SocketFlags.None);
                 if (_rec == 0) { zeroReceiveCount++; }
                 rec += _rec;
 

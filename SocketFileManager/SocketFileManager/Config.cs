@@ -17,6 +17,10 @@ namespace SocketFileManager
 
         public static long SmallFileLimit { get; set; } = 4 * 1024 * 1024;
 
+        public static int SocketSendTimeOut { get; set; } = 3000;
+
+        public static int SocketReceiveTimeOut { get; set; } = 3000;
+
         public static string LastConnect {
             get {
                 try
@@ -47,7 +51,7 @@ namespace SocketFileManager
             {
                 // default config
                 ServerPort = 12138;
-                // create xml donfig
+                // create xml config
                 XDocument doc = new XDocument();
                 XElement root = new XElement("socketFileManagerConfig");
                 XElement server = new XElement("server");
@@ -57,6 +61,8 @@ namespace SocketFileManager
                 connection.SetElementValue("lastConnect", "");
                 connection.SetElementValue("threadLimit", ThreadLimit.ToString());
                 connection.SetElementValue("smallFileLimit", SmallFileLimit.ToString());
+                connection.SetElementValue("socketSendTimeout", SocketSendTimeOut.ToString());
+                connection.SetElementValue("socketReceiveTimeout", SocketReceiveTimeOut.ToString());
                 root.Add(connection);
                 root.Save(configPath);
             }
@@ -67,6 +73,8 @@ namespace SocketFileManager
                 ServerPort = int.Parse(root.Element("server").Element("serverPort").Value);
                 ThreadLimit = int.Parse(root.Element("connection").Element("threadLimit").Value);
                 SmallFileLimit = long.Parse(root.Element("connection").Element("smallFileLimit").Value);
+                SocketSendTimeOut = int.Parse(root.Element("connection").Element("socketSendTimeout").Value);
+                SocketReceiveTimeOut = int.Parse(root.Element("connection").Element("socketReceiveTimeout").Value);
             }
         }
     }
