@@ -76,7 +76,8 @@ namespace SocketFileManager.Pages
         private FileStream localFileStream = null;
         #endregion
 
-        private bool isDownloading = false;
+        public bool IsDownloading { get; private set; } = false;
+
         private bool stopDownloading = false;
 
         private void GridCurrentProgress_Click(object sender, MouseButtonEventArgs e)
@@ -90,7 +91,7 @@ namespace SocketFileManager.Pages
             UpdateUI(false);
         }
 
-        private void ButtonPause_Click(object sender, MouseButtonEventArgs e)
+        public void ButtonPause_Click(object sender, MouseButtonEventArgs e)
         {
             lock (this.transfer)
             {
@@ -111,7 +112,7 @@ namespace SocketFileManager.Pages
             {
                 this.parent.ServerIP = System.Net.IPAddress.Parse(Config.LastConnect);
             }
-            if (!isDownloading)
+            if (!IsDownloading)
             {
                 // 启动下载
                 Thread th = new Thread(Download);
@@ -133,7 +134,7 @@ namespace SocketFileManager.Pages
                 transfer.AddTask(downloadTask);
                 transfer.TotalLength += downloadTask.Length;
             }
-            if (!isDownloading)
+            if (!IsDownloading)
             {
                 // 启动下载
                 Thread th = new Thread(Download);
@@ -147,7 +148,7 @@ namespace SocketFileManager.Pages
         /// </summary>
         private void Download()
         {
-            isDownloading = true;
+            IsDownloading = true;
             // 界面更新 0%
             //UpdateProgerss(0);
             // 直到 currentTaskIndex 指向最后，代表所有任务完成
@@ -165,7 +166,7 @@ namespace SocketFileManager.Pages
                 if (stopDownloading)
                 {
                     stopDownloading = false;
-                    isDownloading = false;
+                    IsDownloading = false;
                     return;
                 }
                 // 完成下载
@@ -176,7 +177,7 @@ namespace SocketFileManager.Pages
             curFin = curLen;
             UpdateUI(false);
             transfer.Clear();
-            isDownloading = false;
+            IsDownloading = false;
         }
 
         /// <summary>

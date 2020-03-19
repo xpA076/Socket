@@ -40,28 +40,36 @@ namespace SocketFileManager.Pages
             this.ButtonRefresh.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonRefresh_Click);
         }
 
-        private void ButtonRefresh_Click(object sender, MouseButtonEventArgs e)
+        public async void ButtonRefresh_Click(object sender, MouseButtonEventArgs e)
         {
-            ListFiles();
+            this.ButtonRefresh.Visibility = Visibility.Hidden;
+            bool result = await ListFilesAsync();
+            this.ButtonRefresh.Visibility = Visibility.Visible;
         }
 
 
-        private void ButtonBack_Click(object sender, MouseButtonEventArgs e)
+        private async void ButtonBack_Click(object sender, MouseButtonEventArgs e)
         {
             if (remoteDirs.Count > 0)
             {
+                this.ButtonBack.Content = "Back ...";
                 string temp = remoteDirs.Last();
                 remoteDirs.RemoveAt(remoteDirs.Count - 1);
-                if (!ListFiles()){ remoteDirs.Add(temp); }
+                bool result = await ListFilesAsync();
+                this.ButtonBack.Content = "Back";
+                if (!result){ remoteDirs.Add(temp); }
             }
         }
 
-        private void ButtonOpen_Click(object sender, MouseButtonEventArgs e)
+        private async void ButtonOpen_Click(object sender, MouseButtonEventArgs e)
         {
             if (fileClasses[this.ListBoxFile.SelectedIndex].IsDirectory)
             {
+                this.ButtonOpen.Content = "Open ...";
                 remoteDirs.Add(fileClasses[this.ListBoxFile.SelectedIndex].Name);
-                if (!ListFiles()) { remoteDirs.RemoveAt(remoteDirs.Count - 1); }
+                bool result = await ListFilesAsync();
+                this.ButtonOpen.Content = "Open";
+                if (!result) { remoteDirs.RemoveAt(remoteDirs.Count - 1); }
             }
         }
 
@@ -88,6 +96,7 @@ namespace SocketFileManager.Pages
                     LocalPath = localPath + "\\" + name,
                     Length = fileClasses[this.ListBoxFile.SelectedIndex].Length,
                 });
+                this.parent.RedirectPage("Download");
             }
         }
 
@@ -112,22 +121,26 @@ namespace SocketFileManager.Pages
         /// 获取 server 文件列表
         /// </summary>
         /// <returns>请求是否成功 bool 值</returns>
-        public bool ListFiles()
+        private Task<bool> ListFilesAsync()
         {
-            try
-            {
-                fileClasses = this.parent.RequestDirectory(RemoteDirectory);
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show("Requesting remote directory [" +
-                    RemoteDirectory + "] failure : " + ex.Message);
-                return false;
-            }
-            this.ListBoxFile.ItemsSource = fileClasses;
-            this.TextRemoteDirectory.Text = RemoteDirectory +
-                (string.IsNullOrEmpty(RemoteDirectory) ? "" : "\\");
-            return true;
+            return Task.Run(()=> {
+                try
+                {
+                    fileClasses = this.parent.RequestDirectory(RemoteDirectory);
+                    this.Dispatcher.Invoke(() => {
+                        this.ListBoxFile.ItemsSource = fileClasses;
+                        this.TextRemoteDirectory.Text = RemoteDirectory +
+                            (string.IsNullOrEmpty(RemoteDirectory) ? "" : "\\");
+                    });
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.Forms.MessageBox.Show("Requesting remote directory [" +
+                        RemoteDirectory + "] failure : " + ex.Message);
+                    return false;
+                }
+            });
         }
 
     }

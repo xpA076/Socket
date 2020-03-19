@@ -71,7 +71,24 @@ namespace SocketFileManager
 
         private void WindowClose_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            this.Close();
+            if (((PageDownload)this.pages["Download"]).IsDownloading)
+            {
+                /*
+                ((PageDownload)this.pages["Download"]).ButtonPause_Click(null, null);
+                for(int i = 0; i < 10; ++i)
+                {
+                    System.Threading.Thread.Sleep(100);
+                    if (!((PageDownload)this.pages["Download"]).IsDownloading)
+                    {
+                        break;
+                    }
+                }*/
+                System.Windows.Forms.MessageBox.Show("please stop downloading first");
+            }
+            else
+            {
+                this.Close();
+            }
         }
 
         public void SetTitle(string title)
@@ -136,7 +153,7 @@ namespace SocketFileManager
 
         public void ListFiles()
         {
-            ((PageBrowser)this.pages["Browser"]).ListFiles();
+            ((PageBrowser)this.pages["Browser"]).ButtonRefresh_Click(null, null);
         }
         /// <summary>
         /// 向 server 请求文件列表
