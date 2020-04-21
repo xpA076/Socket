@@ -30,8 +30,6 @@ namespace SocketFileManager.Pages
             InitializeComponent();
             this.ButtonConnect.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonConnect_MouseLeftDown);
             this.TextIP.Text = Config.LastConnect;
-
-            
         }
 
 
@@ -62,7 +60,7 @@ namespace SocketFileManager.Pages
                         this.parent.ServerIP = System.Net.IPAddress.Parse(this.TextIP.Text);
                         this.parent.ServerPort = Config.ServerPort;
                         this.ButtonConnect.Content = "Connect";
-                        this.parent.SetTitle("Connected IP : " + this.TextIP.Text);
+                        this.parent.Title.Text = "Connected IP : " + this.TextIP.Text;
                         this.parent.RedirectPage("Browser");
                         System.Threading.Thread.Sleep(100);
                         this.parent.ListFiles();

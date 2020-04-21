@@ -27,7 +27,7 @@ namespace SocketFileManager.Models
         public long updateLengthThres = 128 * 1024; // 刷新界面最小字节数
         public int updateTimeThres = 500; // 刷新界面最短时间间隔
 
-        // 这里要用 ObservableCollection 不能用 List
+        // 这里要用 ObservableCollection 不 能用 List
         // 实现引用不变内容改变下的实时显示
         public ObservableCollection<FileTask> FileTasks = new ObservableCollection<FileTask>();
         public int CurrentTaskIndex = 0; // CurrentTaskIndex 一直指向当前未完成的第一个任务

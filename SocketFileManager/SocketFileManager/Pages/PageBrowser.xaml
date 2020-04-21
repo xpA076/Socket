@@ -5,14 +5,14 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SocketFileManager.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="400" d:DesignWidth="450"
+      d:DesignHeight="460" d:DesignWidth="550"
       Title="PageBrowser">
     <Page.Resources>
         <Style x:Key="PageButton" TargetType="Button">
-            <Setter Property="Margin" Value="10" />
-            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="20 10 20 10" />
+            <Setter Property="Height" Value="35" />
             <Setter Property="Width" Value="120" />
-            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="Foreground" Value="#f1f1f1" />
             <Setter Property="Background" Value="#2d2d2d" />
             <Setter Property="FontFamily" Value="Segoe UI" />
@@ -38,12 +38,12 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition />
-            <RowDefinition Height="70" />
+            <RowDefinition Height="120" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="400">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="500">
                         <TextBlock Text="Remote directory:" FontSize="14" Foreground="#eee" 
                                    Margin="30 20 50 0" HorizontalAlignment="Left"/>
                         <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#ccc"
@@ -54,7 +54,7 @@
                         Width="30" Height="30" Margin="0 30 0 0"
                         Style="{StaticResource PageButton}"/>
                 </StackPanel>
-                <ListBox x:Name="ListBoxFile" Height="200" Margin="30 10 30 0" Background="#222">
+                <ListBox x:Name="ListBoxFile" Height="250" Margin="30 10 30 0" Background="#222">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid Height="Auto" Margin="0">

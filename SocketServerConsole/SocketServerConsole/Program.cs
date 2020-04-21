@@ -74,6 +74,7 @@ namespace SocketServerConsole
                 s.Close();
                 Display.WriteLine("Server window start listening error: " + ex.Message);
             }
+            Console.ReadLine();
         }
     }
 }

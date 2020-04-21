@@ -13,7 +13,7 @@ namespace SocketFileManager
     {
         public static int ServerPort { get; private set; }
 
-        public static int ThreadLimit { get; set; } = 10;
+        public static int ThreadLimit { get; set; } = 64;
 
         public static long SmallFileLimit { get; set; } = 4 * 1024 * 1024;
 

@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:SocketFileManager.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="400" d:DesignWidth="450"
+      d:DesignHeight="460" d:DesignWidth="550"
       Title="PageConnect">
     <Page.Resources>
         <Style x:Key="PageButton" TargetType="Button">
@@ -41,8 +41,9 @@
             <Button x:Name="ButtonConnect" Content="Connect" Margin="30" Height="36"
                     FontFamily="Segoe UI" FontSize="20" Width="150" 
                     Cursor="Hand" Style="{StaticResource PageButton}">
-
             </Button>
+
+            <TextBlock Text="By xpA076" Foreground="#999" Margin="0 70 0 0" TextAlignment="Right"/>
         </StackPanel>
     </Grid>
 </Page>

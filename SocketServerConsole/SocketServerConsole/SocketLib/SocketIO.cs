@@ -223,6 +223,7 @@ namespace SocketLib
             List<SokcetFileClass> list = new List<SokcetFileClass>();
             if (string.IsNullOrEmpty(path))
             {
+                /*
                 List<string> disks = new List<string>()
                 {
                     @"C:",
@@ -232,12 +233,15 @@ namespace SocketLib
                     @"G:",
                     @"H:",
                     @"I:",
+                    
+                    //@"E:\Study\THz\comsol\reference\server\comsol"
                 };
-                foreach (string disk in disks)
+                */
+                foreach (string _path in Config.AllowDirectoryList)
                 {
-                    if (Directory.Exists(disk))
+                    if (Directory.Exists(_path))
                     {
-                        list.Add(new SokcetFileClass { Name = disk, IsDirectory = true });
+                        list.Add(new SokcetFileClass { Name = _path, IsDirectory = true });
                     }
                 }
                 return list.ToArray();

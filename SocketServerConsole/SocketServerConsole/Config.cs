@@ -16,19 +16,42 @@ namespace SocketServerConsole
 
         public static int SocketReceiveTimeOut { get; set; } = 3000;
 
+        public static List<string> AllowDirectoryList { get; set; } = new List<string>()
+        {
+            @"D:",
+            @"E:",
+            @"F:",
+            @"G:",
+            @"H:",
+            @"I:",
+        };
+
 
         private static string configPath
         {
             get
             {
-                string dir = System.Environment.CurrentDirectory;
+                //string dir = System.Environment.CurrentDirectory;
                 return System.Environment.CurrentDirectory + "\\SocketServerConsole.config";
             }
         }
 
         public static void LoadConfig()
         {
-            if (!File.Exists(configPath))
+            if (File.Exists(configPath))
+            {
+                XDocument doc = XDocument.Load(configPath);
+                XElement root = doc.Root;
+                ServerPort = int.Parse(root.Element("server").Element("serverPort").Value);
+                SocketSendTimeOut = int.Parse(root.Element("connection").Element("socketSendTimeout").Value);
+                SocketReceiveTimeOut = int.Parse(root.Element("connection").Element("socketReceiveTimeout").Value);
+                AllowDirectoryList.Clear();
+                foreach (XElement allowInfo in root.Element("allowList").Elements("directory"))
+                {
+                    AllowDirectoryList.Add(allowInfo.Element("content").Value);
+                }
+            }
+            else
             {
                 // default config
                 ServerPort = 12138;
@@ -42,15 +65,15 @@ namespace SocketServerConsole
                 connection.SetElementValue("socketSendTimeout", SocketSendTimeOut.ToString());
                 connection.SetElementValue("socketReceiveTimeout", SocketReceiveTimeOut.ToString());
                 root.Add(connection);
+                XElement allowList = new XElement("allowList");
+                foreach(string path in AllowDirectoryList)
+                {
+                    XElement dir = new XElement("directory");
+                    dir.SetElementValue("content", path);
+                    allowList.Add(dir);
+                }
+                root.Add(allowList);
                 root.Save(configPath);
-            }
-            else
-            {
-                XDocument doc = XDocument.Load(configPath);
-                XElement root = doc.Root;
-                ServerPort = int.Parse(root.Element("server").Element("serverPort").Value);
-                SocketSendTimeOut = int.Parse(root.Element("connection").Element("socketSendTimeout").Value);
-                SocketReceiveTimeOut = int.Parse(root.Element("connection").Element("socketReceiveTimeout").Value);
             }
         }
     }
