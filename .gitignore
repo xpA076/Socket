@@ -10,4 +10,5 @@
 /StatusReporter/obj
 /StatusReporter/bin
 /.vscode
+*.log
 /temp
