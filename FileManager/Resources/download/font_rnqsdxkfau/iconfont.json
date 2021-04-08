@@ -1,0 +1,79 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "588333",
+      "name": "刷新",
+      "font_class": "shuaxin",
+      "unicode": "e6c7",
+      "unicode_decimal": 59079
+    },
+    {
+      "icon_id": "879105",
+      "name": "星星",
+      "font_class": "icon",
+      "unicode": "e670",
+      "unicode_decimal": 58992
+    },
+    {
+      "icon_id": "941656",
+      "name": "最小化",
+      "font_class": "zuixiaohua",
+      "unicode": "e629",
+      "unicode_decimal": 58921
+    },
+    {
+      "icon_id": "5831280",
+      "name": "上传",
+      "font_class": "shangchuan",
+      "unicode": "e646",
+      "unicode_decimal": 58950
+    },
+    {
+      "icon_id": "6204091",
+      "name": "关  闭",
+      "font_class": "guanbi",
+      "unicode": "e608",
+      "unicode_decimal": 58888
+    },
+    {
+      "icon_id": "8842904",
+      "name": "星星",
+      "font_class": "xingxing",
+      "unicode": "e637",
+      "unicode_decimal": 58935
+    },
+    {
+      "icon_id": "13515730",
+      "name": "下载",
+      "font_class": "xiazai",
+      "unicode": "e62d",
+      "unicode_decimal": 58925
+    },
+    {
+      "icon_id": "14666074",
+      "name": "文件",
+      "font_class": "wenjian",
+      "unicode": "e72c",
+      "unicode_decimal": 59180
+    },
+    {
+      "icon_id": "18379488",
+      "name": "设 置",
+      "font_class": "shezhi",
+      "unicode": "e696",
+      "unicode_decimal": 59030
+    },
+    {
+      "icon_id": "19701888",
+      "name": "文件夹",
+      "font_class": "folder-open-fill",
+      "unicode": "eba4",
+      "unicode_decimal": 60324
+    }
+  ]
+}

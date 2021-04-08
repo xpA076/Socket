@@ -1,0 +1,206 @@
+﻿<Page x:Class="FileManager.Pages.PageSettings"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:FileManager.Pages"
+      xmlns:local_converter="clr-namespace:FileManager.Converters"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="PageSettings"
+      Loaded="PageSettings_Loaded">
+    <Page.Resources>
+        <Style x:Key="TextPrefix" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#ccc"/>
+            <Setter Property="Margin" Value="10 10 10 10" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+        <Style x:Key="TextSuffix" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#ccc"/>
+            <Setter Property="Margin" Value="10 10 10 10" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+        <Style x:Key="TextBoxConfig" TargetType="TextBox">
+            <Setter Property="Foreground" Value="#ccc"/>
+            <Setter Property="Background" Value="#444"/>
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Margin" Value="10 10 10 10" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Width" Value="100" />
+        </Style>
+        <Style x:Key="SetButton" TargetType="Button">
+            <Setter Property="Width" Value="60" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Content" Value="Set" />
+            <Setter Property="Visibility" Value="Hidden" />
+            <Setter Property="Foreground" Value="#f1f1f1" />
+            <Setter Property="Background" Value="#2d2d2d" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="0" BorderBrush="Black" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3e3e3e" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ConfigLine" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Margin" Value="20 0 20 0" />
+            <Setter Property="Height" Value="50" />
+        </Style>
+        <Style x:Key="SplitLine" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#ccc"/>
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style x:Key="RadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#ccc"/>
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+
+        <local_converter:BoolToVisibilityConverter InverseVisible="False" x:Key="b2v_conv_vis"></local_converter:BoolToVisibilityConverter>
+        <local_converter:BoolToVisibilityConverter InverseVisible="True" x:Key="b2v_conv_invis"></local_converter:BoolToVisibilityConverter>
+
+    </Page.Resources>
+    <Grid>
+        <ScrollViewer Grid.Column="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical" Margin="30">
+                <TextBox x:Name="NullTextBox" Width="0" Height="0" />
+                <TextBlock Text="-- UI --" Style="{StaticResource SplitLine}"/>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Click close button action : " Style="{StaticResource TextPrefix}" />
+                    <RadioButton x:Name="ClickCloseButtonActionMinimize" IsChecked="{Binding Path=ClickCloseToMinimize, Mode=OneWay}" Content="Minimize to tray icon" 
+                                 GroupName="ClickCloseButtonAction" Style="{StaticResource RadioButtonStyle}" Checked="ClickCloseButtonAction_Checked"/>
+                    <RadioButton x:Name="ClickCloseButtonActionClose" IsChecked="{Binding Path=ClickCloseToClose, Mode=OneWay}" Content="Close window" 
+                                 GroupName="ClickCloseButtonAction" Style="{StaticResource RadioButtonStyle}" Checked="ClickCloseButtonAction_Checked"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Update UI minimum bytes : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxUpdateLengthThreshold" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=UpdateLengthThreshold, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="Bytes" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonUpdateLengthThreshold" Style="{StaticResource SetButton}"
+                            Click="ButtonUpdateLengthThreshold_Click"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Update UI minimum interval : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxUpdateTimeThreshold" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=UpdateTimeThreshold, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="ms" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonUpdateTimeThreshold" Style="{StaticResource SetButton}"
+                            Click="ButtonUpdateTimeThreshold_Click"/>
+                </StackPanel>
+
+                <TextBlock Text="-- Connection --" Style="{StaticResource SplitLine}"/>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Default port number : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxDefaultPort" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=DefaultPort, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <Button x:Name="ButtonDefaultPort" Style="{StaticResource SetButton}"
+                            Click="ButtonDefaultPort_Click"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="SocketSendTimeout : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxSocketSendTimeout" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=SocketSendTimeout, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="ms" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonSocketSendTimeout" Style="{StaticResource SetButton}"
+                            Click="ButtonSocketSendTimeout_Click"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="SocketReceiveTimeout : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxSocketReceiveTimeout" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=SocketReceiveTimeout, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="ms" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonSocketReceiveTimeout" Style="{StaticResource SetButton}"
+                            Click="ButtonSocketReceiveTimeout_Click"/>
+                </StackPanel>
+
+                <TextBlock Text="-- Transfer --" Style="{StaticResource SplitLine}"/>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Small-file threshold : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxSmallFileThreshold" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=SmallFileThreshold, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="Bytes" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonSmallFileThreshold" Style="{StaticResource SetButton}"
+                            Click="ButtonSmallFileThreshold_Click"/>
+                </StackPanel>
+                <TextBlock Text="        ( file length under this threshold will transfer at single thread mode )" Style="{StaticResource SplitLine}"/>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Multi thread limit : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxThreadLimit" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=ThreadLimit, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="thread(s)" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonThreadLimit" Style="{StaticResource SetButton}"
+                            Click="ButtonThreadLimit_Click"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Save transfer record interval : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxSaveRecordInterval" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=SaveRecordInterval, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="ms" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonSaveRecordInterval" Style="{StaticResource SetButton}"
+                            Click="ButtonSaveRecordInterval_Click"/>
+                </StackPanel>
+
+                <TextBlock Text="-- Heartbeat --" Style="{StaticResource SplitLine}"/>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Connection monitor record count : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxConnectionMonitorRecordCount" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=ConnectionMonitorRecordCount, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="packet(s)" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonConnectionMonitorRecordCount" Style="{StaticResource SetButton}"
+                            Click="ButtonConnectionMonitorRecordCount_Click"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <TextBlock Text="Connection monitor record interval : " Style="{StaticResource TextPrefix}" />
+                    <TextBox x:Name="TextBoxConnectionMonitorRecordInterval" Style="{StaticResource TextBoxConfig}" 
+                             Text="{Binding Path=ConnectionMonitorRecordInterval, Mode=OneWay}" 
+                             TextChanged="TextBox_TextChanged" 
+                             KeyDown="TextBox_KeyDown"/>
+                    <TextBlock Text="ms" Style="{StaticResource TextSuffix}" />
+                    <Button x:Name="ButtonConnectionMonitorRecordInterval" Style="{StaticResource SetButton}"
+                            Click="ButtonConnectionMonitorRecordInterval_Click"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
