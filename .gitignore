@@ -1,4 +1,8 @@
 /.vs
+/.vscode
+/.idea
+/.pycache
+/Socket_build
 /FileManager/obj
 /FileManager/bin
 /ServerConsoleApp/obj
@@ -9,6 +13,6 @@
 /SocketLib/bin
 /StatusReporter/obj
 /StatusReporter/bin
-/.vscode
+
 *.log
 /temp
