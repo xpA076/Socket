@@ -28,29 +28,13 @@ namespace FileManager.Models
         public string Info { get; set; }
 
 
-        /*
-        public string Fav 
-        {
-            get
-            {
-                return _star;
-            }
-            set
-            {
-                _star = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Fav"));
-            }
-        }
-        */
         public void Star()
         {
-            //Fav = "F";
             IsStarred = true;
         }
 
         public void Unstar()
         {
-            //Fav = "&#xe608;";
             IsStarred = false;
         }
 
@@ -60,7 +44,6 @@ namespace FileManager.Models
             {
                 Info = this.Info,
                 IsStarred = this.IsStarred
-                //Fav = this.Fav
             };
         }
 

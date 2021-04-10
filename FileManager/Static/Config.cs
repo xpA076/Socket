@@ -70,7 +70,7 @@ namespace FileManager.Static
 
         private static string _log_path = "";
 
-        public static string LogDir
+        public static string ConfigDir
         {
             get
             {
@@ -78,12 +78,20 @@ namespace FileManager.Static
             }
         }
 
-        private static string ConfigPath
+        public static string LogDir
+        {
+            get
+            {
+                return ConfigDir;
+            }
+        }
+
+        public static string ConfigPath
         {
             get
             {
                 // return Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName) + "\\SocketFileManager.config";
-                return Environment.GetEnvironmentVariable("APPDATA") + "\\FileManager\\FileManager.config";
+                return ConfigDir + "FileManager.config";
             }
         }
 

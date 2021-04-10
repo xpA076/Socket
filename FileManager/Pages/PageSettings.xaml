@@ -6,7 +6,7 @@
       xmlns:local="clr-namespace:FileManager.Pages"
       xmlns:local_converter="clr-namespace:FileManager.Converters"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="1000" d:DesignWidth="800"
       Title="PageSettings"
       Loaded="PageSettings_Loaded">
     <Page.Resources>
@@ -38,7 +38,7 @@
             <Setter Property="Height" Value="30" />
             <Setter Property="FontSize" Value="15" />
             <Setter Property="Content" Value="Set" />
-            <Setter Property="Visibility" Value="Hidden" />
+            <!--<Setter Property="Visibility" Value="Hidden" />-->
             <Setter Property="Foreground" Value="#f1f1f1" />
             <Setter Property="Background" Value="#2d2d2d" />
             <Setter Property="Cursor" Value="Hand" />
@@ -199,6 +199,11 @@
                     <TextBlock Text="ms" Style="{StaticResource TextSuffix}" />
                     <Button x:Name="ButtonConnectionMonitorRecordInterval" Style="{StaticResource SetButton}"
                             Click="ButtonConnectionMonitorRecordInterval_Click"/>
+                </StackPanel>
+                <StackPanel Style="{StaticResource ConfigLine}">
+                    <Button x:Name="ButtonOpenConfigPath" Style="{StaticResource SetButton}"
+                            Content="Open config path" Width="200"
+                            Click="ButtonOpenConfigPath_Click"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

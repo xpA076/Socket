@@ -301,6 +301,22 @@ namespace FileManager.Pages
             }
             RefreshLine("ConnectionMonitorRecordInterval");
         }
+
+        private void ButtonOpenConfigPath_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardInput = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = true;
+            p.Start();
+            p.StandardInput.WriteLine("C:\\Windows\\explorer.exe " + Config.ConfigDir + "&exit");
+            p.StandardInput.AutoFlush = true;
+            p.WaitForExit();
+            p.Close();
+        }
     }
 }
  
