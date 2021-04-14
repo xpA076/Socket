@@ -22,6 +22,8 @@ namespace FileManager.Windows
     {
         private FolderBrowserDialog folderDialog = new FolderBrowserDialog();
 
+        private static string DefaultPath = "";
+
         public string SelectedPath { get; set; }
 
         public DownloadConfirmWindow()
@@ -41,10 +43,12 @@ namespace FileManager.Windows
 
         private void ButtonDownload_Click(object sender, RoutedEventArgs e)
         {
-            if(folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            folderDialog.SelectedPath = DefaultPath;
+            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 SelectedPath = folderDialog.SelectedPath;
                 this.DialogResult = true;
+                DefaultPath = SelectedPath;
             }
             else
             {

@@ -131,20 +131,25 @@ namespace FileManager.Pages
         {
             if (this.ListViewFile.SelectedIndex < 0) { return; }
             List<FileTask> fileTasks = new List<FileTask>();
-            var selected = fileClasses[this.ListViewFile.SelectedIndex];
-            FileTask task = new FileTask
+            //var a = this.ListViewFile.SelectedItems;
+            //var selected = fileClasses[this.ListViewFile.SelectedIndex];
+            foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
             {
-                TcpAddress = SocketFactory.TcpAddress.Copy(),
-                IsDirectory = selected.IsDirectory,
-                Type = FileTaskType.Download,
-                RemotePath = RemoteDirectory + selected.Name,
-                Length = selected.Length,
-            };
-            if (task.IsDirectory)
-            {
-                task.Length = FileTaskManager.GetDirectoryTaskLength(task);
+                FileTask task = new FileTask
+                {
+                    TcpAddress = SocketFactory.TcpAddress.Copy(),
+                    IsDirectory = selected.IsDirectory,
+                    Type = FileTaskType.Download,
+                    RemotePath = RemoteDirectory + selected.Name,
+                    Length = selected.Length,
+                };
+                if (task.IsDirectory)
+                {
+                    task.Length = FileTaskManager.GetDirectoryTaskLength(task);
+                }
+                fileTasks.Add(task);
             }
-            fileTasks.Add(task);
+
             DownloadConfirm(fileTasks);
         }
 

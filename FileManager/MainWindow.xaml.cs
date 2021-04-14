@@ -218,7 +218,8 @@ namespace FileManager
             }
             else
             {
-                this.notifyIcon.Visible = false;
+                //this.notifyIcon.Visible = false;
+                this.notifyIcon.Dispose();
                 this.Close();
             }
         }
