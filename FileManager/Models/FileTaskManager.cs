@@ -16,7 +16,6 @@ namespace FileManager.Models
     /// <summary>
     /// 文件传输管理类 
     /// 负责 执行, 监控, 管理文件传输任务
-    /// 所有 public 方法保证传输任务参数的线程安全
     /// </summary>
     public class FileTaskManager
     {
@@ -34,6 +33,11 @@ namespace FileManager.Models
         public long CurrentLength { get { return Record.CurrentLength; } }
         public long TotalFinished { get { return Record.TotalFinished; } }
         public long TotalLength { get { return Record.TotalLength; } }
+
+        /// <summary>
+        /// PageTransfer 中 ListView 内容对应此 FileTasks 列表, 直接引用 FileTaskRecord 中的 FileTasks
+        /// 对于 FileTasks 的所有 CRUD 操作都必须经过 FileTaskRecord 中暴露的接口而不应直接操作列表以保证线程安全
+        /// </summary>
         public ObservableCollection<FileTask> FileTasks { get { return Record.FileTasks; } }
 
         private readonly object PacketLock = new object();
@@ -183,6 +187,10 @@ namespace FileManager.Models
             while (!Record.IsFinished())
             {
                 // 界面更新当前任务
+
+                // *** to do *** 这里有 bug
+                // 对于后添加的 dir 任务, 其CurrentLength不能正确计算为零
+                // 21.04.17 10:05
                 if (!Record.CurrentTask.IsDirectory)
                 {
                     lock (this.Record)
@@ -221,7 +229,7 @@ namespace FileManager.Models
         /// </summary>
         private void TransferSingleTask(FileTask task)
         {
-            Logger.Log(string.Format("<FileTaskManager> call TransferSingleTask, \n{0, 20}{1}", "", task.ToString()), LogLevel.Debug);
+            Logger.Log(string.Format("<FileTaskManager> call TransferSingleTask, {0, 20}{1}", "", task.ToString()), LogLevel.Debug);
 
             if (task.IsDirectory)
             {

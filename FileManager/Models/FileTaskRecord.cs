@@ -16,6 +16,8 @@ namespace FileManager.Models
     /// 记录文件任务相关参数
     /// 包括 FileTask 内容, 传输字节计数 等
     /// 可保存为 xml 或从 xml 中恢复
+    /// ** 
+    /// 提供 FileTasks 操作接口以保证线程安全
     /// </summary>
     public class FileTaskRecord
     {
@@ -30,14 +32,33 @@ namespace FileManager.Models
             }
         }
 
-
-        // 这里要用 ObservableCollection 不 能用 List
-        // 实现引用不变内容改变下的实时显示
+        //  *** todo 写接口保证线程安全 21.04.17
+        /// <summary>
+        /// 传输过程中的所有任务列表
+        /// 因为会被 UI 上的 ListView 引用所以写为 public
+        /// 但是对此列表的所有 CRUD 操作必须经过此类中的接口以保证线程安全
+        /// </summary>
         public ObservableCollection<FileTask> FileTasks = new ObservableCollection<FileTask>();
-        public int CurrentTaskIndex = 0; // CurrentTaskIndex 一直指向当前未完成的第一个任务
 
-        private long PrevBytesAddup { get; set; } = 0; // 当前任务以前任务总byte数
+        /// <summary>
+        /// CurrentTaskIndex 一直指向当前未完成的第一个任务
+        /// </summary>
+        public int CurrentTaskIndex = 0;
+
+        /// <summary>
+        /// 当前任务以前任务累积总byte数
+        /// </summary>
+        private long PrevBytesAddup { get; set; } = 0;
+
+        /// <summary>
+        /// 所有 task 总字节数
+        /// </summary>
         public long TotalLength { get; set; } = 0;
+
+        /// <summary>
+        /// 总传输完成字节数 (以前累积 + 本次传输完成部分)
+        /// get = PrevBytesAddup + CurrentFinished
+        /// </summary>
         public long TotalFinished 
         {
             get 
@@ -95,9 +116,10 @@ namespace FileManager.Models
         /// </summary>
         public void FinishCurrentTask()
         {
-            PrevBytesAddup += CurrentLength; // 将当前完成任务 byte 数加入 taskAddup
+            
             Logger.Log(string.Format("<FileTaskRecord> call FinishCurrentTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);
+            PrevBytesAddup += CurrentLength; // 将当前完成任务 byte 数加入 taskAddup
 
         }
 
