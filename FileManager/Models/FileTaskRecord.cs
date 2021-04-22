@@ -103,9 +103,11 @@ namespace FileManager.Models
         /// </summary>
         public void StartNewTask()
         {
-            
-            CurrentLength = CurrentTask.Length; // 更新 CurrentLength
-            CurrentFinished = CurrentTask.FinishedPacket * HB32Encoding.DataSize;
+            lock (this.FileTasks)
+            {
+                CurrentLength = CurrentTask.Length; // 更新 CurrentLength
+                CurrentFinished = CurrentTask.FinishedPacket * HB32Encoding.DataSize;
+            }
             Logger.Log(string.Format("<FileTaskRecord> call StartNewTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);
         }
@@ -114,35 +116,69 @@ namespace FileManager.Models
         /// <summary>
         /// 完成任务时调用
         /// </summary>
-        public void FinishCurrentTask()
+        public void FinishCurrentTask(bool is_dir)
         {
-            
+            // 将当前完成任务 byte 数加入 taskAddup
+            lock (this.FileTasks)
+            {
+                if (!is_dir) { PrevBytesAddup += CurrentLength; }
+            }
             Logger.Log(string.Format("<FileTaskRecord> call FinishCurrentTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);
-            PrevBytesAddup += CurrentLength; // 将当前完成任务 byte 数加入 taskAddup
-
         }
 
-
-        public void AddTask(FileTask task)
-        {
-            if (_need_clear)
-            {
-                FileTasks.Clear();
-                CurrentTaskIndex = 0;
-                PrevBytesAddup = 0;
-                TotalLength = 0;
-                CurrentLength = 0;
-                CurrentFinished = 0;
-                _need_clear = false;
-            }
-            FileTasks.Add(task);
-        }
 
         public void Clear()
         {
             _need_clear = true;
         }
+
+
+        #region FileTasks 列表操作
+        public void AddTask(FileTask task)
+        {
+            lock(this.FileTasks)
+            {
+                if (_need_clear)
+                {
+                    FileTasks.Clear();
+                    CurrentTaskIndex = 0;
+                    PrevBytesAddup = 0;
+                    TotalLength = 0;
+                    CurrentLength = 0;
+                    CurrentFinished = 0;
+                    _need_clear = false;
+                }
+                FileTasks.Add(task);
+                TotalLength += task.Length;
+                Logger.Log("<FiletaskRecord> call AddTask : " + task.ToString(), LogLevel.Debug);
+            }
+        }
+
+
+        public void RemoveTaskAt(int index)
+        {
+            lock (this.FileTasks)
+            {
+                FileTask task = this.FileTasks[index];
+                this.FileTasks.RemoveAt(index);
+                TotalLength -= task.Length;
+                Logger.Log(string.Format("<FiletaskRecord> call RemoveTaskAt : " + index.ToString()), LogLevel.Debug);
+            }
+        }
+
+
+        public void InsertTask(int index, FileTask task)
+        {
+            lock (this.FileTasks)
+            {
+                this.FileTasks.Insert(index, task);
+                TotalLength += task.Length;
+                Logger.Log("<FiletaskRecord> call InsertTask " + index.ToString() + " : " + task.ToString(), LogLevel.Debug);
+            }
+        }
+
+        #endregion
 
 
         #region xml 持久化操作

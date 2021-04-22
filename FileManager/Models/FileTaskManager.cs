@@ -91,45 +91,32 @@ namespace FileManager.Models
             return (double)bytes * 1000 / ms;
         }
 
-        #region FileTask 列表操作
+        #region Pages 对应列表操作
 
+        /// <summary>
+        /// 响应 Pages 中的添加任务调用
+        ///   对于Directory 任务会获取任务文件夹大小
+        /// </summary>
+        /// <param name="task"></param>
         public void AddTask(FileTask task)
         {
-            lock (this.Record)
-            {
-                if (task.IsDirectory && task.Length == 0)
-                {
-                    task.Length = GetDirectoryTaskLength(task);
-                }
-                Record.AddTask(task);
-                Logger.Log("AddTask : " + task.ToString(), LogLevel.Debug);
-                Record.TotalLength += task.Length;
-            }
-        }
-
-        private void RemoveTaskAt(int index)
-        {
-            lock (this.Record)
-            {
-                Logger.Log(string.Format("RemoveTaskAt " + index.ToString()), LogLevel.Debug);
-                this.Record.FileTasks.RemoveAt(index);
-            }
-        }
-
-        private void InsertTask(int index, FileTask task)
-        {
-            lock (this.Record)
-            {
-                if (task.IsDirectory && task.Length == 0)
-                {
-                    task.Length = GetDirectoryTaskLength(task);
-                }
-                Logger.Log("InsertTask " + index.ToString() + " : " + task.ToString(), LogLevel.Debug);
-                this.Record.FileTasks.Insert(index, task);
-            }
+            UpdateTaskLength(task);
+            Record.AddTask(task);
         }
 
         #endregion
+
+        /// <summary>
+        /// 对于即将添加到 FileTasks 列表中的 directory 任务, 应获取其总大小
+        /// </summary>
+        /// <param name="task"></param>
+        private void UpdateTaskLength(FileTask task)
+        {
+            if (task.IsDirectory && task.Length == 0)
+            {
+                task.Length = GetDirectoryTaskLength(task);
+            }
+        }
 
         /// <summary>
         /// FileTask加入队列前, 对文件夹任务获取总大小
@@ -186,19 +173,21 @@ namespace FileManager.Models
             // 直到 currentTaskIndex 指向最后，代表所有任务完成
             while (!Record.IsFinished())
             {
-                // 界面更新当前任务
-
                 // *** to do *** 这里有 bug
                 // 对于后添加的 dir 任务, 其CurrentLength不能正确计算为零
                 // 21.04.17 10:05
-                if (!Record.CurrentTask.IsDirectory)
-                {
-                    lock (this.Record)
-                    {
-                        Record.StartNewTask();
-                        UpdateUICallback();
-                    }
-                }
+                
+
+
+
+
+
+
+                // *** todo *** 先这样写着, 应该把directory 和 file 的传输逻辑分开 if-else
+                bool current_is_dir = Record.CurrentTask.IsDirectory;
+                Record.StartNewTask();
+                // 界面更新当前任务
+                if (!current_is_dir) { UpdateUICallback(); }
                 // 启动下载
                 TransferSingleTask(Record.CurrentTask);
                 if (StopDownloading)
@@ -207,10 +196,11 @@ namespace FileManager.Models
                     IsTransfering = false;
                     return;
                 }
-                // 完成下载
-                Record.FinishCurrentTask();
+                /// 完成下载
+                Record.FinishCurrentTask(current_is_dir);
+                if (!current_is_dir) { Record.CurrentTaskIndex++; }
             }
-            // 界面更新 100%
+            /// 界面更新 100%
             TicTokBytes = 0;
             this.Record.CurrentFinished = this.Record.CurrentLength;
             this.Record.Clear();
@@ -223,9 +213,9 @@ namespace FileManager.Models
         /// <summary>
         /// 启动传输任务，根据当前 FileTask 任务区分传输模式，并阻塞直到所有子线程完成后,
         ///    将 currentTaskIndex 指向下个 task，返回
-        /// 当前任务为 directory 则展开 directory ，更新 fileTasks 和 currentTaskIndex 后返回
-        /// 当前任务为 小文件 则启用单线程传输，currentTaskIndex++ 后返回
-        /// 当前任务为 大文件 则启用多线程传输，currentTaskIndex++ 后返回
+        /// 当前任务为 directory 则展开 directory ，更新 fileTasks 后返回
+        /// 当前任务为 小文件 则启用单线程传输
+        /// 当前任务为 大文件 则启用多线程传输
         /// </summary>
         private void TransferSingleTask(FileTask task)
         {
@@ -279,12 +269,12 @@ namespace FileManager.Models
             }
             /// 更新 TaskList, 重新定位当前任务
             UpdateTasklistCallback(new Action(() => {
-                RemoveTaskAt(Record.CurrentTaskIndex);
+                this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
                 int bias = Record.CurrentTaskIndex;
                 for (int i = 0; i < files.Length; ++i)
                 {
                     SocketFileInfo f = files[i];
-                    InsertTask(bias + i, new FileTask
+                    FileTask task_add = new FileTask
                     {
                         TcpAddress = task.TcpAddress.Copy(),
                         IsDirectory = f.IsDirectory,
@@ -292,8 +282,9 @@ namespace FileManager.Models
                         RemotePath = Path.Combine(task.RemotePath, f.Name),
                         LocalPath = task.LocalPath + "\\" + f.Name,
                         Length = f.Length,
-                    });
-                    //Record.TotalLength += f.Length;
+                    };
+                    UpdateTaskLength(task_add);
+                    this.Record.InsertTask(bias + i, task_add);
                 }
             }));
         }
@@ -408,7 +399,6 @@ namespace FileManager.Models
                 task.Status = FileTaskStatus.Failed;
                 System.Windows.Forms.MessageBox.Show(ex.Message);
             }
-            Record.CurrentTaskIndex++;
         }
 
 
@@ -464,7 +454,6 @@ namespace FileManager.Models
             else
             {
                 task.Status = FileTaskStatus.Success;
-                Record.CurrentTaskIndex++;
             }
         }
 
