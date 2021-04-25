@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 
+using SocketLib.Enums;
+
 namespace SocketLib
 {
     public class SocketIO
@@ -75,7 +77,7 @@ namespace SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        public void SendHeader(Socket socket, SocketDataFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendHeader(Socket socket, SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendHeader(socket, new HB32Header
             {
@@ -159,7 +161,7 @@ namespace SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        public void SendBytes(Socket socket, SocketDataFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendBytes(Socket socket, SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(socket, new HB32Header
             {
@@ -179,7 +181,7 @@ namespace SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        public void SendBytes(Socket socket, SocketDataFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendBytes(Socket socket, SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(socket, flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
         }
@@ -195,8 +197,8 @@ namespace SocketLib
             /// 当包头Flag为指定几种 SocketDataFlag 时 :
             /// *** 这几种flag代表client只发了不带数据的包头过来 ***
             /// 函数应直接返回空byte数组
-            if (header.Flag == SocketDataFlag.DownloadPacketRequest ||
-                header.Flag == SocketDataFlag.UploadPacketResponse)
+            if (header.Flag == SocketPacketFlag.DownloadPacketRequest ||
+                header.Flag == SocketPacketFlag.UploadPacketResponse)
             {
                 bytes = new byte[0];
                 return;
@@ -221,7 +223,7 @@ namespace SocketLib
                     ReceiveBuffer(socket, bytes, header.ValidByteLength, offset);
                     offset += header.ValidByteLength;
                     /// 发送 StreamRequset header
-                    SendHeader(socket, SocketDataFlag.StreamRequest);
+                    SendHeader(socket, SocketPacketFlag.StreamRequest);
                     /// 读取下一个包头
                     ReceiveHeader(socket, out header);
                 }

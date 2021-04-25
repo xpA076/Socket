@@ -4,11 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocketLib
+namespace SocketLib.Enums
 {
-    public enum SocketDataFlag : int
+    public enum SocketPacketFlag : int
     {
         None = 0x0,
+
+
+        /// Mode 0xAC : Authentication
+        /// 
+        AuthenticationPacket = 0xAC01,
+
 
         /// Mode 0x01 : Directory query
         DirectoryRequest = 0x0101,

@@ -60,7 +60,7 @@ namespace FileManager.Static
 
         
 
-        public static byte[] ModifyKey { get; set; } = null;
+        public static byte[] Key { get; set; } = null;
 
         
 

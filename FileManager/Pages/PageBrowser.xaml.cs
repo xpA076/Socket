@@ -20,6 +20,7 @@ using FileManager.ViewModels;
 using FileManager.Static;
 using FileManager.Windows;
 using SocketLib;
+using SocketLib.Enums;
 
 namespace FileManager.Pages
 {
@@ -29,7 +30,6 @@ namespace FileManager.Pages
     public partial class PageBrowser : Page
     {
         private MainWindow parent;
-        private FolderBrowserDialog folderDialog = new FolderBrowserDialog();
         private OpenFileDialog fileDialog = new OpenFileDialog();
         //private UploadSelectWindow uploadSelectWindow = new UploadSelectWindow();
         private SocketFileInfo[] fileClasses;
@@ -89,6 +89,13 @@ namespace FileManager.Pages
             this.browserIPView.ServerAddress = address;
         }
 
+        public void ResetRemoteDirectory()
+        {
+            this.RemoteDirArray = new List<string>();
+        }
+
+
+        #region Button actions
 
         public async void ButtonRefresh_Click(object sender, RoutedEventArgs e)
         {
@@ -224,6 +231,8 @@ namespace FileManager.Pages
         {
             System.Windows.MessageBox.Show("New connection not implemented");
         }
+
+        #endregion
 
 
         public void ListViewFileItem_DoubleClick(object sender, RoutedEventArgs e)

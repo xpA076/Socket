@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using SocketLib;
+using SocketLib.Enums;
 using FileManager.Static;
 
 namespace FileManager.Models
@@ -101,12 +102,12 @@ namespace FileManager.Models
         /// <summary>
         /// 启动新任务时调用
         /// </summary>
-        public void StartNewTask()
+        public void StartNewTask(FileTask task)
         {
             lock (this.FileTasks)
             {
-                CurrentLength = CurrentTask.Length; // 更新 CurrentLength
-                CurrentFinished = CurrentTask.FinishedPacket * HB32Encoding.DataSize;
+                CurrentLength = task.Length; // 更新 CurrentLength
+                CurrentFinished = task.FinishedPacket * HB32Encoding.DataSize;
             }
             Logger.Log(string.Format("<FileTaskRecord> call StartNewTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);
@@ -114,14 +115,14 @@ namespace FileManager.Models
         
 
         /// <summary>
-        /// 完成任务时调用
+        /// 仅在完成File任务时调用
         /// </summary>
-        public void FinishCurrentTask(bool is_dir)
+        public void FinishCurrentTask()
         {
             // 将当前完成任务 byte 数加入 taskAddup
             lock (this.FileTasks)
             {
-                if (!is_dir) { PrevBytesAddup += CurrentLength; }
+                PrevBytesAddup += CurrentLength;
             }
             Logger.Log(string.Format("<FileTaskRecord> call FinishCurrentTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);

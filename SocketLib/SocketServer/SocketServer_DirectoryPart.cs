@@ -22,16 +22,16 @@ namespace SocketLib.SocketServer
             try
             {
                 fileClasses = GetDirectoryAndFiles(path);
-                SendBytes(socket, SocketDataFlag.DirectoryResponse, new byte[1]);
+                SendBytes(socket, SocketPacketFlag.DirectoryResponse, new byte[1]);
             }
             catch (Exception ex)
             {
-                SendBytes(socket, SocketDataFlag.DirectoryException,
+                SendBytes(socket, SocketPacketFlag.DirectoryException,
                     "Directory response exception from server: " + ex.Message);
                 return;
             }
             ReceiveHeader(socket, out _);
-            SendBytes(socket, SocketDataFlag.DirectoryResponse, SocketFileInfo.ListToBytes(fileClasses));
+            SendBytes(socket, SocketPacketFlag.DirectoryResponse, SocketFileInfo.ListToBytes(fileClasses));
         }
 
 
@@ -88,7 +88,7 @@ namespace SocketLib.SocketServer
         {
             string path = Encoding.UTF8.GetString(bytes);
             long size = GetDirectorySize(path);
-            SendBytes(client, SocketDataFlag.DirectorySizeResponse, size.ToString());
+            SendBytes(client, SocketPacketFlag.DirectorySizeResponse, size.ToString());
         }
 
 
@@ -132,11 +132,11 @@ namespace SocketLib.SocketServer
                     DirectoryInfo dirInfo = new DirectoryInfo(path);
                     dirInfo.Create();
                 }
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.CreateDirectoryAllowed }, new byte[1]);
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.CreateDirectoryAllowed }, new byte[1]);
             }
             catch (Exception ex)
             {
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.CreateDirectoryDenied }, ex.Message);
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.CreateDirectoryDenied }, ex.Message);
             }
         }
 

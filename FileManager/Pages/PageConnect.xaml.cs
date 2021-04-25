@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.Threading;
 
 using SocketLib;
+using SocketLib.Enums;
 using FileManager.Windows;
 using FileManager.Models;
 using FileManager.Static;
@@ -203,6 +204,7 @@ namespace FileManager.Pages
                         //this.parent.IpTitle.Text = "Connected IP : " + this.TextIP.Text;
                         this.parent.RedirectPage("Browser");
                         System.Threading.Thread.Sleep(100);
+                        this.parent.SubPageBrowser.ResetRemoteDirectory();
                         this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
                         //this.parent.ListFiles();
                     }));

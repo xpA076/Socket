@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using SocketLib.Enums;
+
 namespace SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
@@ -30,10 +32,10 @@ namespace SocketLib.SocketServer
             }
             catch (Exception ex)
             {
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, ex.Message);
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadDenied }, ex.Message);
                 return;
             }
-            SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadAllowed }, _bytes);
+            SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadAllowed }, _bytes);
         }
 
         /// <summary>
@@ -51,7 +53,7 @@ namespace SocketLib.SocketServer
             string path = BytesParser.ParseString(bytes, ref headerLength);
             if (!CheckKey(key))
             {
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.UploadDenied }, "key error");
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadDenied }, "key error");
                 return;
             }
             byte[] contentBytes = new byte[bytes.Length - headerLength];
@@ -62,10 +64,10 @@ namespace SocketLib.SocketServer
             }
             catch (Exception ex)
             {
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.UploadDenied }, ex.Message);
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadDenied }, ex.Message);
                 return;
             }
-            SendBytes(client, new HB32Header { Flag = SocketDataFlag.UploadAllowed }, new byte[1]);
+            SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadAllowed }, new byte[1]);
         }
 
 
@@ -81,13 +83,13 @@ namespace SocketLib.SocketServer
             /// header.Flag 为 SocketDataFlag.UploadPacketRequest 或 SocketDataFlag.DownloadPacketRequest
             if (!ServerFileSet.ContainsKey(header.I1))
             {
-                if (header.Flag == SocketDataFlag.UploadPacketRequest)
+                if (header.Flag == SocketPacketFlag.UploadPacketRequest)
                 {
-                    SendHeader(client, new HB32Header { Flag = SocketDataFlag.UploadDenied });
+                    SendHeader(client, new HB32Header { Flag = SocketPacketFlag.UploadDenied });
                 }
                 else
                 {
-                    SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied }, 
+                    SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadDenied }, 
                         Encoding.UTF8.GetBytes("no fsid key in available server filestream"));
                 }
             }
@@ -117,7 +119,7 @@ namespace SocketLib.SocketServer
             lock (fs)
             {
                 fs.Seek(begin, SeekOrigin.Begin);
-                if (header.Flag == SocketDataFlag.UploadPacketRequest)
+                if (header.Flag == SocketPacketFlag.UploadPacketRequest)
                 {
                     fs.Write(bytes, 0, header.ValidByteLength);
                     //Display.TimeWriteLine(header.I2.ToString());
@@ -131,13 +133,13 @@ namespace SocketLib.SocketServer
             fs_info.LastTime = DateTime.Now;
 
             /// response
-            if (header.Flag == SocketDataFlag.UploadPacketRequest)
+            if (header.Flag == SocketPacketFlag.UploadPacketRequest)
             {
-                SendHeader(client, new HB32Header { Flag = SocketDataFlag.UploadPacketResponse });
+                SendHeader(client, new HB32Header { Flag = SocketPacketFlag.UploadPacketResponse });
             }
             else
             {
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadPacketResponse }, responseBytes);
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadPacketResponse }, responseBytes);
             }
         }
 
@@ -151,7 +153,7 @@ namespace SocketLib.SocketServer
         /// <param name="isUpload"></param>
         private void ResponseFileStreamId(Socket client, HB32Header header, byte[] bytes, bool isUpload)
         {
-            SocketDataFlag upload_mask = (SocketDataFlag)((isUpload ? 1 : 0) << 8);
+            SocketPacketFlag upload_mask = (SocketPacketFlag)((isUpload ? 1 : 0) << 8);
             string path;
             /// 验证 key
             if (isUpload)
@@ -162,7 +164,7 @@ namespace SocketLib.SocketServer
                 path = BytesParser.ParseString(bytes, ref keyLength);
                 if (!CheckKey(key))
                 {
-                    SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied ^ upload_mask }, "key error");
+                    SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadDenied ^ upload_mask }, "key error");
                     return;
                 }
             }
@@ -175,7 +177,7 @@ namespace SocketLib.SocketServer
             if (IsFileOccupying(path, out int occupied_fsid))
             {
                 //SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied ^ upload_mask }, "file occupied");
-                SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadAllowed ^ upload_mask }, occupied_fsid.ToString());
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadAllowed ^ upload_mask }, occupied_fsid.ToString());
                 return;
             }
             else
@@ -193,11 +195,11 @@ namespace SocketLib.SocketServer
                     };
                     int id = GenerateRandomFileStreamId(1 << 16);
                     ServerFileSet.Add(id, record);
-                    SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadAllowed ^ upload_mask }, id.ToString());
+                    SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadAllowed ^ upload_mask }, id.ToString());
                 }
                 catch (Exception ex)
                 {
-                    SendBytes(client, new HB32Header { Flag = SocketDataFlag.DownloadDenied ^ upload_mask }, ex.Message);
+                    SendBytes(client, new HB32Header { Flag = SocketPacketFlag.DownloadDenied ^ upload_mask }, ex.Message);
                 }
             }
         }

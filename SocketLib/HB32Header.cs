@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using SocketLib.Enums;
+
 namespace SocketLib
 {
     public class HB32Header
     {
-        public SocketDataFlag Flag { get; set; } = 0;
+        public SocketPacketFlag Flag { get; set; } = 0;
         public int I1 { get; set; } = 0;
         public int I2 { get; set; } = 0;
         public int I3 { get; set; } = 0;
@@ -37,7 +39,7 @@ namespace SocketLib
             int[] array = BytesParser.ParseIntArray(bytes, 0, 32);
             return new HB32Header()
             {
-                Flag = (SocketDataFlag)array[0],
+                Flag = (SocketPacketFlag)array[0],
                 I1 = array[1],
                 I2 = array[2],
                 I3 = array[3],

@@ -48,6 +48,7 @@ namespace FileManager.Static
                 {
                     SocketClient client = new SocketClient(tcpAddress);
                     client.Connect();
+                    
                     return client;
                 }
                 catch (Exception)

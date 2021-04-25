@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-
+using SocketLib.Enums;
 
 namespace SocketLib
 {
@@ -47,12 +47,12 @@ namespace SocketLib
             asyncExceptionCallback = c;
         }
 
-        public void SendBytes(SocketDataFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendBytes(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(client, flag, bytes, i1, i2, i3);
         }
 
-        public void SendBytes(SocketDataFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendBytes(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
         }
@@ -64,13 +64,13 @@ namespace SocketLib
         /// <returns></returns>
         public SocketFileInfo[] RequestDirectory(string path)
         {
-            SendBytes(client, SocketDataFlag.DirectoryRequest, path);
+            SendBytes(client, SocketPacketFlag.DirectoryRequest, path);
             ReceiveBytes(client, out HB32Header header, out byte[] bytes);
-            if (header.Flag != SocketDataFlag.DirectoryResponse)
+            if (header.Flag != SocketPacketFlag.DirectoryResponse)
             {
                 throw new Exception(Encoding.UTF8.GetString(bytes));
             }
-            SendHeader(client, SocketDataFlag.DirectoryRequest);
+            SendHeader(client, SocketPacketFlag.DirectoryRequest);
             ReceiveBytes(client, out _, out bytes);
             return SocketFileInfo.BytesToList(bytes);
         }

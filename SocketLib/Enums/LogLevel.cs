@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocketLib
+namespace SocketLib.Enums
 {
     public delegate void SocketLogger(string log, LogLevel logLevel);
 

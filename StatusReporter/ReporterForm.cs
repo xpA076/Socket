@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using SocketLib;
+using SocketLib.Enums;
 
 namespace StatusReporter
 {
@@ -69,7 +70,7 @@ namespace StatusReporter
             {
                 SocketClient client = new SocketClient(ReporterConfig.ServerIP, ReporterConfig.ServerPort);
                 client.Connect();
-                client.SendBytes(SocketDataFlag.StatusReport, sb.ToString());
+                client.SendBytes(SocketPacketFlag.StatusReport, sb.ToString());
                 client.Close();
             }
             catch (Exception) {; }
@@ -78,7 +79,7 @@ namespace StatusReporter
         private string getStatusComsol()
         {
             
-            float cpu = 0;
+            //float cpu = 0;
             float ram = 0;
             foreach(Process ps in Process.GetProcessesByName("comsol"))
             {

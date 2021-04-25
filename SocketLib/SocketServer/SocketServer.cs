@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using SocketLib.Enums;
+
+
 namespace SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
@@ -34,47 +37,47 @@ namespace SocketLib.SocketServer
                         //Display.TimeWriteLine(header.Flag.ToString());
                         switch (header.Flag)
                         {
-                            case SocketDataFlag.DirectoryRequest:
+                            case SocketPacketFlag.DirectoryRequest:
                                 ResponseDirectory(client, bytes);
                                 break;
-                            case SocketDataFlag.DirectorySizeRequest:
+                            case SocketPacketFlag.DirectorySizeRequest:
                                 ResponseDirectorySize(client, bytes);
                                 break;
 
-                            case SocketDataFlag.CreateDirectoryRequest:
+                            case SocketPacketFlag.CreateDirectoryRequest:
                                 ResponseCreateDirectory(client, bytes);
                                 break;
 
                             #region download
-                            case SocketDataFlag.DownloadRequest:
+                            case SocketPacketFlag.DownloadRequest:
                                 ResponseDownloadSmallFile(client, bytes);
                                 break;
-                            case SocketDataFlag.DownloadFileStreamIdRequest:
+                            case SocketPacketFlag.DownloadFileStreamIdRequest:
                                 ResponseFileStreamId(client, header, bytes, false);
                                 break;
-                            case SocketDataFlag.DownloadPacketRequest:
+                            case SocketPacketFlag.DownloadPacketRequest:
                                 ResponseTransferPacket(client, header, bytes);
                                 break;
                             #endregion
 
                             #region upload
-                            case SocketDataFlag.UploadRequest:
+                            case SocketPacketFlag.UploadRequest:
                                 ResponseUploadSmallFile(client, bytes);
                                 break;
-                            case SocketDataFlag.UploadFileStreamIdRequest:
+                            case SocketPacketFlag.UploadFileStreamIdRequest:
                                 ResponseFileStreamId(client, header, bytes, true);
                                 break;
-                            case SocketDataFlag.UploadPacketRequest:
+                            case SocketPacketFlag.UploadPacketRequest:
                                 ResponseTransferPacket(client, header, bytes);
                                 break;
                             #endregion
 
-                            case SocketDataFlag.StatusReport:
+                            case SocketPacketFlag.StatusReport:
                                 RecordStatusReport(client, bytes);
                                 break;
 
 
-                            case SocketDataFlag.DisconnectRequest:
+                            case SocketPacketFlag.DisconnectRequest:
                                 client.Close();
                                 return;
                             default:
