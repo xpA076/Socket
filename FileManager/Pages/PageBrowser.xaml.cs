@@ -32,7 +32,7 @@ namespace FileManager.Pages
         private MainWindow parent;
         private OpenFileDialog fileDialog = new OpenFileDialog();
         //private UploadSelectWindow uploadSelectWindow = new UploadSelectWindow();
-        private SocketFileInfo[] fileClasses;
+        private List<SocketFileInfo> fileClasses;
 
         private List<string> RemoteDirArray = new List<string>();
 
@@ -146,7 +146,7 @@ namespace FileManager.Pages
                 {
                     TcpAddress = SocketFactory.TcpAddress.Copy(),
                     IsDirectory = selected.IsDirectory,
-                    Type = FileTaskType.Download,
+                    Type = TransferType.Download,
                     RemotePath = RemoteDirectory + selected.Name,
                     Length = selected.Length,
                 };
@@ -162,7 +162,7 @@ namespace FileManager.Pages
 
         public void DownloadConfirm(List<FileTask> fileTasks)
         {
-            DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
+            ConfirmWindow downloadConfirmWindow = new ConfirmWindow();
             downloadConfirmWindow.ListViewTask.ItemsSource = fileTasks; // to edit
             if (downloadConfirmWindow.ShowDialog() != true) { return; }
 
@@ -192,7 +192,7 @@ namespace FileManager.Pages
                     this.parent.SubPageTransfer.AddTask(new FileTask
                     {
                         IsDirectory = false,
-                        Type = FileTaskType.Upload,
+                        Type = TransferType.Upload,
                         RemotePath = remoteDir + name,
                         LocalPath = localPath,
                         Length = new FileInfo(localPath).Length
@@ -207,7 +207,7 @@ namespace FileManager.Pages
                 this.parent.SubPageTransfer.AddTask(new FileTask
                 {
                     IsDirectory = true,
-                    Type = FileTaskType.Upload,
+                    Type = TransferType.Upload,
                     RemotePath = remoteDir + name,
                     LocalPath = localPath,
                     Length = 0,

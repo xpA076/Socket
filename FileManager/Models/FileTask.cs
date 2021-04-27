@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using SocketLib;
+using SocketLib.Enums;
 
 namespace FileManager.Models
 {
@@ -22,35 +23,17 @@ namespace FileManager.Models
         Sizing
     }
 
-    public enum FileTaskType
-    {
-        Download, 
-        Upload
-    }
-
+    
 
     public class FileTask : INotifyPropertyChanged
     {
         public TCPAddress TcpAddress { get; set; }
 
         public bool IsDirectory { get; set; } = false;
-        public FileTaskType Type { get; set; }
+        public TransferType Type { get; set; }
         public string RemotePath { get; set; }
         public string LocalPath { get; set; }
-
-
-        private long _length = -1;
-        public long Length
-        {
-            get
-            {
-                return _length;
-            }
-            set
-            {
-                _length = value;
-            }
-        }
+        public long Length { get; set; } = -1;
 
 
 
@@ -58,7 +41,7 @@ namespace FileManager.Models
         {
             get
             {
-                return Type == FileTaskType.Download;
+                return Type == TransferType.Download;
             }
         }
 

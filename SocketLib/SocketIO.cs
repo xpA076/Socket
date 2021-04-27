@@ -195,7 +195,7 @@ namespace SocketLib
             ReceiveHeader(socket, out header);
             /// 此时 socket 只接收了HB32Header包头长度的字节
             /// 当包头Flag为指定几种 SocketDataFlag 时 :
-            /// *** 这几种flag代表client只发了不带数据的包头过来 ***
+            /// *** 这几种flag代表对方只发了不带数据的包头过来 ***
             /// 函数应直接返回空byte数组
             if (header.Flag == SocketPacketFlag.DownloadPacketRequest ||
                 header.Flag == SocketPacketFlag.UploadPacketResponse)
@@ -227,6 +227,16 @@ namespace SocketLib
                     /// 读取下一个包头
                     ReceiveHeader(socket, out header);
                 }
+            }
+        }
+
+
+        public void ReceiveBytesWithHeaderFlag(Socket socket, SocketPacketFlag flag, out byte[] bytes)
+        {
+            this.ReceiveBytes(socket, out HB32Header header, out bytes);
+            if (header.Flag != flag)
+            {
+                throw new ArgumentException(string.Format("Received not valid header: {0}, required : {1}.", header.Flag.ToString(), flag.ToString()));
             }
         }
 

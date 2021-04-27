@@ -62,7 +62,7 @@ namespace SocketLib
         /// </summary>
         /// <param name="path">server path</param>
         /// <returns></returns>
-        public SocketFileInfo[] RequestDirectory(string path)
+        public List<SocketFileInfo> RequestDirectory(string path)
         {
             SendBytes(client, SocketPacketFlag.DirectoryRequest, path);
             ReceiveBytes(client, out HB32Header header, out byte[] bytes);
@@ -70,8 +70,6 @@ namespace SocketLib
             {
                 throw new Exception(Encoding.UTF8.GetString(bytes));
             }
-            SendHeader(client, SocketPacketFlag.DirectoryRequest);
-            ReceiveBytes(client, out _, out bytes);
             return SocketFileInfo.BytesToList(bytes);
         }
 

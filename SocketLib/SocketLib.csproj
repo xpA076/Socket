@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BytesParser.cs" />
+    <Compile Include="Enums\SocketIdentity.cs" />
+    <Compile Include="Enums\TransferType.cs" />
     <Compile Include="Handles.cs" />
     <Compile Include="HB32Encoding.cs" />
     <Compile Include="HB32Header.cs" />

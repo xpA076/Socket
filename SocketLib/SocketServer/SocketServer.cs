@@ -15,26 +15,39 @@ namespace SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
     {
+        public SocketIdentityCheckHandler CheckIdentity = null;
+
         public SocketServer(IPAddress ip):base(ip)
         {
             
         }
 
+        private readonly Dictionary<Socket, SocketIdentity> ClientIdentities = new Dictionary<Socket, SocketIdentity>();
+        private object ClientIdentitiesLock = new object();
 
+
+        /// <summary>
+        /// 在 Socket.accept() 获取到的 client 在这里处理
+        /// 这个函数为 client 的整个生存周期
+        /// </summary>
+        /// <param name="acceptSocketObject">client socket</param>
         public override void ReceiveData(object acceptSocketObject)
         {
+            Socket client = (Socket)acceptSocketObject;
             try
             {
-                Socket client = (Socket)acceptSocketObject;
                 client.SendTimeout = Config.SocketSendTimeOut;
                 client.ReceiveTimeout = Config.SocketReceiveTimeOut;
+                this.ReceiveBytes(client, out HB32Header ac_header, out byte[] ac_bytes);
+                SocketIdentity identity = CheckIdentity(ac_header, ac_bytes);
+                ClientIdentities.Add(client, identity);
+                this.SendHeader(client, SocketPacketFlag.AuthenticationResponse);
                 int error_count = 0;
                 while (flag_receive & error_count < 5)
                 {
                     try
                     {
                         ReceiveBytes(client, out HB32Header header, out byte[] bytes);
-                        //Display.TimeWriteLine(header.Flag.ToString());
                         switch (header.Flag)
                         {
                             case SocketPacketFlag.DirectoryRequest:
@@ -53,7 +66,7 @@ namespace SocketLib.SocketServer
                                 ResponseDownloadSmallFile(client, bytes);
                                 break;
                             case SocketPacketFlag.DownloadFileStreamIdRequest:
-                                ResponseFileStreamId(client, header, bytes, false);
+                                ResponseFileStreamId(client, header, bytes, TransferType.Download);
                                 break;
                             case SocketPacketFlag.DownloadPacketRequest:
                                 ResponseTransferPacket(client, header, bytes);
@@ -65,7 +78,7 @@ namespace SocketLib.SocketServer
                                 ResponseUploadSmallFile(client, bytes);
                                 break;
                             case SocketPacketFlag.UploadFileStreamIdRequest:
-                                ResponseFileStreamId(client, header, bytes, true);
+                                ResponseFileStreamId(client, header, bytes, TransferType.Upload);
                                 break;
                             case SocketPacketFlag.UploadPacketRequest:
                                 ResponseTransferPacket(client, header, bytes);
@@ -78,7 +91,7 @@ namespace SocketLib.SocketServer
 
 
                             case SocketPacketFlag.DisconnectRequest:
-                                client.Close();
+                                DisposeClient(client);
                                 return;
                             default:
                                 throw new Exception("Invalid socket header in receiving: " + header.Flag.ToString());
@@ -92,7 +105,7 @@ namespace SocketLib.SocketServer
                         {
                             // 远程 client 主机关闭连接
                             case 10054:
-                                client.Close();
+                                DisposeClient(client);
                                 Log("Connection closed (client closed). " + ex.Message, LogLevel.Info);
                                 return;
                             // Socket 超时
@@ -101,7 +114,6 @@ namespace SocketLib.SocketServer
                                 Log("Socket timeout. " + ex.Message, LogLevel.Trace);
                                 continue;
                             default:
-                                //System.Windows.Forms.MessageBox.Show("Server receive data :" + ex.Message);
                                 Log("Server receive data :" + ex.Message, LogLevel.Warn);
                                 continue;
                         }
@@ -111,13 +123,13 @@ namespace SocketLib.SocketServer
                         error_count++;
                         if (ex.Message.Contains("Buffer receive error: cannot receive package"))
                         {
-                            client.Close();
+                            DisposeClient(client);
                             Log(ex.Message, LogLevel.Trace);
                             return;
                         }
                         if (ex.Message.Contains("Invalid socket header"))
                         {
-                            client.Close();
+                            DisposeClient(client);
                             Log("Connection closed : " + ex.Message, LogLevel.Warn);
                             return;
                         }
@@ -126,16 +138,29 @@ namespace SocketLib.SocketServer
                         continue;
                     }
                 }
-                Log("Connection closed: error count 5", LogLevel.Warn);
+                Log("Connection closed.", LogLevel.Warn);
             }
             catch (Exception ex)
             {
                 Log("WTF ReceiveData exception :" + ex.Message, LogLevel.Error);
+                ClientIdentities.Remove(client);
             }
-
         }
 
 
+
+        private void DisposeClient(Socket client)
+        {
+            try
+            {
+                client.Close();
+            }
+            catch (Exception) { }
+            finally
+            {
+                ClientIdentities.Remove(client);
+            }
+        }
 
 
         private void RecordStatusReport(Socket client, byte[] bytes)
@@ -143,12 +168,20 @@ namespace SocketLib.SocketServer
             Log(Encoding.UTF8.GetString(bytes), LogLevel.Info);
         }
 
-
-        private bool CheckKey(byte[] bytes)
+        private SocketIdentity GetIdentity(Socket socket)
         {
-            return true;
+            lock (ClientIdentitiesLock)
+            {
+                try
+                {
+                    return ClientIdentities[socket];
+                }
+                catch (Exception)
+                {
+                    return SocketIdentity.None;
+                }
+            }
         }
-
 
 
         public void Close()

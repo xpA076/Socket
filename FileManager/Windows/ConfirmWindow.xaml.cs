@@ -18,7 +18,7 @@ namespace FileManager.Windows
     /// <summary>
     /// DownloadConfirmWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class DownloadConfirmWindow : Window
+    public partial class ConfirmWindow : Window
     {
         private FolderBrowserDialog folderDialog = new FolderBrowserDialog();
 
@@ -26,7 +26,7 @@ namespace FileManager.Windows
 
         public string SelectedPath { get; set; }
 
-        public DownloadConfirmWindow()
+        public ConfirmWindow()
         {
             InitializeComponent();
         }

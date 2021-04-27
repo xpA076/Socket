@@ -14,6 +14,7 @@ namespace SocketLib.Enums
         /// Mode 0xAC : Authentication
         /// 
         AuthenticationPacket = 0xAC01,
+        AuthenticationResponse = 0xAC09,
 
 
         /// Mode 0x01 : Directory query

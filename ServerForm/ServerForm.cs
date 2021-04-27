@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using SocketLib;
+using SocketLib.Enums;
 using SocketLib.SocketServer;
 
 namespace FileManagerServer
@@ -57,6 +58,7 @@ namespace FileManagerServer
                 server.Config.Create(ConfigPath);
             }
             server.Logger = ServerFormLogger;
+            server.CheckIdentity = CheckIdentity;
             server.Config.Load(ConfigPath);
             try
             {
@@ -69,6 +71,11 @@ namespace FileManagerServer
                 //MessageBox.Show("Server window start listening error: " + ex.Message);
                 ServerFormLogger("Server window start listening error: " + ex.Message, LogLevel.Error);
             }
+        }
+
+        private SocketLib.Enums.SocketIdentity CheckIdentity(HB32Header header, byte[] bytes)
+        {
+            return SocketLib.Enums.SocketIdentity.All;
         }
 
         private void ServerFormLogger(string log, LogLevel logLevel)

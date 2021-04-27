@@ -132,7 +132,7 @@ namespace FileManager.Models
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task.TcpAddress);
                 client.SendBytes(SocketPacketFlag.DirectorySizeRequest, task.RemotePath);
-                client.ReceiveBytes(client.client, out _, out byte[] bytes);
+                client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.DirectorySizeResponse, out byte[] bytes);
                 return long.Parse(Encoding.UTF8.GetString(bytes));
             }
             catch (Exception)
@@ -212,7 +212,7 @@ namespace FileManager.Models
         /// <param name="task"></param>
         private void TransferDirectoryTask(FileTask task)
         {
-            if (task.Type == FileTaskType.Upload) 
+            if (task.Type == TransferType.Upload) 
             { 
                 UploadSingleTaskDirectory(task); 
             }
@@ -232,7 +232,7 @@ namespace FileManager.Models
                 dirInfo.Create();
             }
             /// 获取 server 端文件列表
-            SocketFileInfo[] files;
+            List<SocketFileInfo> files;
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
@@ -248,14 +248,14 @@ namespace FileManager.Models
             UpdateTasklistCallback(new Action(() => {
                 this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
                 int bias = Record.CurrentTaskIndex;
-                for (int i = 0; i < files.Length; ++i)
+                for (int i = 0; i < files.Count; ++i)
                 {
                     SocketFileInfo f = files[i];
                     FileTask task_add = new FileTask
                     {
                         TcpAddress = task.TcpAddress.Copy(),
                         IsDirectory = f.IsDirectory,
-                        Type = FileTaskType.Download,
+                        Type = TransferType.Download,
                         RemotePath = Path.Combine(task.RemotePath, f.Name),
                         LocalPath = task.LocalPath + "\\" + f.Name,
                         Length = f.Length,
@@ -310,7 +310,7 @@ namespace FileManager.Models
                         this.Record.FileTasks.Insert(bias + i, new FileTask
                         {
                             IsDirectory = true,
-                            Type = FileTaskType.Upload,
+                            Type = TransferType.Upload,
                             RemotePath = task.RemotePath + "\\" + d.Name,
                             LocalPath = task.LocalPath + "\\" + d.Name,
                             Length = 0,
@@ -323,7 +323,7 @@ namespace FileManager.Models
                         this.Record.FileTasks.Insert(bias + i, new FileTask
                         {
                             IsDirectory = false,
-                            Type = FileTaskType.Upload,
+                            Type = TransferType.Upload,
                             RemotePath = task.RemotePath + "\\" + f.Name,
                             LocalPath = task.LocalPath + "\\" + f.Name,
                             Length = f.Length,
@@ -344,11 +344,11 @@ namespace FileManager.Models
         private void TransferSingleTask(FileTask task)
         {
             Logger.Log(string.Format("<FileTaskManager> call TransferSingleTask, {0, 20}{1}", "", task.ToString()), LogLevel.Debug);
-            if (task.Type == FileTaskType.Download)
+            if (task.Type == TransferType.Download)
             {
                 task.Status = FileTaskStatus.Downloading;
             }
-            else if (task.Type == FileTaskType.Download)
+            else if (task.Type == TransferType.Download)
             {
                 task.Status = FileTaskStatus.Uploading;
             }
@@ -363,37 +363,28 @@ namespace FileManager.Models
         }
 
 
-        private void TransferSingleTaskSmallFile(FileTask task, FileTaskType taskType)
+        private void TransferSingleTaskSmallFile(FileTask task, TransferType taskType)
         {
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                if (taskType == FileTaskType.Upload)
+                if (taskType == TransferType.Upload)
                 {
-                    int keyLength = 16;
-                    byte[] keyBytes = GenerateKeyBytes(keyLength);
-                    byte[] headerBytes = BytesParser.WriteString(keyBytes, task.RemotePath, ref keyLength);
+                    int pt = 0;
+                    byte[] headerBytes = BytesParser.WriteString(new byte[4], task.RemotePath, ref pt);
                     byte[] contentBytes = File.ReadAllBytes(task.LocalPath);
                     byte[] bytes = new byte[headerBytes.Length + contentBytes.Length];
                     Array.Copy(headerBytes, 0, bytes, 0, headerBytes.Length);
                     Array.Copy(contentBytes, 0, bytes, headerBytes.Length, contentBytes.Length);
                     client.SendBytes(SocketPacketFlag.UploadRequest, bytes);
-                    client.ReceiveBytes(client.client, out HB32Header header, out byte[] recvBytes);
+                    client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.UploadAllowed, out byte[] recvBytes);
                     client.Close();
-                    if (header.Flag != SocketPacketFlag.UploadAllowed)
-                    {
-                        throw new Exception(Encoding.UTF8.GetString(recvBytes));
-                    }
                 }
                 else
                 {
                     client.SendBytes(SocketPacketFlag.DownloadRequest, task.RemotePath);
-                    client.ReceiveBytes(client.client, out HB32Header header, out byte[] bytes);
+                    client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.DownloadAllowed, out byte[] bytes);
                     client.Close();
-                    if (header.Flag != SocketPacketFlag.DownloadAllowed)
-                    {
-                        throw new Exception(Encoding.UTF8.GetString(bytes));
-                    }
                     File.WriteAllBytes(task.LocalPath, bytes);
                 }
                 this.Record.CurrentFinished = task.Length;
@@ -422,7 +413,7 @@ namespace FileManager.Models
 
             /// 创建本地 FileStream
             localFileStream = new FileStream(task.LocalPath, FileMode.OpenOrCreate,
-                task.Type == FileTaskType.Upload ? FileAccess.Read : FileAccess.Write);
+                task.Type == TransferType.Upload ? FileAccess.Read : FileAccess.Write);
 
 
             /// 运行下载子线程
@@ -436,7 +427,7 @@ namespace FileManager.Models
             try
             {
                 SocketClient sc = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                if (task.Type == FileTaskType.Upload)
+                if (task.Type == TransferType.Upload)
                 {
                     sc.SendBytes(SocketPacketFlag.UploadPacketRequest, new byte[1], task.FileStreamId, -1);
                 }
@@ -469,11 +460,11 @@ namespace FileManager.Models
         /// <returns></returns>
         private int GetFileStreamId (FileTask task)
         {
-            SocketPacketFlag mask = (SocketPacketFlag)((task.Type == FileTaskType.Upload ? 1 : 0) << 8);
+            SocketPacketFlag mask = (SocketPacketFlag)((task.Type == TransferType.Upload ? 1 : 0) << 8);
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                if (task.Type == FileTaskType.Upload)
+                if (task.Type == TransferType.Upload)
                 {
                     int keyLength = 16;
                     byte[] keyBytes = GenerateKeyBytes(keyLength);
@@ -515,7 +506,7 @@ namespace FileManager.Models
             TransferSubThreads = new Thread[Config.ThreadLimit];
             for (int i = 0; i < Config.ThreadLimit; ++i)
             {
-                if (task.Type == FileTaskType.Upload)
+                if (task.Type == TransferType.Upload)
                 {
                     TransferSubThreads[i] = new Thread(new ParameterizedThreadStart(UploadThreadUnit)) { IsBackground = true };
                 }

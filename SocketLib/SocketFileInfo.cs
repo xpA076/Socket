@@ -54,7 +54,7 @@ namespace SocketLib
 
         #region Bytes convertion
 
-        public static byte[] ListToBytes(SocketFileInfo[] socketFileInfos)
+        public static byte[] ListToBytes(List<SocketFileInfo> socketFileInfos)
         {
             List<byte[]> byteList = new List<byte[]>();
             int bytesCount = 0;
@@ -76,14 +76,14 @@ namespace SocketLib
             return bytes;
         }
 
-        public static SocketFileInfo[] BytesToList(byte[] bytes)
+        public static List<SocketFileInfo> BytesToList(byte[] bytes)
         {
             int idx = 0;
             int len = BytesParser.ParseInt(bytes, ref idx);
-            SocketFileInfo[] socketFileInfos = new SocketFileInfo[len];
+            List<SocketFileInfo> socketFileInfos = new List<SocketFileInfo>();
             for (int i = 0; i < len; ++i)
             {
-                socketFileInfos[i] = FromBytes(bytes, ref idx);
+                socketFileInfos.Add(FromBytes(bytes, ref idx));
             }
             return socketFileInfos;
         }

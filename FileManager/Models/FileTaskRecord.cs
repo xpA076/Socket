@@ -33,7 +33,6 @@ namespace FileManager.Models
             }
         }
 
-        //  *** todo 写接口保证线程安全 21.04.17
         /// <summary>
         /// 传输过程中的所有任务列表
         /// 因为会被 UI 上的 ListView 引用所以写为 public
@@ -180,7 +179,7 @@ namespace FileManager.Models
         }
 
         #endregion
-
+          
 
         #region xml 持久化操作
 
@@ -247,7 +246,7 @@ namespace FileManager.Models
                 FileTask fileTask = new FileTask();
                 fileTask.TcpAddress = TCPAddress.FromString(task.Element("TcpAddress").Value);
                 fileTask.IsDirectory = bool.Parse(task.Element("IsDirectory").Value);
-                fileTask.Type = (FileTaskType)Enum.Parse(typeof(FileTaskType), task.Element("Type").Value);
+                fileTask.Type = (TransferType)Enum.Parse(typeof(TransferType), task.Element("Type").Value);
                 fileTask.RemotePath = task.Element("RemotePath").Value;
                 fileTask.LocalPath = task.Element("LocalPath").Value;
                 fileTask.Length = long.Parse(task.Element("Length").Value);

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 
 using SocketLib;
+using SocketLib.Enums;
 using FileManager.Models;
 using System.Net;
 
@@ -42,13 +43,18 @@ namespace FileManager.Static
             {
                 if (maxTry > 0 && tryCount >= maxTry)
                 {
-                    throw new Exception("exceed max try times");
+                    throw new ArgumentException("exceed max try times");
                 }
                 try
                 {
                     SocketClient client = new SocketClient(tcpAddress);
                     client.Connect();
-                    
+                    client.SendBytes(SocketPacketFlag.AuthenticationPacket, Config.KeyBytes, 0, 0, 1);
+                    client.ReceiveHeader(client.client, out HB32Header header);
+                    if (header.Flag != SocketPacketFlag.AuthenticationResponse)
+                    {
+                        throw new ArgumentException("not valid header");
+                    }
                     return client;
                 }
                 catch (Exception)
