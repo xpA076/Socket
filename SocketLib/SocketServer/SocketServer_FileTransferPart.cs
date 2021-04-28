@@ -17,7 +17,7 @@ namespace SocketLib.SocketServer
 
         /// <summary>
         /// 小文件下载响应
-        /// client : SocketPacketFlag.DirectoryRequest + server 文件路径string -> (UTF-8)bytes
+        /// client : SocketPacketFlag.DownloadRequest + server 文件路径string -> (UTF-8)bytes
         /// server : SocketDataFlag.DownloadAllowed + 文件bytes
         ///     or : SocketPacketFlag.DownloadDenied + err_msg
         /// </summary>
@@ -53,27 +53,35 @@ namespace SocketLib.SocketServer
 
         /// <summary>
         /// 小文件上传响应
-        /// byte 内容: path string(BytesParser encoded), content bytes
-        /// 返回 SocketDataFlag.UploadAllowed + new byte[1](异常时返回异常信息)
+        /// client : SocketPacketFlag.UploadRequest + path string(BytesParser encoded), content bytes
+        /// server : SocketPacketFlag.UploadAllowed + new byte[1]
+        ///     or : SocketPacketFlag.UploadDenied + err_msg
         /// </summary>
         /// <param name="client"></param>
         /// <param name="bytes"></param>
         private void ResponseUploadSmallFile(Socket client, byte[] bytes)
         {
-            int pt = 0;
-            string path = BytesParser.ParseString(bytes, ref pt);
-            byte[] contentBytes = new byte[bytes.Length - pt];
-            Array.Copy(bytes, pt, contentBytes, 0, contentBytes.Length);
+            string err_msg = "";
             try
             {
+                int pt = 0;
+                string path = BytesParser.ParseString(bytes, ref pt);
+                byte[] contentBytes = new byte[bytes.Length - pt];
+                Array.Copy(bytes, pt, contentBytes, 0, contentBytes.Length);
                 File.WriteAllBytes(path, contentBytes);
             }
             catch (Exception ex)
             {
-                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadDenied }, ex.Message);
-                return;
+                err_msg = ex.Message;
             }
-            SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadAllowed }, new byte[1]);
+            if (string.IsNullOrEmpty(err_msg))
+            {
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadAllowed }, new byte[1]);
+            }
+            else
+            {
+                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.UploadDenied }, err_msg);
+            }
         }
 
 
@@ -122,20 +130,25 @@ namespace SocketLib.SocketServer
             byte[] responseBytes = new byte[0];
 
             /// 定位 FileStream 读取/写入 bytes
-            lock (fs)
+            /// 
+            if (header.Flag == SocketPacketFlag.UploadPacketRequest)
             {
-                fs.Seek(begin, SeekOrigin.Begin);
-                if (header.Flag == SocketPacketFlag.UploadPacketRequest)
+                lock (fs)
                 {
+                    fs.Seek(begin, SeekOrigin.Begin);
                     fs.Write(bytes, 0, header.ValidByteLength);
-                    //Display.TimeWriteLine(header.I2.ToString());
                 }
-                else
+            }
+            else
+            {
+                lock (fs)
                 {
+                    fs.Seek(begin, SeekOrigin.Begin);
                     responseBytes = new byte[length];
                     fs.Read(responseBytes, 0, length);
                 }
             }
+
             fs_info.LastTime = DateTime.Now;
 
             /// response
@@ -156,7 +169,7 @@ namespace SocketLib.SocketServer
         /// <param name="client"></param>
         /// <param name="header"></param>
         /// <param name="bytes"></param>
-        /// <param name="isUpload"></param>
+        /// <param name="transferType"></param>
         private void ResponseFileStreamId(Socket client, HB32Header header, byte[] bytes, TransferType transferType)
         {
             SocketPacketFlag upload_mask = (SocketPacketFlag)((transferType == TransferType.Upload ? 1 : 0) << 8);

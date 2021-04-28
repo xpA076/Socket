@@ -272,16 +272,11 @@ namespace FileManager.Models
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                int keyLength = 16;
-                byte[] keyBytes = GenerateKeyBytes(keyLength);
-                byte[] headerBytes = BytesParser.WriteString(keyBytes, task.RemotePath, ref keyLength);
+                int pt = 0;
+                byte[] headerBytes = BytesParser.WriteString(new byte[4], task.RemotePath, ref pt);
                 client.SendBytes(SocketPacketFlag.CreateDirectoryRequest, headerBytes);
-                client.ReceiveBytes(client.client, out HB32Header header, out byte[] recvBytes);
+                client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.CreateDirectoryAllowed, out byte[] recvBytes);
                 client.Close();
-                if (header.Flag != SocketPacketFlag.CreateDirectoryAllowed)
-                {
-                    throw new Exception(Encoding.UTF8.GetString(recvBytes));
-                }
             }
             catch (Exception)
             {

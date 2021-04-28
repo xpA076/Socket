@@ -236,7 +236,13 @@ namespace SocketLib
             this.ReceiveBytes(socket, out HB32Header header, out bytes);
             if (header.Flag != flag)
             {
-                throw new ArgumentException(string.Format("Received not valid header: {0}, required : {1}.", header.Flag.ToString(), flag.ToString()));
+                string err_msg = "";
+                try
+                {
+                    err_msg = Encoding.UTF8.GetString(bytes);
+                }
+                catch (Exception) { }
+                throw new ArgumentException(string.Format("[Received not valid header: {0}, required : {1}] -- {2}", header.Flag.ToString(), flag.ToString(), err_msg));
             }
         }
 

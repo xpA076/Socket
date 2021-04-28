@@ -92,10 +92,11 @@
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
+    <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
-    <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">
-      <DependentUpon>DownloadConfirmWindow.xaml</DependentUpon>
+    <Compile Include="Windows\ConfirmWindow.xaml.cs">
+      <DependentUpon>ConfirmWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\UploadSelectWindow.xaml.cs">
       <DependentUpon>UploadSelectWindow.xaml</DependentUpon>
@@ -142,7 +143,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Windows\DownloadConfirmWindow.xaml">
+    <Page Include="Windows\ConfirmWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
