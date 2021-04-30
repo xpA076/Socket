@@ -152,7 +152,7 @@ namespace FileManager.Pages
                 };
                 if (task.IsDirectory)
                 {
-                    task.Length = FileTaskManager.GetDirectoryTaskLength(task);
+                    task.Length = FileTaskManager.GetDownloadDirectoryTaskLength(task);
                 }
                 fileTasks.Add(task);
             }

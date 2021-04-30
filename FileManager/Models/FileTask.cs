@@ -153,6 +153,19 @@ namespace FileManager.Models
         }
 
 
+        public static int Compare(FileTask t1, FileTask t2)
+        {
+            if (t1.IsDirectory == t2.IsDirectory)
+            {
+                return t1.Name.CompareTo(t2.Name);
+            }
+            else
+            {
+                return t1.IsDirectory ? -1 : 1;
+            }
+        }
+
+
 
         public event PropertyChangedEventHandler PropertyChanged;
     }

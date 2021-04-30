@@ -115,18 +115,26 @@ namespace FileManager.Models
         /// <param name="task"></param>
         private void UpdateTaskLength(FileTask task)
         {
-            if (task.IsDirectory && task.Length == 0)
+            if (task.Type == TransferType.Download)
             {
-                task.Length = GetDirectoryTaskLength(task);
+                if (task.IsDirectory && task.Length == 0)
+                {
+                    task.Length = GetDownloadDirectoryTaskLength(task);
+                }
+            }
+            else
+            {
+
             }
         }
 
+
         /// <summary>
-        /// FileTask加入队列前, 对文件夹任务获取总大小
+        /// 下载FileTask加入队列前, 对文件夹任务获取总大小
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
-        public static long GetDirectoryTaskLength(FileTask task)
+        public static long GetDownloadDirectoryTaskLength(FileTask task)
         {
             try
             {
@@ -139,6 +147,74 @@ namespace FileManager.Models
             {
                 return -1;
             }
+        }
+
+
+        /// <summary>
+        /// 在 UplaodTask 中, 获取目录文件大小
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static long GetLocalDirectoryLength(string path)
+        {
+            long size = 0;
+            DirectoryInfo dir = new DirectoryInfo(path);
+            FileInfo[] fileInfos = dir.GetFiles();
+            foreach (FileInfo fileInfo in fileInfos)
+            {
+                if (true)
+                {
+                    size += fileInfo.Length;
+                }
+            }
+            DirectoryInfo[] directoryInfos = dir.GetDirectories();
+            foreach (DirectoryInfo directoryInfo in directoryInfos)
+            {
+                if (true)
+                {
+                    size += GetLocalDirectoryLength(directoryInfo.FullName);
+                }
+            }
+            return size;
+        }
+
+
+        /// <summary>
+        /// 在 Uplaod Directory时, 获取 local_path 下所有子 FileTask 列表
+        /// </summary>
+        /// <param name="local_path"></param>
+        /// <param name="remote_path"></param>
+        /// <returns></returns>
+        private List<FileTask> GetUploadTasksInDirectory(string local_path, string remote_path)
+        {
+            DirectoryInfo directory = new DirectoryInfo(local_path);
+            DirectoryInfo[] directoryInfos = directory.GetDirectories();
+            List<FileTask> tasks = new List<FileTask>();
+            foreach(DirectoryInfo dir_info in directoryInfos)
+            {
+                tasks.Add(new FileTask
+                {
+                    IsDirectory = true,
+                    Type = TransferType.Upload,
+                    RemotePath = remote_path + "\\" + dir_info.Name,
+                    LocalPath = local_path + "\\" + dir_info.Name,
+                    Length = 0,
+                });
+            }
+            FileInfo[] fileInfos = directory.GetFiles();
+            foreach (FileInfo file_info in fileInfos)
+            {
+                tasks.Add(new FileTask
+                {
+                    IsDirectory = false,
+                    Type = TransferType.Upload,
+                    RemotePath = remote_path + "\\" + file_info.Name,
+                    LocalPath = local_path + "\\" + file_info.Name,
+                    Length = file_info.Length,
+                });
+            }
+            tasks.Sort(FileTask.Compare);
+            return tasks;
         }
 
 
