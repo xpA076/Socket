@@ -41,7 +41,7 @@ namespace SocketLib.SocketServer
                 this.ReceiveBytes(client, out HB32Header ac_header, out byte[] ac_bytes);
                 SocketIdentity identity = CheckIdentity(ac_header, ac_bytes);
                 ClientIdentities.Add(client, identity);
-                this.SendHeader(client, SocketPacketFlag.AuthenticationResponse);
+                this.SendHeader(client, SocketPacketFlag.AuthenticationResponse, (int)identity);
                 int error_count = 0;
                 while (flag_receive & error_count < 5)
                 {
@@ -66,7 +66,7 @@ namespace SocketLib.SocketServer
                                 ResponseDownloadSmallFile(client, bytes);
                                 break;
                             case SocketPacketFlag.DownloadFileStreamIdRequest:
-                                ResponseFileStreamId(client, header, bytes, TransferType.Download);
+                                ResponseFileStreamId(client, header, bytes);
                                 break;
                             case SocketPacketFlag.DownloadPacketRequest:
                                 ResponseTransferPacket(client, header, bytes);
@@ -78,7 +78,7 @@ namespace SocketLib.SocketServer
                                 ResponseUploadSmallFile(client, bytes);
                                 break;
                             case SocketPacketFlag.UploadFileStreamIdRequest:
-                                ResponseFileStreamId(client, header, bytes, TransferType.Upload);
+                                ResponseFileStreamId(client, header, bytes);
                                 break;
                             case SocketPacketFlag.UploadPacketRequest:
                                 ResponseTransferPacket(client, header, bytes);

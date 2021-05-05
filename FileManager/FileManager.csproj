@@ -78,6 +78,7 @@
     </ApplicationDefinition>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ConnectionStatusToForeColorConverter.cs" />
+    <Compile Include="Models\Communicator.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatConnectionMonitor.cs" />

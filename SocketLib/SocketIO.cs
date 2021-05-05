@@ -241,7 +241,7 @@ namespace SocketLib
                 {
                     err_msg = Encoding.UTF8.GetString(bytes);
                 }
-                catch (Exception) { }
+                catch (Exception) {; }
                 throw new ArgumentException(string.Format("[Received not valid header: {0}, required : {1}] -- {2}", header.Flag.ToString(), flag.ToString(), err_msg));
             }
         }

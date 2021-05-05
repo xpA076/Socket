@@ -49,7 +49,7 @@ namespace FileManager
                 /// 同时在此触发各类 UI 和其它类同步更改
                 _server_address = value;
                 this.SubPageBrowser.SetConnectedIPText(value);
-                SocketFactory.TcpAddress = value;
+                SocketFactory.ServerAddress = value;
             }
         }
 

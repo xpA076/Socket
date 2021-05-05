@@ -32,7 +32,7 @@ namespace SocketLib.SocketServer
             /// get SocketFileInfo[]
             try
             {
-                if ((GetIdentity(client) | SocketIdentity.ReadFile) == 0)
+                if ((GetIdentity(client) & SocketIdentity.ReadFile) == 0)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -118,7 +118,7 @@ namespace SocketLib.SocketServer
             string err_msg = "";
             try
             {
-                if ((GetIdentity(client) | SocketIdentity.ReadFile) == 0)
+                if ((GetIdentity(client) & SocketIdentity.ReadFile) == 0)
                 {
                     throw new Exception("Socket not authenticated.");
                 }

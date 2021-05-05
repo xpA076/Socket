@@ -144,7 +144,7 @@ namespace FileManager.Pages
             {
                 FileTask task = new FileTask
                 {
-                    TcpAddress = SocketFactory.TcpAddress.Copy(),
+                    TcpAddress = SocketFactory.ServerAddress.Copy(),
                     IsDirectory = selected.IsDirectory,
                     Type = TransferType.Download,
                     RemotePath = RemoteDirectory + selected.Name,

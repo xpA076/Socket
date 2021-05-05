@@ -158,6 +158,7 @@ namespace FileManager.Pages
 
         private void ButtonConnect_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
+            if (IsConnecting) { return; }
             TCPAddress tcpAddress = new TCPAddress();
             try
             {
@@ -177,22 +178,28 @@ namespace FileManager.Pages
                 Logger.Log("Invalid address syntax : " + this.TextIP.Text, LogLevel.Warn);
                 return;
             }
-
-            if (IsConnecting) { return; }
-            IsConnecting = true;
             try
             {
+                IsConnecting = true;
+                Logger.Log("Start connection to " + this.TextIP.Text, LogLevel.Info);
+                this.ButtonConnect.Content = "Connecting ...";
                 SocketClient s = new SocketClient(tcpAddress, (ex) => {
                     this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
                         this.ButtonConnect.Content = "Connect";
                     }));
                     MessageBox.Show(ex.Message);
                 });
-                Logger.Log("Start connection to " + this.TextIP.Text, LogLevel.Info);
-                this.ButtonConnect.Content = "Connecting ...";
                 s.AsyncConnect(() => {
+                    /// 发送验证 KeyBytes
+                    s.SendBytes(SocketPacketFlag.AuthenticationPacket, Config.KeyBytes, 0, 0, 1);
+                    s.ReceiveHeader(s.client, out HB32Header header);
+                    if (header.Flag != SocketPacketFlag.AuthenticationResponse)
+                    {
+                        throw new ArgumentException("not valid header");
+                    }
+                    SocketIdentity identity = (SocketIdentity)header.I1;
                     s.Close();
-                    // 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
+                    /// 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
                     this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
                         Logger.Log("Connection to " + this.TextIP.Text + " success", LogLevel.Info);
                         this.parent.ServerAddress = tcpAddress;
@@ -201,12 +208,10 @@ namespace FileManager.Pages
                             Info = this.TextIP.Text
                         });
                         this.parent.StartConnectionMonitor();
-                        //this.parent.IpTitle.Text = "Connected IP : " + this.TextIP.Text;
                         this.parent.RedirectPage("Browser");
                         System.Threading.Thread.Sleep(100);
                         this.parent.SubPageBrowser.ResetRemoteDirectory();
                         this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
-                        //this.parent.ListFiles();
                     }));
                 });
             }

@@ -14,7 +14,9 @@ namespace FileManager.Static
 {
     public static class SocketFactory
     {
-        public static TCPAddress TcpAddress { get; set; }
+        public static TCPAddress ServerAddress { get; set; }
+
+        public static TCPAddress ProxyAddress { get; set; } = null;
 
 
         /// <summary>
@@ -26,15 +28,13 @@ namespace FileManager.Static
         /// <returns></returns>
         public static SocketClient GenerateConnectedSocketClient(int maxTry = 1, int retryInterval = 3000)
         {
-            return GenerateConnectedSocketClient(TcpAddress, maxTry, retryInterval);
+            return GenerateConnectedSocketClient(ServerAddress, maxTry, retryInterval);
         }
 
         public static SocketClient GenerateConnectedSocketClient(FileTask task, int maxTry = 1, int retryInterval = 3000)
         {
             return GenerateConnectedSocketClient(task.TcpAddress, maxTry, retryInterval);
         }
-
-
 
         public static SocketClient GenerateConnectedSocketClient(TCPAddress tcpAddress, int maxTry = 1, int retryInterval = 3000)
         {
@@ -64,6 +64,8 @@ namespace FileManager.Static
                 }
             }
         }
+
+
 
     }
 }

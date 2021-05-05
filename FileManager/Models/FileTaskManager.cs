@@ -28,7 +28,20 @@ namespace FileManager.Models
         public PageUIInvokeCallback UpdateTasklistCallback { private get; set; }
 
         public bool IsTransfering { get; private set; } = false;
-        public bool StopDownloading { get; set; } = false;
+        public bool IsStopDownloading { get; set; } = false;
+        /// <summary>
+        /// Server 端重启后, 原有 fsid 不可用, 在某一 SubThread 中首先重新调用 GetFileStreamId()
+        /// 将此 flag 置为 true
+        /// 此时其余线程执行 SendHeader() 或 SendBytes() 应加锁, 保证在获取 fsid 后再发包
+        /// </summary>
+        private bool IsRequestingFsid { get; set; } = false;
+        /// <summary>
+        /// 在大文件传输过程中, 任一子线程触发无法处理异常时(socket 认证, server端文件读写异常)
+        /// 将此 flag 置为 true, 其它线程会因此退出, 在 RunTransferSubThreads() 中将当前 task.Status 标为 Failed
+        /// </summary>
+        private bool IsCurrentTaskFailed { get; set; } = false;
+
+
 
         private FileTaskRecord Record = new FileTaskRecord();
 
@@ -94,7 +107,6 @@ namespace FileManager.Models
             return (double)bytes * 1000 / ms;
         }
 
-        #region Pages 对应列表操作
 
         /// <summary>
         /// 响应 Pages 中的添加任务调用
@@ -107,7 +119,6 @@ namespace FileManager.Models
             Record.AddTask(task);
         }
 
-        #endregion
 
         /// <summary>
         /// 对于即将添加到 FileTasks 列表中的 directory 任务, 应获取其总大小
@@ -124,6 +135,10 @@ namespace FileManager.Models
             }
             else
             {
+                if (task.IsDirectory && task.Length == 0)
+                {
+                    task.Length = GetLocalDirectoryLength(task.LocalPath);
+                }
 
             }
         }
@@ -239,7 +254,7 @@ namespace FileManager.Models
                 TransferingPackets.Clear();
                 FinishedPackets.Clear();
             }
-            StopDownloading = true;
+            IsStopDownloading = true;
         }
 
 
@@ -263,9 +278,9 @@ namespace FileManager.Models
                     UpdateUICallback();
                     Record.StartNewTask(current_task);
                     TransferSingleTask(current_task);
-                    if (StopDownloading)
+                    if (IsStopDownloading)
                     {
-                        StopDownloading = false;
+                        IsStopDownloading = false;
                         IsTransfering = false;
                         return;
                     }
@@ -363,43 +378,15 @@ namespace FileManager.Models
             UpdateTasklistCallback(new Action(() => {
                 lock (this.Record)
                 {
-                    this.Record.FileTasks.RemoveAt(Record.CurrentTaskIndex);
-                    DirectoryInfo directory = new DirectoryInfo(task.LocalPath);
-                    FileInfo[] fileInfos = directory.GetFiles();
-                    DirectoryInfo[] directoryInfos = directory.GetDirectories();
-                    /// 添加 task
-                    List<FileTask> tasks = new List<FileTask>();
+                    FileTask father_task = Record.CurrentTask;
                     int bias = Record.CurrentTaskIndex;
-
-                    // *********************** todo *********
-                    // UploadSingleTaskDirectory insert 时没有考虑文件夹大小 2021.02.07
-                    // **************************
-
-                    for (int i = 0; i < directoryInfos.Length; ++i)
+                    this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
+                    List<FileTask> tasks_son = GetUploadTasksInDirectory(father_task.LocalPath, father_task.RemotePath);
+                    for (int i = 0; i < tasks_son.Count; ++i)
                     {
-                        DirectoryInfo d = directoryInfos[i];
-                        this.Record.FileTasks.Insert(bias + i, new FileTask
-                        {
-                            IsDirectory = true,
-                            Type = TransferType.Upload,
-                            RemotePath = task.RemotePath + "\\" + d.Name,
-                            LocalPath = task.LocalPath + "\\" + d.Name,
-                            Length = 0,
-                        });
-                        //Record.TotalLength += 0;
-                    }
-                    for (int i = 0; i < fileInfos.Length; ++i)
-                    {
-                        FileInfo f = fileInfos[i];
-                        this.Record.FileTasks.Insert(bias + i, new FileTask
-                        {
-                            IsDirectory = false,
-                            Type = TransferType.Upload,
-                            RemotePath = task.RemotePath + "\\" + f.Name,
-                            LocalPath = task.LocalPath + "\\" + f.Name,
-                            Length = f.Length,
-                        });
-                        //Record.TotalLength += f.Length;
+                        FileTask task_son = tasks_son[i];
+                        UpdateTaskLength(task_son);
+                        this.Record.InsertTask(bias + i, task_son);
                     }
                 }
             }));
@@ -469,10 +456,13 @@ namespace FileManager.Models
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="task"></param>
         private void TransferSingleTaskBigFile(FileTask task)
         {
-
-            /// 获取 FileStreamId
+            /// 请求 server 端打开文件, 并获取 FileStreamId
             task.FileStreamId = GetFileStreamId(task);
             if (task.FileStreamId == -1) 
             {
@@ -488,7 +478,7 @@ namespace FileManager.Models
 
 
             /// 运行下载子线程
-            RunTransferSubThreads(task);
+            FileTaskStatus result = RunTransferSubThreads(task);
 
             /// 结束 Transfer, 关闭 FileStream
             localFileStream.Close();
@@ -514,18 +504,19 @@ namespace FileManager.Models
             }
 
             /// 判断从子线程退出返回原因是否是 Pause
-            if (StopDownloading)
+            if (IsStopDownloading)
             {
                 task.Status = FileTaskStatus.Pause;
             }
             else
             {
-                task.Status = FileTaskStatus.Success;
+                task.Status = result;
             }
         }
 
+
         /// <summary>
-        /// 根据 FileTask 向 Server 端请求 FileStreamId (0~65535), 如有异常返回-1
+        /// 根据 FileTask 向 Server 端请求 FileStreamId (16bit - 0~65535), 如有异常返回-1
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
@@ -535,23 +526,8 @@ namespace FileManager.Models
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                if (task.Type == TransferType.Upload)
-                {
-                    int keyLength = 16;
-                    byte[] keyBytes = GenerateKeyBytes(keyLength);
-                    byte[] headerBytes = BytesParser.WriteString(keyBytes, task.RemotePath, ref keyLength);
-                    client.SendBytes(SocketPacketFlag.UploadFileStreamIdRequest, headerBytes);
-                }
-                else
-                {
-                    client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest, task.RemotePath);
-                }
-                client.ReceiveBytes(client.client, out HB32Header header, out byte[] bytes);
-                client.Close();
-                if (header.Flag != (SocketPacketFlag.DownloadAllowed ^ mask))
-                {
-                    throw new Exception(Encoding.UTF8.GetString(bytes));
-                }
+                client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest | mask, task.RemotePath);
+                client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
                 string response = Encoding.UTF8.GetString(bytes);
                 return int.Parse(response);
             }
@@ -561,13 +537,13 @@ namespace FileManager.Models
                 System.Windows.Forms.MessageBox.Show(ex.Message);
                 return -1;
             }
-
         }
 
 
 
-        private void RunTransferSubThreads(FileTask task)
+        private FileTaskStatus RunTransferSubThreads(FileTask task)
         {
+            IsCurrentTaskFailed = false;
             /// 清空 packets 缓存记录
             lock (this.PacketLock)
             {
@@ -588,23 +564,27 @@ namespace FileManager.Models
                 TransferSubThreads[i].Start(task);
                 Thread.Sleep(50);
             }
-            Config.ThreadLimit = 2;
+            //Config.ThreadLimit = 2;
             /// 阻塞至子线程工作完毕
             for (int i = 0; i < Config.ThreadLimit; ++i)
             {
                 TransferSubThreads[i].Join();
             }
+            /// 确定 task 状态
+            if (IsCurrentTaskFailed)
+            {
+                IsCurrentTaskFailed = false;
+                return FileTaskStatus.Failed;
+            }
+            else
+            {
+                return FileTaskStatus.Success;
+            }
         }
 
 
-        /// <summary>
-        /// Server 端重启后, 原有 fsid 不可用, 在某一 SubThread 中首先重新调用 GetFileStreamId()
-        /// 将此 flag 置为 true
-        /// 此时其余线程执行 SendHeader() 或 SendBytes() 应加锁, 保证在获取 fsid 后再发包
-        /// </summary>
-        private bool FlagRequestingFsid { get; set; } = false;
 
-        private readonly object LockRequestFsid = new object();
+        private readonly object obj_lock_request_fsid = new object();
 
         private void DownloadThreadUnit(object o)
         {
@@ -613,45 +593,60 @@ namespace FileManager.Models
             int packet = GeneratePacketIndex(task);
             while (packet != -1)
             {
-                if (StopDownloading)
+                if (IsStopDownloading || IsCurrentTaskFailed)
                 {
                     break;
                 }
                 try
                 {
-                    if (FlagRequestingFsid)
+                    #region 通过 fsid 向 server 请求 bytes
+                    /// ↑ 包含在 server 重启后重新获取 fsid 的异常处理
+                    if (IsRequestingFsid)
                     {
-                        lock (LockRequestFsid)
+                        /// 此时其它线程正在获取fsid并已获得 obj_lock_request_fsid 锁
+                        /// 等待其它线程释放 obj_lock_request_fsid 后, 可通过 fsid 请求packet
+                        lock (obj_lock_request_fsid)
                         {
                             client.SendHeader(client.client, SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
                         }
                     }
                     else
                     {
+                        /// 正常请求packet
                         client.SendHeader(client.client, SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
                     }
                     client.ReceivePacket(client.client, out HB32Header header, out byte[] bytes);
-                    /// ↓对应情况: Server 重启后没有对应 fsid, client端原有 fsid 不可用
+                    /// 异常处理
                     if (header.Flag == SocketPacketFlag.DownloadDenied)
                     {
-                        
-                        if (FlagRequestingFsid)
+                        if (header.I1 > 0)
                         {
-                            /// 此时其它子线程正在获取 fsid
-                            /// 执行 continue 后进入 LockRequestFsid 等待获取fsid的线程释放锁
-                            continue;
+                            /// ↓对应情况: Server 重启后没有对应 fsid, client端原有 fsid 不可用
+                            if (IsRequestingFsid)
+                            {
+                                /// 此时其它子线程正在获取 fsid
+                                /// 执行 continue 后进入 lock(obj_lock_request_fsid) 等待获取fsid的线程释放锁
+                                continue;
+                            }
+                            else
+                            {
+                                /// 加锁获取 fsid, 此时其它子线程等待当前线程获取 fsid 后再发包
+                                IsRequestingFsid = true;
+                                lock (obj_lock_request_fsid)
+                                {
+                                    task.FileStreamId = GetFileStreamId(task);
+                                    IsRequestingFsid = false;
+                                }
+                            }
                         }
                         else
                         {
-                            /// 加锁获取 fsid, 此时其它子线程等待当前线程获取 fsid 后再发包
-                            FlagRequestingFsid = true;
-                            lock (LockRequestFsid)
-                            {
-                                task.FileStreamId = GetFileStreamId(task);
-                                FlagRequestingFsid = false;
-                            }
+                            /// task failed, 置 flag 后退出子线程
+                            IsCurrentTaskFailed = true;
+                            break;
                         }
                     }
+                    #endregion
                     lock (this.localFileStream)
                     {
                         localFileStream.Seek((long)packet * HB32Encoding.DataSize, SeekOrigin.Begin);
@@ -676,7 +671,7 @@ namespace FileManager.Models
                 catch (Exception)
                 {
                     /// 生成已连接 SocketClient
-                    while (!StopDownloading)
+                    while (!IsStopDownloading)
                     {
                         try
                         {
@@ -694,20 +689,24 @@ namespace FileManager.Models
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="o"></param>
         private void UploadThreadUnit(object o)
         {
             FileTask task = (FileTask)o;
-            int fsid = task.FileStreamId;
             SocketClient client = SocketFactory.GenerateConnectedSocketClient(task);
             int packet = GeneratePacketIndex(task);
             while (packet != -1)
             {
-                if (StopDownloading)
+                if (IsStopDownloading || IsCurrentTaskFailed)
                 {
                     break;
                 }
                 try
                 {
+                    /// 根据 packet 读取 FileStream 中 bytes
                     long begin = (long)packet * HB32Encoding.DataSize;
                     int length = HB32Encoding.DataSize;
                     if(begin + HB32Encoding.DataSize > task.Length)
@@ -720,8 +719,42 @@ namespace FileManager.Models
                         localFileStream.Seek((long)packet * HB32Encoding.DataSize, SeekOrigin.Begin);
                         localFileStream.Read(contentBytes, 0, length);
                     }
-                    client.SendBytes(SocketPacketFlag.UploadPacketRequest, contentBytes, fsid, packet);
+                    /// 上传 packet 对应 bytes
+                    if (IsRequestingFsid)
+                    {
+                        lock (obj_lock_request_fsid)
+                        {
+                            client.SendBytes(SocketPacketFlag.UploadPacketRequest, contentBytes, task.FileStreamId, packet);
+                        }
+                    }
+                    else
+                    {
+                        client.SendBytes(SocketPacketFlag.UploadPacketRequest, contentBytes, task.FileStreamId, packet);
+                    }
                     client.ReceiveBytes(client.client, out HB32Header header, out byte[] bytes);
+                    /// 异常处理
+                    if (header.Flag == SocketPacketFlag.UploadDenied)
+                    {
+                        if (header.I1 > 0)
+                        {
+                            if (IsRequestingFsid) { continue; }
+                            else
+                            {
+                                IsRequestingFsid = true;
+                                lock (obj_lock_request_fsid)
+                                {
+                                    task.FileStreamId = GetFileStreamId(task);
+                                    IsRequestingFsid = false;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            IsCurrentTaskFailed = true;
+                            break;
+                        }
+                    }
+                    /// 完成当前 packet
                     FinishPacket(task, packet);
                     lock (this.Record)
                     {
@@ -767,7 +800,6 @@ namespace FileManager.Models
                     else
                     {
                         TransferingPackets.Add(packet);
-                        //Log.ThreadPackage(Thread.CurrentThread.ManagedThreadId, package, "generate", task.FinishedPackage.ToString());
                         return packet;
                     }
                 }
@@ -798,12 +830,6 @@ namespace FileManager.Models
             }
         }
 
-
-
-        private byte[] GenerateKeyBytes(int keyLength = 16)
-        {
-            return new byte[keyLength];
-        }
 
 
     }
