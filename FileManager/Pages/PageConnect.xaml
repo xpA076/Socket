@@ -65,17 +65,45 @@
             <RowDefinition Height="5*" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="1">
-            <StackPanel Orientation="Vertical" Width="400">
-                <TextBlock Text="Server IP :" FontSize="20" Margin="0 0 0 10" TextAlignment="Center"  Foreground="#BBB"/>
-                <TextBox x:Name="TextIP" FontSize="24" Margin="20" Padding="3" Background="#444" 
-                         KeyDown="TextBoxTextIP_KeyDown"
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <TextBlock Text="Server IP :" FontSize="20" Height="24" TextAlignment="Center" HorizontalAlignment="Center" Foreground="#BBB"/>
+                </Grid>
+                <Grid Grid.Column="1">
+                    <TextBox x:Name="TextBoxIP" FontSize="24" Height="38" Padding="3" Background="#444" 
+                         KeyDown="TextBoxIP_KeyDown" LostFocus="TextBoxIP_LostFocus"
                          TextAlignment="Center" Foreground="#CCC"/>
-                <Button x:Name="ButtonConnect" Content="Connect" Margin="30" Height="36"
+                </Grid>
+                <Grid Grid.Column="2">
+                    <Button x:Name="ButtonConnect" Content="Connect" Height="36"
                         FontFamily="Segoe UI" FontSize="20" Width="150" 
-                        PreviewMouseLeftButtonDown="ButtonConnect_MouseLeftDown"
-                        Cursor="Hand" Style="{StaticResource PageButton}">
-                </Button>
-            </StackPanel>
+                        Click="ButtonConnect_Click"
+                        Cursor="Hand" Style="{StaticResource PageButton}"/>
+                </Grid>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <TextBlock Text="  Proxy  :" FontSize="20" Height="24" TextAlignment="Center" HorizontalAlignment="Center" Foreground="#BBB"/>
+                </Grid>
+                <Grid Grid.Column="1">
+                    <TextBox x:Name="TextBoxProxy" FontSize="24" Height="38" Padding="3" Background="#444" 
+                         KeyDown="TextBoxProxy_KeyDown" Margin="0 0 50 0"
+                         TextAlignment="Center" Foreground="#CCC"/>
+                </Grid>
+            </Grid>
         </Grid>
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>

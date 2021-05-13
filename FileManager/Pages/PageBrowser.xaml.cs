@@ -36,17 +36,6 @@ namespace FileManager.Pages
 
         private List<string> RemoteDirArray = new List<string>();
 
-        public TCPAddress ServerAddress
-        {
-            get
-            {
-                return this.parent.ServerAddress;
-            }
-            set
-            {
-                this.parent.ServerAddress = value;
-            }
-        }
 
 
         private string RemoteDirectory
@@ -99,7 +88,7 @@ namespace FileManager.Pages
 
         public async void ButtonRefresh_Click(object sender, RoutedEventArgs e)
         {
-            if (this.parent.ServerAddress == null) return;
+            if (!this.parent.IsConnected) return;
             this.ButtonRefresh.Visibility = Visibility.Hidden;
             _ = await ListFiles();
             this.ButtonRefresh.Visibility = Visibility.Visible;
@@ -144,7 +133,7 @@ namespace FileManager.Pages
             {
                 FileTask task = new FileTask
                 {
-                    TcpAddress = SocketFactory.ServerAddress.Copy(),
+                    Route = SocketFactory.CurrentRoute.Copy(),
                     IsDirectory = selected.IsDirectory,
                     Type = TransferType.Download,
                     RemotePath = RemoteDirectory + selected.Name,
@@ -191,6 +180,7 @@ namespace FileManager.Pages
                     string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
                     this.parent.SubPageTransfer.AddTask(new FileTask
                     {
+                        Route = SocketFactory.CurrentRoute.Copy(),
                         IsDirectory = false,
                         Type = TransferType.Upload,
                         RemotePath = remoteDir + name,
@@ -206,6 +196,7 @@ namespace FileManager.Pages
                 string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
                 this.parent.SubPageTransfer.AddTask(new FileTask
                 {
+                    Route = SocketFactory.CurrentRoute.Copy(),
                     IsDirectory = true,
                     Type = TransferType.Upload,
                     RemotePath = remoteDir + name,
@@ -257,11 +248,11 @@ namespace FileManager.Pages
             return Task.Run(() => {
                 try
                 {
-
-                    // 向 server 请求文件列表
                     Logger.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
-                    SocketClient client = SocketFactory.GenerateConnectedSocketClient(1);
-                    this.fileClasses = client.RequestDirectory(RemoteDirectory);
+                    SocketClient client = SocketFactory.GenerateConnectedSocketClient();
+                    client.SendBytes(SocketPacketFlag.DirectoryRequest, RemoteDirectory);
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
+                    this.fileClasses = SocketFileInfo.BytesToList(recv_bytes);
                     client.Close();
                     this.Dispatcher.Invoke(() => {
                         //this.ListBoxFile.ItemsSource = this.fileClasses;

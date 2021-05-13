@@ -12,8 +12,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileManager", "FileManager\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileManagerServer", "ServerForm\FileManagerServer.csproj", "{EC21A1A8-DB28-4041-987D-8F23E572722F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StatusReporter", "StatusReporter\StatusReporter.csproj", "{A85D392E-B45B-4CE1-BFCD-2E49A885C5B7}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,10 +30,6 @@ Global
 		{EC21A1A8-DB28-4041-987D-8F23E572722F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC21A1A8-DB28-4041-987D-8F23E572722F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC21A1A8-DB28-4041-987D-8F23E572722F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A85D392E-B45B-4CE1-BFCD-2E49A885C5B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A85D392E-B45B-4CE1-BFCD-2E49A885C5B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A85D392E-B45B-4CE1-BFCD-2E49A885C5B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A85D392E-B45B-4CE1-BFCD-2E49A885C5B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

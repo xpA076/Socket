@@ -27,7 +27,7 @@ namespace FileManager.Models
 
     public class FileTask : INotifyPropertyChanged
     {
-        public TCPAddress TcpAddress { get; set; }
+        public ConnectionRoute Route { get; set; }
 
         public bool IsDirectory { get; set; } = false;
         public TransferType Type { get; set; }
@@ -49,7 +49,7 @@ namespace FileManager.Models
         {
             get
             {
-                return TcpAddress.ToString();
+                return Route.ServerAddress.ToString();
             }
         }
 

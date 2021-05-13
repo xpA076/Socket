@@ -8,6 +8,9 @@ using SocketLib.Enums;
 
 namespace SocketLib
 {
+
+    public delegate byte[] GetHeaderBytesHandler(HB32Header header);
+
     public class HB32Header
     {
         public SocketPacketFlag Flag { get; set; } = 0;
@@ -21,7 +24,7 @@ namespace SocketLib
 
         public byte[] GetBytes()
         {
-            return BytesParser.WriteIntArray(new int[] 
+            return BytesConverter.WriteIntArray(new int[] 
             { 
                 (int)Flag,
                 I1,
@@ -34,9 +37,16 @@ namespace SocketLib
             });
         }
 
+
+        public static byte[] GetBytes(HB32Header header)
+        {
+            return header.GetBytes();
+        }
+
+
         public static HB32Header ReadFromBytes(byte[] bytes)
         {
-            int[] array = BytesParser.ParseIntArray(bytes, 0, 32);
+            int[] array = BytesConverter.ParseIntArray(bytes, 0, 32);
             return new HB32Header()
             {
                 Flag = (SocketPacketFlag)array[0],

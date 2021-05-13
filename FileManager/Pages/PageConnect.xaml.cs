@@ -38,17 +38,6 @@ namespace FileManager.Pages
 
         private string _lastFocusListView = "";
 
-        public TCPAddress ServerAddress
-        {
-            get
-            {
-                return this.parent.ServerAddress;
-            }
-            set
-            {
-                this.parent.ServerAddress = value;
-            }
-        }
 
 
         public PageConnect()
@@ -57,7 +46,7 @@ namespace FileManager.Pages
             //this.ButtonConnect.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonConnect_MouseLeftDown);
             if (Config.Histories.Count > 0)
             {
-                this.TextIP.Text = Config.Histories[0].Info;
+                this.TextBoxIP.Text = Config.Histories[0].Info;
             }
             
             /*
@@ -83,7 +72,7 @@ namespace FileManager.Pages
         {
             if (this.ListViewHistory.SelectedIndex >= 0)
             {
-                this.TextIP.Text = Config.Histories[this.ListViewHistory.SelectedIndex].Info;
+                this.TextBoxIP.Text = Config.Histories[this.ListViewHistory.SelectedIndex].Info;
             }
             
         }
@@ -92,18 +81,18 @@ namespace FileManager.Pages
         {
             if (this.ListViewStar.SelectedIndex >= 0)
             {
-                this.TextIP.Text = Config.Stars[this.ListViewStar.SelectedIndex].Info;
+                this.TextBoxIP.Text = Config.Stars[this.ListViewStar.SelectedIndex].Info;
             }
         }
 
         private void ListViewHistoryItem_DoubleClick(object sender, RoutedEventArgs e)
         {
-            this.ButtonConnect_MouseLeftDown(null, null);
+            this.ButtonConnect_Click(null, null);
         }
 
         private void ListViewStarItem_DoubleClick(object sender, RoutedEventArgs e)
         {
-            this.ButtonConnect_MouseLeftDown(null, null);
+            this.ButtonConnect_Click(null, null);
         }
 
         private void ListViewHistory_GotFocus(object sender, RoutedEventArgs e)
@@ -148,22 +137,30 @@ namespace FileManager.Pages
             Config.UnStar(connectionRecord);
         }
 
-        private void TextBoxTextIP_KeyDown(object sender, KeyEventArgs e)
+        private void TextBoxIP_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
-                ButtonConnect_MouseLeftDown(null, null);
+                ButtonConnect_Click(null, null);
             }
         }
 
-        private void ButtonConnect_MouseLeftDown(object sender, MouseButtonEventArgs e)
+        private void TextBoxProxy_KeyDown(object sender, KeyEventArgs e)
         {
-            if (IsConnecting) { return; }
+            TextBoxIP_KeyDown(sender, e);
+        }
+
+
+
+        private void ButtonConnect_Click(object sender, RoutedEventArgs e)
+        {
+            if (IsConnecting) { 
+                return; }
             TCPAddress tcpAddress = new TCPAddress();
             try
             {
                 int port = Config.DefaultPort;
-                string ip_str = this.TextIP.Text;
+                string ip_str = this.TextBoxIP.Text;
                 if (ip_str.Contains(":"))
                 {
                     port = int.Parse(ip_str.Split(':')[1]);
@@ -175,56 +172,70 @@ namespace FileManager.Pages
             catch (Exception)
             {
                 MessageBox.Show("Invalid address syntax");
-                Logger.Log("Invalid address syntax : " + this.TextIP.Text, LogLevel.Warn);
+                Logger.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
                 return;
             }
+            // **** todo **** 在 SocketFactory 中重写 21.05.12
             try
             {
                 IsConnecting = true;
-                Logger.Log("Start connection to " + this.TextIP.Text, LogLevel.Info);
+                Logger.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
-                SocketClient s = new SocketClient(tcpAddress, (ex) => {
-                    this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
-                        this.ButtonConnect.Content = "Connect";
-                    }));
-                    MessageBox.Show(ex.Message);
-                });
-                s.AsyncConnect(() => {
-                    /// 发送验证 KeyBytes
-                    s.SendBytes(SocketPacketFlag.AuthenticationPacket, Config.KeyBytes, 0, 0, 1);
-                    s.ReceiveHeader(s.client, out HB32Header header);
-                    if (header.Flag != SocketPacketFlag.AuthenticationResponse)
-                    {
-                        throw new ArgumentException("not valid header");
-                    }
-                    SocketIdentity identity = (SocketIdentity)header.I1;
-                    s.Close();
-                    /// 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
-                    this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
-                        Logger.Log("Connection to " + this.TextIP.Text + " success", LogLevel.Info);
-                        this.parent.ServerAddress = tcpAddress;
-                        Config.InsertHistory(new ConnectionRecord
-                        {
-                            Info = this.TextIP.Text
-                        });
-                        this.parent.StartConnectionMonitor();
-                        this.parent.RedirectPage("Browser");
-                        System.Threading.Thread.Sleep(100);
-                        this.parent.SubPageBrowser.ResetRemoteDirectory();
-                        this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
-                    }));
-                });
+                SocketClient s = new SocketClient(tcpAddress);
+                s.AsyncConnect(
+                    () => {
+                        /// 发送验证 KeyBytes
+                        s.SendBytes(SocketPacketFlag.AuthenticationPacket, Config.KeyBytes, 0, 0, 1);
+                        s.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header, out byte[] bytes);
+                        SocketIdentity identity = (SocketIdentity)header.I1;
+                        s.Close();
+                        /// 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
+                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
+                            this.ButtonConnect.Content = "Connect";
+                            Logger.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
+                            this.parent.ServerAddress = tcpAddress;
+                            Config.InsertHistory(new ConnectionRecord
+                            {
+                                Info = this.TextBoxIP.Text
+                            });
+                            this.parent.StartConnectionMonitor();
+                            this.parent.RedirectPage("Browser");
+                            System.Threading.Thread.Sleep(100);
+                            this.parent.SubPageBrowser.ResetRemoteDirectory();
+                            this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
+                        }));
+                        IsConnecting = false;
+                    }, 
+                    (ex) => {
+                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
+                            this.ButtonConnect.Content = "Connect";
+                        }));
+                        MessageBox.Show(ex.Message);
+                        IsConnecting = false;
+                    }, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
             }
             catch (Exception ex)
             {
-                Logger.Log("Connection to " + this.TextIP.Text + " failed. " + ex.Message, LogLevel.Info);
+                /// AsyncConnect 的异常在上面的 SocketAsyncExceptionCallback 中处理
+                /// 这里的代码应该不会执行
+                Logger.Log("Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
                 MessageBox.Show(ex.Message);
-            }
-            finally
-            {
-                this.ButtonConnect.Content = "Connect";
                 IsConnecting = false;
             }
+            /// 这里如果写 finally 的话, 会执行于异步代码 AsyncConnect 之前
+            /// 所以不应在这里用 finally 处理, 后续处理应该写进 AysncConnect 的代理方法内
+            /*
+            finally
+            {
+                //this.ButtonConnect.Content = "Connect";
+                //IsConnecting = false;
+            }
+            */
+        }
+
+        private void TextBoxIP_LostFocus(object sender, RoutedEventArgs e)
+        {
+            int a =1;
         }
     }
 }

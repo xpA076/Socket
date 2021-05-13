@@ -14,7 +14,8 @@ namespace SocketLib
 {
     public class SocketIO
     {
-        protected System.Web.Script.Serialization.JavaScriptSerializer jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+        public GetHeaderBytesHandler GetHeaderBytesFunc = HB32Header.GetBytes;
+
 
         /// <summary>
         /// 循环操作socket接收数据写入buffer, 收不到数据抛出异常
@@ -47,27 +48,24 @@ namespace SocketLib
 
         #region Socket 字节流 发送 与 接收
 
-        /// <summary>
-        /// Receive socket 只接收包头
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        public void ReceiveHeader(Socket socket, out HB32Header header)
-        {
-            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
-            ReceiveBuffer(socket, bytes_header);
-            header = HB32Header.ReadFromBytes(bytes_header);
-        }
+
 
         /// <summary>
         /// Send socket 只发送包头
+        /// 只有 SendHeader() 会只发送包头
+        /// SendBytes() 至少会发一个空包
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>
-        public void SendHeader(Socket socket, HB32Header header)
+        protected void SendHeader(Socket socket, HB32Header header)
         {
-            socket.Send(header.GetBytes(), HB32Encoding.HeaderSize, SocketFlags.None);
+            header.PacketCount = 0;
+            header.TotalByteLength = 0;
+            header.PacketIndex = 0;
+            header.ValidByteLength = 0;
+            socket.Send(GetHeaderBytesFunc(header), HB32Encoding.HeaderSize, SocketFlags.None);
         }
+
 
         /// <summary>
         /// Send socket 只发送包头
@@ -77,7 +75,7 @@ namespace SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        public void SendHeader(Socket socket, SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
+        protected void SendHeader(Socket socket, SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendHeader(socket, new HB32Header
             {
@@ -88,19 +86,6 @@ namespace SocketLib
             });
         }
 
-        /// <summary>
-        /// 尽量不要用, 可以用 ReceiveBytes() 代替
-        /// Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header">输出包头</param>
-        /// <param name="bytes_data"></param>
-        public void ReceivePacket(Socket socket, out HB32Header header, out byte[] bytes_data)
-        {
-            ReceiveHeader(socket, out header);
-            bytes_data = new byte[HB32Encoding.DataSize];
-            ReceiveBuffer(socket, bytes_data);
-        }
 
         /// <summary>
         /// 发送 Socket 数据包, 过长的 byte流 会被拆成多个包发送
@@ -109,7 +94,7 @@ namespace SocketLib
         /// <param name="socket"></param>
         /// <param name="header"></param>
         /// <param name="bytes"></param>
-        public void SendBytes(Socket socket, HB32Header header, byte[] bytes)
+        protected void SendBytes(Socket socket, HB32Header header, byte[] bytes)
         {
             header.PacketCount = ((bytes.Length > 0 ? bytes.Length : 1) - 1) / (HB32Encoding.DataSize) + 1;
             header.TotalByteLength = bytes.Length;
@@ -120,7 +105,7 @@ namespace SocketLib
                 {
                     header.ValidByteLength = bytes.Length - offset;
                     byte[] _toSend = new byte[HB32Encoding.PacketSize];
-                    Array.Copy(header.GetBytes(), 0, _toSend, 0, HB32Encoding.HeaderSize);
+                    Array.Copy(GetHeaderBytesFunc(header), 0, _toSend, 0, HB32Encoding.HeaderSize);
                     Array.Copy(bytes, offset, _toSend, HB32Encoding.HeaderSize, bytes.Length - offset);
                     socket.Send(_toSend);
                 }
@@ -128,7 +113,7 @@ namespace SocketLib
                 {
                     header.ValidByteLength = HB32Encoding.DataSize;
                     byte[] _toSend = new byte[HB32Encoding.PacketSize];
-                    Array.Copy(header.GetBytes(), 0, _toSend, 0, HB32Encoding.HeaderSize);
+                    Array.Copy(GetHeaderBytesFunc(header), 0, _toSend, 0, HB32Encoding.HeaderSize);
                     Array.Copy(bytes, offset, _toSend, HB32Encoding.HeaderSize, HB32Encoding.DataSize);
                     socket.Send(_toSend);
                 }
@@ -141,13 +126,15 @@ namespace SocketLib
             }
         }
 
+
+
         /// <summary>
         /// 发送 Socket 数据包, 字符串以 UTF-8 编码后发送
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>
         /// <param name="str"></param>
-        public void SendBytes(Socket socket, HB32Header header, string str)
+        protected void SendBytes(Socket socket, HB32Header header, string str)
         {
             SendBytes(socket, header, Encoding.UTF8.GetBytes(str));
         }
@@ -161,7 +148,7 @@ namespace SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        public void SendBytes(Socket socket, SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        protected void SendBytes(Socket socket, SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(socket, new HB32Header
             {
@@ -181,28 +168,58 @@ namespace SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        public void SendBytes(Socket socket, SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        protected void SendBytes(Socket socket, SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(socket, flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
         }
 
 
+        /// <summary>
+        /// Receive socket 只接收包头
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header"></param>
+        protected void ReceiveHeader(Socket socket, out HB32Header header)
+        {
+            byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
+            ReceiveBuffer(socket, bytes_header);
+            header = HB32Header.ReadFromBytes(bytes_header);
+        }
+
+
+        /// <summary>
+        /// 尽量不要用, 可以用 ReceiveBytes() 代替
+        /// Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header">输出包头</param>
+        /// <param name="bytes_data"></param>
+        protected void ReceivePacket(Socket socket, out HB32Header header, out byte[] bytes_data)
+        {
+            ReceiveHeader(socket, out header);
+            bytes_data = new byte[HB32Encoding.DataSize];
+            ReceiveBuffer(socket, bytes_data);
+        }
+
+
+
         /// 接收 Socket 数据包, 在接收不定长byte流时使用, 过长byte流会分开接收并拼接成byte数组
-        /// 当包头Flag为指定几种 SocketDataFlag 时，直接返回空byte数组
-        public void ReceiveBytes(Socket socket, out HB32Header header, out byte[] bytes)
+        /// 收到的数据只有包头时, 返回空byte数组
+        protected void ReceiveBytes(Socket socket, out HB32Header header, out byte[] bytes)
         {
             /// 通过包头判断byte流长度, 确定byte数组大小 包数量 等基本信息
             ReceiveHeader(socket, out header);
             /// 此时 socket 只接收了HB32Header包头长度的字节
-            /// 当包头Flag为指定几种 SocketDataFlag 时 :
-            /// *** 这几种flag代表对方只发了不带数据的包头过来 ***
-            /// 函数应直接返回空byte数组
+            /// 对于 SendHeader() 只发送包头的数据
+            /// 函数会直接返回空byte数组
+            /*
             if (header.Flag == SocketPacketFlag.DownloadPacketRequest ||
                 header.Flag == SocketPacketFlag.UploadPacketResponse)
             {
                 bytes = new byte[0];
                 return;
             }
+            */
             bytes = new byte[header.TotalByteLength];
             int offset = 0;     // bytes 数组写入起点偏移量
             for (int i = 0; i < header.PacketCount; ++i)
@@ -230,50 +247,6 @@ namespace SocketLib
             }
         }
 
-
-        public void ReceiveBytesWithHeaderFlag(Socket socket, SocketPacketFlag flag, out byte[] bytes)
-        {
-            this.ReceiveBytes(socket, out HB32Header header, out bytes);
-            if (header.Flag != flag)
-            {
-                string err_msg = "";
-                try
-                {
-                    err_msg = Encoding.UTF8.GetString(bytes);
-                }
-                catch (Exception) {; }
-                throw new ArgumentException(string.Format("[Received not valid header: {0}, required : {1}] -- {2}", header.Flag.ToString(), flag.ToString(), err_msg));
-            }
-        }
-
-        /// <summary>
-        /// 对象序列化, 以Json格式发送
-        ///   因为初始化 JavaScriptSerializer 有性能问题 (耗时3s左右)
-        ///   不建议使用
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        /// <param name="obj"></param>
-        public void SendJson(Socket socket, HB32Header header, object obj)
-        {
-            string json = jss.Serialize(obj);
-            SendBytes(socket, header, json);
-        }
-
-        /// <summary>
-        /// 接收字符串并以Json反序列化
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        /// <param name="obj"></param>
-        public void ReceiveJson<T>(Socket socket, out HB32Header header, out T obj)
-        {
-            ReceiveBytes(socket, out header, out byte[] bytes);
-            string json = Encoding.UTF8.GetString(bytes);
-            System.Web.Script.Serialization.JavaScriptSerializer j = new System.Web.Script.Serialization.JavaScriptSerializer();
-            obj = j.Deserialize<T>(json);
-        }
 
         #endregion
     }

@@ -68,7 +68,10 @@ namespace StatusReporter
             }));
             try
             {
-                SocketClient client = new SocketClient(ReporterConfig.ServerIP, ReporterConfig.ServerPort);
+                SocketClient client = new SocketClient();
+                client.Hostip = ReporterConfig.ServerIP;
+                client.Port = ReporterConfig.ServerPort;
+                //SocketClient client = new SocketClient(ReporterConfig.ServerIP, ReporterConfig.ServerPort);
                 client.Connect();
                 client.SendBytes(SocketPacketFlag.StatusReport, sb.ToString());
                 client.Close();

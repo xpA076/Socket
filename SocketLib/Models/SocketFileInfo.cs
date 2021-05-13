@@ -67,7 +67,7 @@ namespace SocketLib
 
             byte[] bytes = new byte[bytesCount + 4];
             int idx = 0;
-            bytes = BytesParser.WriteInt(bytes, byteList.Count, ref idx);
+            bytes = BytesConverter.WriteInt(bytes, byteList.Count, ref idx);
             foreach(byte[] _bytes in byteList)
             {
                 Array.Copy(_bytes, 0, bytes, idx, _bytes.Length);
@@ -79,7 +79,7 @@ namespace SocketLib
         public static List<SocketFileInfo> BytesToList(byte[] bytes)
         {
             int idx = 0;
-            int len = BytesParser.ParseInt(bytes, ref idx);
+            int len = BytesConverter.ParseInt(bytes, ref idx);
             List<SocketFileInfo> socketFileInfos = new List<SocketFileInfo>();
             for (int i = 0; i < len; ++i)
             {
@@ -92,18 +92,18 @@ namespace SocketLib
         {
             byte[] bytes = new byte[info.Name.Length + 4 + 8 + 1];
             int idx = 0;
-            bytes = BytesParser.WriteString(bytes, info.Name, ref idx);
-            bytes = BytesParser.WriteLong(bytes, info.Length, ref idx);
-            bytes = BytesParser.WriteBool(bytes, info.IsDirectory, ref idx);
+            bytes = BytesConverter.WriteString(bytes, info.Name, ref idx);
+            bytes = BytesConverter.WriteLong(bytes, info.Length, ref idx);
+            bytes = BytesConverter.WriteBool(bytes, info.IsDirectory, ref idx);
             return bytes;
         }
 
         public static SocketFileInfo FromBytes(byte[] bytes, ref int idx)
         {
             SocketFileInfo info = new SocketFileInfo();
-            info.Name = BytesParser.ParseString(bytes, ref idx);
-            info.Length = BytesParser.ParseLong(bytes, ref idx);
-            info.IsDirectory = BytesParser.ParseBool(bytes, ref idx);
+            info.Name = BytesConverter.ParseString(bytes, ref idx);
+            info.Length = BytesConverter.ParseLong(bytes, ref idx);
+            info.IsDirectory = BytesConverter.ParseBool(bytes, ref idx);
             return info;
         }
 

@@ -12,7 +12,35 @@ namespace FileManager.Models
     {
         private SocketLib.SocketClient SocketClient { get; set; }
 
-        public bool IsUseProxy { get; set; }
+        public bool IsWithProxy { get; set; }
+
+
+        private SocketLib.Enums.ProxyHeader NextProxyHeader { get; set; }
+
+
+        private byte[] GetHeaderBytes(HB32Header header)
+        {
+            if (IsWithProxy)
+            {
+                byte[] bytes = new byte[34];
+                bytes[0] = 0xA3;
+                bytes[1] = (byte)NextProxyHeader;
+                Array.Copy(header.GetBytes(), 0, bytes, 2, 32);
+                return bytes;
+            }
+            else
+            {
+                return header.GetBytes();
+            }
+        }
+
+
+        public void SendHeader(HB32Header header)
+        {
+            this.NextProxyHeader = SocketLib.Enums.ProxyHeader.SendBytes;
+            SocketClient.SendHeader(header);
+        }
+
 
         public void SendBytes(HB32Header header, byte[] bytes)
         {

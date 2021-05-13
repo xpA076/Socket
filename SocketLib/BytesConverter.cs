@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SocketLib
 {
-    public static class BytesParser
+    public static class BytesConverter
     {
         #region int
 

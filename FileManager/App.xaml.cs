@@ -18,11 +18,11 @@ namespace FileManager
         {
             if (e.Args.Length == 0)
             {
-                int a = 1;
+                //int a = 1;
             }
             else
             {
-                int a = 2;
+                //int a = 2;
             }
             return;
             //CatchException();

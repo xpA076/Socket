@@ -42,7 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BytesParser.cs" />
+    <Compile Include="BytesConverter.cs" />
+    <Compile Include="Models\ConnectionRoute.cs" />
+    <Compile Include="Enums\ProxyHeader.cs" />
     <Compile Include="Enums\SocketIdentity.cs" />
     <Compile Include="Enums\TransferType.cs" />
     <Compile Include="Handles.cs" />
@@ -55,12 +57,12 @@
     <Compile Include="SocketClient.cs" />
     <Compile Include="Enums\SocketPacketFlag.cs" />
     <Compile Include="SocketIO.cs" />
-    <Compile Include="SocketFileInfo.cs" />
+    <Compile Include="Models\SocketFileInfo.cs" />
     <Compile Include="SocketServer\SocketServer.cs" />
     <Compile Include="SocketServer\SocketServerConfig.cs" />
     <Compile Include="SocketServer\SocketServer_DirectoryPart.cs" />
     <Compile Include="SocketServer\SocketServer_FileTransferPart.cs" />
-    <Compile Include="TCPAddress.cs" />
+    <Compile Include="Models\TCPAddress.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -19,7 +19,7 @@ namespace SocketLib.SocketServer
 
         public SocketServer(IPAddress ip):base(ip)
         {
-            
+
         }
 
         private readonly Dictionary<Socket, SocketIdentity> ClientIdentities = new Dictionary<Socket, SocketIdentity>();

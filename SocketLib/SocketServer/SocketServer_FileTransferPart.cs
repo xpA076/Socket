@@ -69,7 +69,7 @@ namespace SocketLib.SocketServer
                     throw new Exception("Socket not authenticated.");
                 }
                 int pt = 0;
-                string path = BytesParser.ParseString(bytes, ref pt);
+                string path = BytesConverter.ParseString(bytes, ref pt);
                 byte[] contentBytes = new byte[bytes.Length - pt];
                 Array.Copy(bytes, pt, contentBytes, 0, contentBytes.Length);
                 File.WriteAllBytes(path, contentBytes);
@@ -218,11 +218,11 @@ namespace SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                SendHeader(client, new HB32Header { Flag = SocketPacketFlag.UploadPacketResponse });
+                SendHeader(client, SocketPacketFlag.UploadPacketResponse);
             }
             else
             {
-                SendHeader(client, new HB32Header { Flag = SocketPacketFlag.UploadDenied, I1 = i1 });
+                SendHeader(client, SocketPacketFlag.UploadDenied, i1);
             }
         }
 

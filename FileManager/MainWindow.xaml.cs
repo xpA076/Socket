@@ -37,6 +37,23 @@ namespace FileManager
 
         private TCPAddress _server_address = null;
 
+
+        // *** todo ***
+        public bool IsConnected
+        {
+            get
+            {
+                return CurrentRoute == null;
+            }
+        }
+
+
+        public ConnectionRoute CurrentRoute
+        {
+            get; set;
+        }
+
+
         public TCPAddress ServerAddress
         {
             get

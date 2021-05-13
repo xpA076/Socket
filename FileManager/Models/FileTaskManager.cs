@@ -120,6 +120,8 @@ namespace FileManager.Models
         }
 
 
+        #region Task length
+
         /// <summary>
         /// 对于即将添加到 FileTasks 列表中的 directory 任务, 应获取其总大小
         /// </summary>
@@ -153,9 +155,9 @@ namespace FileManager.Models
         {
             try
             {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task.TcpAddress);
+                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task.Route);
                 client.SendBytes(SocketPacketFlag.DirectorySizeRequest, task.RemotePath);
-                client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.DirectorySizeResponse, out byte[] bytes);
+                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectorySizeResponse, out byte[] bytes);
                 return long.Parse(Encoding.UTF8.GetString(bytes));
             }
             catch (Exception)
@@ -193,44 +195,10 @@ namespace FileManager.Models
             return size;
         }
 
+        #endregion
 
-        /// <summary>
-        /// 在 Uplaod Directory时, 获取 local_path 下所有子 FileTask 列表
-        /// </summary>
-        /// <param name="local_path"></param>
-        /// <param name="remote_path"></param>
-        /// <returns></returns>
-        private List<FileTask> GetUploadTasksInDirectory(string local_path, string remote_path)
-        {
-            DirectoryInfo directory = new DirectoryInfo(local_path);
-            DirectoryInfo[] directoryInfos = directory.GetDirectories();
-            List<FileTask> tasks = new List<FileTask>();
-            foreach(DirectoryInfo dir_info in directoryInfos)
-            {
-                tasks.Add(new FileTask
-                {
-                    IsDirectory = true,
-                    Type = TransferType.Upload,
-                    RemotePath = remote_path + "\\" + dir_info.Name,
-                    LocalPath = local_path + "\\" + dir_info.Name,
-                    Length = 0,
-                });
-            }
-            FileInfo[] fileInfos = directory.GetFiles();
-            foreach (FileInfo file_info in fileInfos)
-            {
-                tasks.Add(new FileTask
-                {
-                    IsDirectory = false,
-                    Type = TransferType.Upload,
-                    RemotePath = remote_path + "\\" + file_info.Name,
-                    LocalPath = local_path + "\\" + file_info.Name,
-                    Length = file_info.Length,
-                });
-            }
-            tasks.Sort(FileTask.Compare);
-            return tasks;
-        }
+
+
 
 
 
@@ -297,6 +265,8 @@ namespace FileManager.Models
         }
 
 
+        #region Transfer directory
+
         /// <summary>
         /// 启动 Directory 传输任务, 更新Task列表后按原 Record.CurrentIndex 返回
         /// </summary>
@@ -327,7 +297,9 @@ namespace FileManager.Models
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                files = client.RequestDirectory(task.RemotePath);
+                client.SendBytes(SocketPacketFlag.DirectoryRequest, task.RemotePath);
+                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
+                files = SocketFileInfo.BytesToList(recv_bytes);
                 client.Close();
             }
             catch (Exception)
@@ -344,7 +316,7 @@ namespace FileManager.Models
                     SocketFileInfo f = files[i];
                     FileTask task_add = new FileTask
                     {
-                        TcpAddress = task.TcpAddress.Copy(),
+                        Route = task.Route.Copy(),
                         IsDirectory = f.IsDirectory,
                         Type = TransferType.Download,
                         RemotePath = Path.Combine(task.RemotePath, f.Name),
@@ -364,9 +336,9 @@ namespace FileManager.Models
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
                 int pt = 0;
-                byte[] headerBytes = BytesParser.WriteString(new byte[4], task.RemotePath, ref pt);
+                byte[] headerBytes = BytesConverter.WriteString(new byte[4], task.RemotePath, ref pt);
                 client.SendBytes(SocketPacketFlag.CreateDirectoryRequest, headerBytes);
-                client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.CreateDirectoryAllowed, out byte[] recvBytes);
+                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.CreateDirectoryAllowed, out byte[] recvBytes);
                 client.Close();
             }
             catch (Exception)
@@ -381,7 +353,7 @@ namespace FileManager.Models
                     FileTask father_task = Record.CurrentTask;
                     int bias = Record.CurrentTaskIndex;
                     this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
-                    List<FileTask> tasks_son = GetUploadTasksInDirectory(father_task.LocalPath, father_task.RemotePath);
+                    List<FileTask> tasks_son = GetUploadTasksInDirectory(father_task);
                     for (int i = 0; i < tasks_son.Count; ++i)
                     {
                         FileTask task_son = tasks_son[i];
@@ -392,6 +364,50 @@ namespace FileManager.Models
             }));
         }
 
+        /// <summary>
+        /// 在 Uplaod Directory时, 获取 local_path 下所有子 FileTask 列表
+        /// </summary>
+        /// <param name="local_path"></param>
+        /// <param name="remote_path"></param>
+        /// <returns></returns>
+        private List<FileTask> GetUploadTasksInDirectory(FileTask father_task)
+        {
+            string local_path = father_task.LocalPath;
+            string remote_path = father_task.RemotePath;
+            DirectoryInfo directory = new DirectoryInfo(local_path);
+            DirectoryInfo[] directoryInfos = directory.GetDirectories();
+            List<FileTask> tasks = new List<FileTask>();
+            foreach (DirectoryInfo dir_info in directoryInfos)
+            {
+                tasks.Add(new FileTask
+                {
+                    Route = father_task.Route.Copy(),
+                    IsDirectory = true,
+                    Type = TransferType.Upload,
+                    RemotePath = remote_path + "\\" + dir_info.Name,
+                    LocalPath = local_path + "\\" + dir_info.Name,
+                    Length = 0,
+                });
+            }
+            FileInfo[] fileInfos = directory.GetFiles();
+            foreach (FileInfo file_info in fileInfos)
+            {
+                tasks.Add(new FileTask
+                {
+                    Route = father_task.Route.Copy(),
+                    IsDirectory = false,
+                    Type = TransferType.Upload,
+                    RemotePath = remote_path + "\\" + file_info.Name,
+                    LocalPath = local_path + "\\" + file_info.Name,
+                    Length = file_info.Length,
+                });
+            }
+            tasks.Sort(FileTask.Compare);
+            return tasks;
+        }
+
+
+        #endregion
 
         /// <summary>
         /// 启动 File 传输任务，根据当前 FileTask 任务区分传输模式，并阻塞直到所有子线程完成后,
@@ -429,19 +445,19 @@ namespace FileManager.Models
                 if (taskType == TransferType.Upload)
                 {
                     int pt = 0;
-                    byte[] headerBytes = BytesParser.WriteString(new byte[4], task.RemotePath, ref pt);
+                    byte[] headerBytes = BytesConverter.WriteString(new byte[4], task.RemotePath, ref pt);
                     byte[] contentBytes = File.ReadAllBytes(task.LocalPath);
                     byte[] bytes = new byte[headerBytes.Length + contentBytes.Length];
                     Array.Copy(headerBytes, 0, bytes, 0, headerBytes.Length);
                     Array.Copy(contentBytes, 0, bytes, headerBytes.Length, contentBytes.Length);
                     client.SendBytes(SocketPacketFlag.UploadRequest, bytes);
-                    client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.UploadAllowed, out byte[] recvBytes);
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.UploadAllowed, out byte[] recvBytes);
                     client.Close();
                 }
                 else
                 {
                     client.SendBytes(SocketPacketFlag.DownloadRequest, task.RemotePath);
-                    client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.DownloadAllowed, out byte[] bytes);
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed, out byte[] bytes);
                     client.Close();
                     File.WriteAllBytes(task.LocalPath, bytes);
                 }
@@ -494,7 +510,7 @@ namespace FileManager.Models
                 }
                 else
                 {
-                    sc.SendHeader(sc.client, SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, -1);
+                    sc.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, -1);
                 }
                 sc.Close();
             }
@@ -527,7 +543,7 @@ namespace FileManager.Models
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
                 client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest | mask, task.RemotePath);
-                client.ReceiveBytesWithHeaderFlag(client.client, SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
+                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
                 string response = Encoding.UTF8.GetString(bytes);
                 return int.Parse(response);
             }
@@ -607,15 +623,15 @@ namespace FileManager.Models
                         /// 等待其它线程释放 obj_lock_request_fsid 后, 可通过 fsid 请求packet
                         lock (obj_lock_request_fsid)
                         {
-                            client.SendHeader(client.client, SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
+                            client.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
                         }
                     }
                     else
                     {
                         /// 正常请求packet
-                        client.SendHeader(client.client, SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
+                        client.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
                     }
-                    client.ReceivePacket(client.client, out HB32Header header, out byte[] bytes);
+                    client.ReceiveBytes(out HB32Header header, out byte[] bytes);
                     /// 异常处理
                     if (header.Flag == SocketPacketFlag.DownloadDenied)
                     {
@@ -731,7 +747,7 @@ namespace FileManager.Models
                     {
                         client.SendBytes(SocketPacketFlag.UploadPacketRequest, contentBytes, task.FileStreamId, packet);
                     }
-                    client.ReceiveBytes(client.client, out HB32Header header, out byte[] bytes);
+                    client.ReceiveBytes(out HB32Header header, out byte[] bytes);
                     /// 异常处理
                     if (header.Flag == SocketPacketFlag.UploadDenied)
                     {

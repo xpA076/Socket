@@ -14,42 +14,78 @@ namespace SocketLib
     {
         public Socket client = null;
 
-        private IPAddress Hostip;
-        private int Port;
+        /// <summary>
+        /// 目标Server (或直接连接的第一层Proxy) 地址
+        /// </summary>
+        public TCPAddress HostAddress { get; set; } = null;
 
-        public static int SendTimeout { get; set; } = 3000;
-        public static int ReceiveTimeout { get; set; } = 3000;
 
-        private SocketAsyncExceptionCallback asyncExceptionCallback = null;
-
-        public SocketClient(string ip, string port, SocketAsyncExceptionCallback c = null)
-            : this(IPAddress.Parse(ip), int.Parse(port), c)
+        public SocketClient(TCPAddress tcpAddress)
         {
-            ;
+            HostAddress = tcpAddress.Copy();
+            this.GetHeaderBytesFunc = this.GetHeaderBytesWithProxy;
         }
 
-        public SocketClient(string ip, int port, SocketAsyncExceptionCallback c = null) 
-            : this(IPAddress.Parse(ip), port, c)
-        {
 
+        public bool IsWithProxy { get; set; } = false;
+
+        private SocketLib.Enums.ProxyHeader NextProxyHeader { get; set; }
+
+
+        private byte[] GetHeaderBytesWithProxy(HB32Header header)
+        {
+            if (IsWithProxy)
+            {
+                byte[] bytes = new byte[34];
+                bytes[0] = 0xA3;
+                bytes[1] = (byte)NextProxyHeader;
+                Array.Copy(header.GetBytes(), 0, bytes, 2, 32);
+                return bytes;
+            }
+            else
+            {
+                return header.GetBytes();
+            }
         }
 
-        public SocketClient(TCPAddress tcpAddress, SocketAsyncExceptionCallback c = null) 
-            : this(tcpAddress.IP, tcpAddress.Port, c)
-        {
 
+        #region Send / Receive
+
+        public void SendHeader(HB32Header header)
+        {
+            this.NextProxyHeader = ProxyHeader.SendHeader;
+            SendHeader(client, header);
         }
 
-        public SocketClient(IPAddress ip, int port, SocketAsyncExceptionCallback c = null)
+
+        public void SendHeader(SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
         {
-            Hostip = ip;
-            Port = port;
-            asyncExceptionCallback = c;
+            SendHeader(new HB32Header
+            {
+                Flag = flag,
+                I1 = i1,
+                I2 = i2,
+                I3 = i3
+            });
         }
+
+
+        public void SendBytes(HB32Header header, byte[] bytes)
+        {
+            this.NextProxyHeader = ProxyHeader.SendBytes;
+            SendBytes(client, header, bytes);
+        }
+
 
         public void SendBytes(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
-            SendBytes(client, flag, bytes, i1, i2, i3);
+            SendBytes(new HB32Header
+            {
+                Flag = flag,
+                I1 = i1,
+                I2 = i2,
+                I3 = i3
+            }, bytes);
         }
 
         public void SendBytes(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
@@ -57,33 +93,58 @@ namespace SocketLib
             SendBytes(flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
         }
 
-        /// <summary>
-        /// 获取 server 指定path下的文件列表
-        /// </summary>
-        /// <param name="path">server path</param>
-        /// <returns></returns>
-        public List<SocketFileInfo> RequestDirectory(string path)
+
+        public void ReceiveBytes(out HB32Header header, out byte[] bytes)
         {
-            SendBytes(client, SocketPacketFlag.DirectoryRequest, path);
-            ReceiveBytes(client, out HB32Header header, out byte[] bytes);
-            if (header.Flag != SocketPacketFlag.DirectoryResponse)
-            {
-                throw new Exception(Encoding.UTF8.GetString(bytes));
-            }
-            return SocketFileInfo.BytesToList(bytes);
+            client.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
+            ReceiveBytes(client, out header, out bytes);
         }
+
+
+        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out HB32Header header, out byte[] bytes)
+        {
+            ReceiveBytes(out header, out bytes);
+            if (header.Flag != flag)
+            {
+                string err_msg = "";
+                try
+                {
+                    err_msg = Encoding.UTF8.GetString(bytes);
+                }
+                catch (Exception) {; }
+                throw new ArgumentException(string.Format("[Received not valid header: {0}, required : {1}] -- {2}", header.Flag.ToString(), flag.ToString(), err_msg));
+            }
+        }
+
+
+        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out HB32Header header)
+        {
+            ReceiveBytesWithHeaderFlag(flag, out header, out _);
+        }
+
+
+        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out byte[] bytes)
+        {
+            ReceiveBytesWithHeaderFlag(flag, out _, out bytes);
+        }
+
+
+
+
+        #endregion
 
 
         /// <summary>
         /// client 异步 connect, 连接成功后执行回调函数句柄
         /// </summary>
         /// <param name="asyncCallback"></param>
-        public void AsyncConnect(SocketAsyncCallback asyncCallback)
+        public void AsyncConnect(SocketAsyncCallback asyncCallback, SocketAsyncExceptionCallback exceptionCallback, int SendTimeout, int ReceiveTimeout)
         {
-            IPEndPoint ipe = new IPEndPoint(Hostip, Port);
+            IPEndPoint ipe = new IPEndPoint(HostAddress.IP, HostAddress.Port);
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.SendTimeout = SocketClient.SendTimeout;
-            client.ReceiveTimeout = SocketClient.ReceiveTimeout;
+            client.SendTimeout = SendTimeout;
+            client.ReceiveTimeout = ReceiveTimeout;
+            /// BeginConnect为异步代码, 无法捕捉异常, 所以只能写成这种方式
             client.BeginConnect(ipe, asyncResult => {
                 try
                 {
@@ -92,17 +153,17 @@ namespace SocketLib
                 }
                 catch(Exception ex)
                 {
-                    asyncExceptionCallback(ex);
+                    exceptionCallback(ex);
                 }
             }, null);
         }
 
-        public void Connect()
+        public void Connect(int SendTimeout, int ReceiveTimeout)
         {
-            IPEndPoint ipe = new IPEndPoint(Hostip, Port);
+            IPEndPoint ipe = new IPEndPoint(HostAddress.IP, HostAddress.Port);
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.SendTimeout = SocketClient.SendTimeout;
-            client.ReceiveTimeout = SocketClient.ReceiveTimeout;
+            client.SendTimeout = SendTimeout;
+            client.ReceiveTimeout = ReceiveTimeout;
             client.Connect(ipe);
             //client.Blocking = true;
         }
