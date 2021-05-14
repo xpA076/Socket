@@ -156,7 +156,7 @@ namespace FileManager.Pages
         {
             if (IsConnecting) { 
                 return; }
-            TCPAddress tcpAddress = new TCPAddress();
+            ConnectionRoute route = new ConnectionRoute();
             try
             {
                 int port = Config.DefaultPort;
@@ -166,8 +166,8 @@ namespace FileManager.Pages
                     port = int.Parse(ip_str.Split(':')[1]);
                     ip_str = ip_str.Split(':')[0];
                 }
-                tcpAddress.IP = IPAddress.Parse(ip_str);
-                tcpAddress.Port = port;
+                route.ServerAddress.IP = IPAddress.Parse(ip_str);
+                route.ServerAddress.Port = port;
             }
             catch (Exception)
             {
@@ -175,50 +175,48 @@ namespace FileManager.Pages
                 Logger.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
                 return;
             }
-            // **** todo **** 在 SocketFactory 中重写 21.05.12
+            // **** todo **** 在 SocketFactory 中重写Async 21.05.12
             try
             {
                 IsConnecting = true;
                 Logger.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
-                SocketClient s = new SocketClient(tcpAddress);
-                s.AsyncConnect(
-                    () => {
-                        /// 发送验证 KeyBytes
-                        s.SendBytes(SocketPacketFlag.AuthenticationPacket, Config.KeyBytes, 0, 0, 1);
-                        s.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header, out byte[] bytes);
-                        SocketIdentity identity = (SocketIdentity)header.I1;
-                        s.Close();
+                SocketIdentity identity = SocketFactory.AsyncConnectForIndetity(route,
+                    () =>
+                    {
                         /// 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
-                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
+                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
+                        {
                             this.ButtonConnect.Content = "Connect";
+                            SocketFactory.CurrentRoute = route;
                             Logger.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
-                            this.parent.ServerAddress = tcpAddress;
                             Config.InsertHistory(new ConnectionRecord
                             {
                                 Info = this.TextBoxIP.Text
                             });
-                            this.parent.StartConnectionMonitor();
+                            //this.parent.StartConnectionMonitor();
                             this.parent.RedirectPage("Browser");
                             System.Threading.Thread.Sleep(100);
                             this.parent.SubPageBrowser.ResetRemoteDirectory();
                             this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
                         }));
                         IsConnecting = false;
-                    }, 
-                    (ex) => {
-                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() => {
+                    },
+                    (ex) =>
+                    {
+                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
+                        {
                             this.ButtonConnect.Content = "Connect";
                         }));
                         MessageBox.Show(ex.Message);
                         IsConnecting = false;
-                    }, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                    });
             }
             catch (Exception ex)
             {
                 /// AsyncConnect 的异常在上面的 SocketAsyncExceptionCallback 中处理
                 /// 这里的代码应该不会执行
-                Logger.Log("Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
+                Logger.Log("(Not expected exception) Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
                 MessageBox.Show(ex.Message);
                 IsConnecting = false;
             }
@@ -235,6 +233,7 @@ namespace FileManager.Pages
 
         private void TextBoxIP_LostFocus(object sender, RoutedEventArgs e)
         {
+            // todo
             int a =1;
         }
     }

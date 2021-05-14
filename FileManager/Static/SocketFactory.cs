@@ -48,6 +48,29 @@ namespace FileManager.Static
         }
 
 
+        private static SocketClient GenerateSocketClient(ConnectionRoute route, out byte[] bytes_to_send)
+        {
+            byte[] key_bytes = Config.KeyBytes;
+            if (route.ProxyRoute.Count == 0)
+            {
+                SocketClient client = new SocketClient(route.ServerAddress);
+                client.IsWithProxy = false;
+                bytes_to_send = key_bytes;
+                return client;
+            }
+            else
+            {
+                SocketClient client = new SocketClient(route.ProxyRoute[0]);
+                client.IsWithProxy = true;
+                byte[] proxy_bytes = route.GetBytesExceptFirstProxy();
+                bytes_to_send = new byte[proxy_bytes.Length + key_bytes.Length];
+                Array.Copy(proxy_bytes, bytes_to_send, proxy_bytes.Length);
+                Array.Copy(key_bytes, 0, bytes_to_send, proxy_bytes.Length, key_bytes.Length);
+                return client;
+            }
+        }
+
+
         public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route, int maxTry = 1, int retryInterval = 3000)
         {
             int tryCount = 0;
@@ -59,29 +82,11 @@ namespace FileManager.Static
                 }
                 try
                 {
-                    byte[] key_bytes = Config.KeyBytes;
-                    if (route.ProxyRoute.Count == 0)
-                    {
-                        SocketClient client = new SocketClient(route.ServerAddress);
-                        client.IsWithProxy = false;
-                        client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                        client.SendBytes(SocketPacketFlag.AuthenticationPacket, key_bytes, 0, 0, 1);
-                        client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
-                        return client;
-                    }
-                    else
-                    {
-                        SocketClient client = new SocketClient(route.ProxyRoute[0]);
-                        client.IsWithProxy = true;
-                        byte[] proxy_bytes = route.GetBytesExceptFirstProxy();
-                        byte[] bytes = new byte[proxy_bytes.Length + key_bytes.Length];
-                        Array.Copy(proxy_bytes, bytes, proxy_bytes.Length);
-                        Array.Copy(key_bytes, 0, bytes, proxy_bytes.Length, key_bytes.Length);
-                        client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                        client.SendBytes(SocketPacketFlag.AuthenticationPacket, bytes, 0, 0, 1);
-                        client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
-                        return client;
-                    }
+                    SocketClient client = GenerateSocketClient(route, out byte[] bytes_to_send);
+                    client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                    client.SendBytes(SocketPacketFlag.AuthenticationPacket, bytes_to_send, 0, 0, 1);
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
+                    return client;
                 }
                 catch (Exception)
                 {
@@ -89,8 +94,25 @@ namespace FileManager.Static
                     Thread.Sleep(retryInterval);
                 }
             }
-
         }
+
+
+        public static SocketIdentity AsyncConnectForIndetity(ConnectionRoute route, SocketAsyncCallback asyncCallback, SocketAsyncExceptionCallback exceptionCallback)
+        {
+            SocketClient client = GenerateSocketClient(route, out byte[] bytes_to_send);
+            SocketIdentity identity = SocketIdentity.None;
+            client.AsyncConnect(()=> {
+                client.SendBytes(SocketPacketFlag.AuthenticationPacket, bytes_to_send, 0, 0, 1);
+                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
+                identity = (SocketIdentity)header.I1;
+                client.Close();
+                asyncCallback();
+            }, exceptionCallback, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+            return identity;
+        }
+
+
+
 
         /*
         public static Communicator GetConnectedCommunicator(TCPAddress server_address, int maxTry = -1, int retryInterval = 3000)

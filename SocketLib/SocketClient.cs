@@ -96,7 +96,10 @@ namespace SocketLib
 
         public void ReceiveBytes(out HB32Header header, out byte[] bytes)
         {
-            client.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
+            if (IsWithProxy)
+            {
+                client.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
+            }
             ReceiveBytes(client, out header, out bytes);
         }
 

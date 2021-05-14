@@ -8,7 +8,7 @@ namespace SocketLib
 {
     public class ConnectionRoute
     {
-        public TCPAddress ServerAddress { get; set; } = null;
+        public TCPAddress ServerAddress { get; set; } = new TCPAddress();
 
         public List<TCPAddress> ProxyRoute { get; set; } = new List<TCPAddress>();
 

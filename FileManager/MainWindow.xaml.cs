@@ -35,8 +35,6 @@ namespace FileManager
         private const string host = "http://server.hhcsdtc.com:9999";
         private const string exeName = "SocketFileManager";
 
-        private TCPAddress _server_address = null;
-
 
         // *** todo ***
         public bool IsConnected
@@ -53,22 +51,6 @@ namespace FileManager
             get; set;
         }
 
-
-        public TCPAddress ServerAddress
-        {
-            get
-            {
-                return _server_address;
-            }
-            set
-            {
-                /// 每次IP变动都改动在 MainWindow 下的 ServerAddress
-                /// 同时在此触发各类 UI 和其它类同步更改
-                _server_address = value;
-                this.SubPageBrowser.SetConnectedIPText(value);
-                SocketFactory.ServerAddress = value;
-            }
-        }
 
 
 
