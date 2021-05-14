@@ -173,6 +173,7 @@ namespace SocketLib
 
         public void Close()
         {
+            SendHeader(SocketPacketFlag.DisconnectRequest);
             client.Close();
         }
 

@@ -245,7 +245,7 @@ namespace FileManager.Models
             foreach (XElement task in tasks.Elements("task"))
             {
                 FileTask fileTask = new FileTask();
-                fileTask.Route = ConnectionRoute.FromBytes(Convert.FromBase64String(task.Element("TcpAddress").Value));
+                fileTask.Route = ConnectionRoute.FromBytes(Convert.FromBase64String(task.Element("Route").Value));
                 fileTask.IsDirectory = bool.Parse(task.Element("IsDirectory").Value);
                 fileTask.Type = (TransferType)Enum.Parse(typeof(TransferType), task.Element("Type").Value);
                 fileTask.RemotePath = task.Element("RemotePath").Value;

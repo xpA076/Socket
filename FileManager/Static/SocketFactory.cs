@@ -99,6 +99,7 @@ namespace FileManager.Static
 
         public static SocketIdentity AsyncConnectForIndetity(ConnectionRoute route, SocketAsyncCallback asyncCallback, SocketAsyncExceptionCallback exceptionCallback)
         {
+            // (to_do) 可以通过 BeginInvoke/EndInvoke 控制Conenct超时时间
             SocketClient client = GenerateSocketClient(route, out byte[] bytes_to_send);
             SocketIdentity identity = SocketIdentity.None;
             client.AsyncConnect(()=> {

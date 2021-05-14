@@ -422,7 +422,7 @@ namespace FileManager.Models
             {
                 task.Status = FileTaskStatus.Downloading;
             }
-            else if (task.Type == TransferType.Download)
+            else if (task.Type == TransferType.Upload)
             {
                 task.Status = FileTaskStatus.Uploading;
             }

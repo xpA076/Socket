@@ -67,7 +67,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.DefaultPort.ToString();
+                return Config.DefaultServerPort.ToString();
             }
             set
             {

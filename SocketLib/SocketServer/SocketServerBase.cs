@@ -50,13 +50,14 @@ namespace SocketLib.SocketServer
         }
 
 
-        public void InitializeServer()
+        public void InitializeServer(int port)
         {
-            IPEndPoint ipe = new IPEndPoint(HostIP, Config.ServerPort);
+            IPEndPoint ipe = new IPEndPoint(HostIP, port);
+            //IPEndPoint ipe = new IPEndPoint(HostIP, 12139);
             server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(ipe);
             server.Listen(20);
-            Log("Server initiated. " + HostIP.ToString(), LogLevel.Info);
+            Log(string.Format("Server initiated - {0}:{1}", HostIP, port), LogLevel.Info);
         }
 
 

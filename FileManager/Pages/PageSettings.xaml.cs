@@ -155,7 +155,7 @@ namespace FileManager.Pages
             {
                 if (i >= 1 && i <= 65535)
                 {
-                    Config.DefaultPort = i;
+                    Config.DefaultServerPort = i;
                     Config.SaveConfig();
                     valid_flag = true;
                 }

@@ -159,7 +159,7 @@ namespace FileManager.Pages
             ConnectionRoute route = new ConnectionRoute();
             try
             {
-                int port = Config.DefaultPort;
+                int port = Config.DefaultServerPort;
                 string ip_str = this.TextBoxIP.Text;
                 if (ip_str.Contains(":"))
                 {
@@ -175,7 +175,6 @@ namespace FileManager.Pages
                 Logger.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
                 return;
             }
-            // **** todo **** 在 SocketFactory 中重写Async 21.05.12
             try
             {
                 IsConnecting = true;
@@ -194,7 +193,7 @@ namespace FileManager.Pages
                             {
                                 Info = this.TextBoxIP.Text
                             });
-                            //this.parent.StartConnectionMonitor();
+                            this.parent.StartConnectionMonitor();
                             this.parent.RedirectPage("Browser");
                             System.Threading.Thread.Sleep(100);
                             this.parent.SubPageBrowser.ResetRemoteDirectory();

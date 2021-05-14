@@ -51,21 +51,27 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
                 <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="200" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <TextBlock Text="Server IP : 127.0.0.1" Style="{StaticResource TextInfo}"/>
+                <TextBlock Text="Server IP :   --" Style="{StaticResource TextInfo}"/>
+                <TextBox Text="{Binding Path=Nothing, Mode=OneWay}" x:Name="TextBoxNull" Visibility="Hidden"/>
             </Grid>
             <Grid Grid.Column="1">
-                <Button Content="Start listening" Width="140" Height="30" VerticalAlignment="Center"
-                        Style="{StaticResource PageButton}"/>
+                <Button x:Name="ButtonStartListen" Content="Start listening" Width="140" Height="30" VerticalAlignment="Center"
+                        Style="{StaticResource PageButton}" Click="ButtonStartListen_Click"/>
             </Grid>
 
-            
+            <Grid Grid.Column="2">
+                <Button x:Name="ButtonClear" Content="Clear" Width="140" Height="30" VerticalAlignment="Center"
+                        Style="{StaticResource PageButton}" Click="ButtonClear_Click"/>
+            </Grid>
+
         </Grid>
         <Grid Grid.Row="1">
-            <RichTextBox>
-                <FlowDocument x:Name="Doc">
-                    
+            <RichTextBox Margin="20" x:Name="RichTextBoxLog" Background="#222">
+                <FlowDocument LineHeight="1" x:Name="fd" FontFamily="Consolas">
+
                 </FlowDocument>
             </RichTextBox>
         </Grid>

@@ -39,7 +39,7 @@ namespace FileManager.Static
 
         #endregion
 
-        public static int DefaultPort { get; set; } = 12138;
+        public static int DefaultServerPort { get; set; } = 12138;
 
         public static int SocketSendTimeout { get; set; } = 5000;
 
@@ -50,7 +50,7 @@ namespace FileManager.Static
         /// </summary>
         public static long SmallFileThreshold { get; set; } = 4 * 1024 * 1024;
 
-        public static int ThreadLimit { get; set; } = 64;
+        public static int ThreadLimit { get; set; } = 16;
 
         /// <summary>
         /// Transfer 过程中保存 Record 间隔
@@ -92,6 +92,15 @@ namespace FileManager.Static
             {
                 // return Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName) + "\\SocketFileManager.config";
                 return ConfigDir + "FileManager.config";
+            }
+        }
+
+
+        public static string ServerConfigPath
+        {
+            get
+            {
+                return ConfigDir + "FileManagerServer.config";
             }
         }
 
@@ -192,7 +201,7 @@ namespace FileManager.Static
                 SaveRecordInterval = int.Parse(settings.Element("SaveRecordInterval").Value);
                 ConnectionMonitorRecordCount = int.Parse(settings.Element("ConnectionMonitorRecordCount").Value);
                 ConnectionMonitorRecordInterval = int.Parse(settings.Element("ConnectionMonitorRecordInterval").Value);
-                DefaultPort = int.Parse(settings.Element("DefaultPort").Value);
+                DefaultServerPort = int.Parse(settings.Element("DefaultPort").Value);
                 ThreadLimit = int.Parse(settings.Element("ThreadLimit").Value);
                 SmallFileThreshold = long.Parse(settings.Element("SmallFileLimit").Value);
                 SocketSendTimeout = int.Parse(settings.Element("SocketSendTimeout").Value);
@@ -231,7 +240,7 @@ namespace FileManager.Static
             settings.SetElementValue("SaveRecordInterval", SaveRecordInterval.ToString());
             settings.SetElementValue("ConnectionMonitorRecordCount", ConnectionMonitorRecordCount.ToString());
             settings.SetElementValue("ConnectionMonitorRecordInterval", ConnectionMonitorRecordInterval.ToString());
-            settings.SetElementValue("DefaultPort", DefaultPort.ToString());
+            settings.SetElementValue("DefaultPort", DefaultServerPort.ToString());
             settings.SetElementValue("ThreadLimit", ThreadLimit.ToString());
             settings.SetElementValue("SmallFileLimit", SmallFileThreshold.ToString());
             settings.SetElementValue("SocketSendTimeout", SocketSendTimeout.ToString());

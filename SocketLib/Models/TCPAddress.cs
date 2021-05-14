@@ -51,7 +51,7 @@ namespace SocketLib
                 IP = new IPAddress(new byte[4] {
                     bytes[index + 0], bytes[index + 1], bytes[index + 2], bytes[index + 3]
                 }),
-                Port = (((int)bytes[4]) << 8) + (int)bytes[index + 5]
+                Port = (((int)bytes[index + 4]) << 8) + (int)bytes[index + 5]
             };
         }
 

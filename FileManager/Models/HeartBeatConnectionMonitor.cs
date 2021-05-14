@@ -102,6 +102,7 @@ namespace FileManager.Models
             try
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(1, Interval);
+                
                 client.Close();
                 AddRecord(true);
             }

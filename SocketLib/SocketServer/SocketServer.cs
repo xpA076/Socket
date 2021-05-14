@@ -23,7 +23,7 @@ namespace SocketLib.SocketServer
         }
 
         private readonly Dictionary<Socket, SocketIdentity> ClientIdentities = new Dictionary<Socket, SocketIdentity>();
-        private object ClientIdentitiesLock = new object();
+        private readonly object ClientIdentitiesLock = new object();
 
 
         /// <summary>
