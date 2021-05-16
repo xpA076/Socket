@@ -80,11 +80,5 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SocketLib\SocketLib.csproj">
-      <Project>{4b0ed0fc-f53c-48bf-8929-ff2df3806488}</Project>
-      <Name>SocketLib</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

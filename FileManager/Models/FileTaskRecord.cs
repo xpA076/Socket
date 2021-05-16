@@ -7,8 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-using SocketLib;
-using SocketLib.Enums;
+using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
 using FileManager.Static;
 
 namespace FileManager.Models

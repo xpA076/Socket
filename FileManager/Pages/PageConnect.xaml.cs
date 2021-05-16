@@ -13,14 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
+using System.Net;
+using System.Collections.ObjectModel;
 
-using SocketLib;
-using SocketLib.Enums;
+using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
 using FileManager.Windows;
 using FileManager.Models;
 using FileManager.Static;
-using System.Net;
-using System.Collections.ObjectModel;
 
 
 

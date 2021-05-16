@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 
 using FileManager.Models;
 using FileManager.ViewModels;
-using SocketLib;
+using FileManager.SocketLib;
 
 namespace FileManager.Pages
 {

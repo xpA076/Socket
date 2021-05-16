@@ -62,7 +62,7 @@ namespace FileManagerServer
             server.Config.Load(ConfigPath);
             try
             {
-                server.InitializeServer(12139);
+                server.InitializeServer(server.Config.ServerPort);
                 server.StartListening();
             }
             catch (Exception ex)

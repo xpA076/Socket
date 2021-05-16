@@ -41,6 +41,8 @@ namespace FileManager.Static
 
         public static int DefaultServerPort { get; set; } = 12138;
 
+        public static int DefaultProxyPort { get; set; } = 12139;
+
         public static int SocketSendTimeout { get; set; } = 5000;
 
         public static int SocketReceiveTimeout { get; set; } = 5000;

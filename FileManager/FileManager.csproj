@@ -84,12 +84,35 @@
     <Compile Include="Models\HeartBeatConnectionMonitor.cs" />
     <Compile Include="Models\HeartBeatTransferRecord.cs" />
     <Compile Include="Models\_UI_Callback.cs" />
+    <Compile Include="Pages\PageProxy.xaml.cs">
+      <DependentUpon>PageProxy.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Pages\PageServer.xaml.cs">
       <DependentUpon>PageServer.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\PageSettings.xaml.cs">
       <DependentUpon>PageSettings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SocketLib\BytesConverter.cs" />
+    <Compile Include="SocketLib\Enums\LogLevel.cs" />
+    <Compile Include="SocketLib\Enums\ProxyHeader.cs" />
+    <Compile Include="SocketLib\Enums\SocketIdentity.cs" />
+    <Compile Include="SocketLib\Enums\SocketPacketFlag.cs" />
+    <Compile Include="SocketLib\Enums\TransferType.cs" />
+    <Compile Include="SocketLib\Handles.cs" />
+    <Compile Include="SocketLib\HB32Encoding.cs" />
+    <Compile Include="SocketLib\HB32Header.cs" />
+    <Compile Include="SocketLib\Models\ConnectionRoute.cs" />
+    <Compile Include="SocketLib\Models\SocketFileInfo.cs" />
+    <Compile Include="SocketLib\Models\TCPAddress.cs" />
+    <Compile Include="SocketLib\SocketClient.cs" />
+    <Compile Include="SocketLib\SocketIO.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServer.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServerBase.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServerConfig.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServerFileStreamInfo.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServer_DirectoryPart.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServer_FileTransferPart.cs" />
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
@@ -129,6 +152,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\PageConnect.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\PageProxy.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -213,12 +240,6 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SocketLib\SocketLib.csproj">
-      <Project>{4b0ed0fc-f53c-48bf-8929-ff2df3806488}</Project>
-      <Name>SocketLib</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

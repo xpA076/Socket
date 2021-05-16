@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-
-using SocketLib;
-using SocketLib.Enums;
-using FileManager.Models;
 using System.Net;
+
+using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
+using FileManager.Models;
+
 
 namespace FileManager.Static
 {
@@ -19,7 +20,6 @@ namespace FileManager.Static
         public static TCPAddress ProxyAddress { get; set; } = null;
 
         public static ConnectionRoute CurrentRoute { get; set; } = null;
-
 
 
 

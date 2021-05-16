@@ -19,8 +19,8 @@ using FileManager.Models;
 using FileManager.ViewModels;
 using FileManager.Static;
 using FileManager.Windows;
-using SocketLib;
-using SocketLib.Enums;
+using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
 
 namespace FileManager.Pages
 {

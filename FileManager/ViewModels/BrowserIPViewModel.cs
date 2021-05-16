@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using FileManager.Static;
-using SocketLib;
+using FileManager.SocketLib;
 
 namespace FileManager.ViewModels
 {

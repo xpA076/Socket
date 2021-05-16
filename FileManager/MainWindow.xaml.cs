@@ -20,7 +20,7 @@ using System.Windows.Shapes;
 
 using FileManager.Pages;
 using FileManager.Static;
-using SocketLib;
+using FileManager.SocketLib;
 using FileManager.Models;
 using FileManager.ViewModels;
 using System.Net.Sockets;

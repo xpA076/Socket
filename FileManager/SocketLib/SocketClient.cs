@@ -6,11 +6,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
 
 namespace FileManager.SocketLib
 {
-    public class SocketClient : FileManager.SocketLib.SocketIO
+    public class SocketClient : SocketIO
     {
         public Socket client = null;
 
@@ -29,7 +29,7 @@ namespace FileManager.SocketLib
 
         public bool IsWithProxy { get; set; } = false;
 
-        private SocketLib.Enums.ProxyHeader NextProxyHeader { get; set; }
+        private ProxyHeader NextProxyHeader { get; set; }
 
 
         private byte[] GetHeaderBytesWithProxy(HB32Header header)

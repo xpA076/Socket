@@ -1,5 +1,4 @@
-﻿using SocketLib.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,13 +13,15 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-using FileManager.Static;
 using System.Net;
-using SocketLib.SocketServer;
+using System.ComponentModel;
 using System.Net.Sockets;
 using System.IO;
-using SocketLib;
-using System.ComponentModel;
+
+using FileManager.SocketLib;
+using FileManager.SocketLib.SocketServer;
+using FileManager.Static;
+using FileManager.SocketLib.Enums;
 
 namespace FileManager.Pages
 {
@@ -89,13 +90,6 @@ namespace FileManager.Pages
             }
         }
 
-
-        private void Auto()
-        {
-
-            ServerLogger("123", LogLevel.Info);
-            System.Threading.Thread.Sleep(1000);
-        }
 
 
         private void ButtonClear_Click(object sender, RoutedEventArgs e)

@@ -1,5 +1,4 @@
-﻿using SocketLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -10,7 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using FileManager.Static;
-using SocketLib.Enums;
+using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
 
 
 
