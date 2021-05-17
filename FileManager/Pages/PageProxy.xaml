@@ -7,8 +7,56 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="PageProxy">
+    <Page.Resources>
+        <Style x:Key="TextInfo" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#ccc"/>
+            <Setter Property="Margin" Value="10 10 10 10" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+
+    </Page.Resources>
 
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="100"/>
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="200" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <StackPanel Orientation="Vertical" >
+                    <TextBlock Text="Proxy IP  :   --" Style="{StaticResource TextInfo}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="Port  :  " Style="{StaticResource TextInfo}"/>
+                        <TextBox x:Name="TextBoxPort" Style="{StaticResource PageTextBox}"/>
+                    </StackPanel>
+
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Column="1">
+                <Button x:Name="ButtonStartProxy" Content="Start proxy" Width="140" Height="30" VerticalAlignment="Center"
+                        Style="{StaticResource PageButton}" Click="ButtonStartProxy_Click"/>
+            </Grid>
+
+            <Grid Grid.Column="2">
+                <Button x:Name="ButtonClear" Content="Clear" Width="140" Height="30" VerticalAlignment="Center"
+                        Style="{StaticResource PageButton}" Click="ButtonClear_Click"/>
+                <TextBox Text="{Binding Path=Nothing, Mode=OneWay}" x:Name="TextBoxNull" Visibility="Hidden"/>
+            </Grid>
+
+        </Grid>
+        <Grid Grid.Row="2">
+            <RichTextBox Margin="20" x:Name="RichTextBoxLog" Background="#222">
+                <FlowDocument LineHeight="1" x:Name="fd" FontFamily="Consolas">
+                </FlowDocument>
+            </RichTextBox>
+        </Grid>
     </Grid>
 </Page>

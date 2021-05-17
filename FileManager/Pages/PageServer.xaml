@@ -15,47 +15,30 @@
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="FontSize" Value="16" />
         </Style>
-        <Style x:Key="PageButton" TargetType="Button">
-            <Setter Property="Margin" Value="20 10 20 10" />
-            <Setter Property="Height" Value="35" />
-            <Setter Property="Width" Value="120" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="Foreground" Value="#f1f1f1" />
-            <Setter Property="Background" Value="#2d2d2d" />
-            <Setter Property="FontFamily" Value="Segoe UI" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Name="border" BorderThickness="0" BorderBrush="Black" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#3e3e3e" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
+        
     </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
             <RowDefinition Height="100"/>
             <RowDefinition />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
                 <ColumnDefinition Width="200" />
                 <ColumnDefinition Width="200" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <TextBlock Text="Server IP :   --" Style="{StaticResource TextInfo}"/>
-                <TextBox Text="{Binding Path=Nothing, Mode=OneWay}" x:Name="TextBoxNull" Visibility="Hidden"/>
+                <StackPanel Orientation="Vertical" >
+                    <TextBlock Text="Server IP  :   --" Style="{StaticResource TextInfo}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="Port  :  " Style="{StaticResource TextInfo}"/>
+                        <TextBox x:Name="TextBoxPort" Style="{StaticResource PageTextBox}"/>
+                    </StackPanel>
+                    
+                </StackPanel>
             </Grid>
             <Grid Grid.Column="1">
                 <Button x:Name="ButtonStartListen" Content="Start listening" Width="140" Height="30" VerticalAlignment="Center"
@@ -65,13 +48,13 @@
             <Grid Grid.Column="2">
                 <Button x:Name="ButtonClear" Content="Clear" Width="140" Height="30" VerticalAlignment="Center"
                         Style="{StaticResource PageButton}" Click="ButtonClear_Click"/>
+                <TextBox Text="{Binding Path=Nothing, Mode=OneWay}" x:Name="TextBoxNull" Visibility="Hidden"/>
             </Grid>
 
         </Grid>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <RichTextBox Margin="20" x:Name="RichTextBoxLog" Background="#222">
                 <FlowDocument LineHeight="1" x:Name="fd" FontFamily="Consolas">
-
                 </FlowDocument>
             </RichTextBox>
         </Grid>

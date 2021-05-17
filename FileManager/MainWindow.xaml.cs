@@ -197,6 +197,7 @@ namespace FileManager
                 { "Code", new PageCode() },
                 { "Settings", new PageSettings() },
                 { "Server", new PageServer() },
+                { "Proxy", new PageProxy() },
             };
             RedirectPage("Connect");
         }
@@ -282,6 +283,11 @@ namespace FileManager
         {
             RedirectPage("Server");
         }
+        private void SidebarProxy_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            RedirectPage("Proxy");
+        }
+
 
         public void RedirectPage(string pageName)
         {
@@ -291,6 +297,7 @@ namespace FileManager
             this.SidebarCode.Background = this.SidebarGrid.Background;
             this.SidebarSettings.Background = this.SidebarGrid.Background;
             this.SidebarServer.Background = this.SidebarGrid.Background;
+            this.SidebarProxy.Background = this.SidebarGrid.Background;
             TextBlock block = null;
             switch (pageName)
             {
@@ -311,6 +318,9 @@ namespace FileManager
                     break;
                 case "Server":
                     block = this.SidebarServer;
+                    break;
+                case "Proxy":
+                    block = this.SidebarProxy;
                     break;
             }
             block.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));

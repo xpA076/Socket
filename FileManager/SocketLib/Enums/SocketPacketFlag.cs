@@ -14,7 +14,8 @@ namespace FileManager.SocketLib.Enums
         /// Mode 0xAC : Authentication
         /// 
         AuthenticationPacket = 0xAC01,
-        AuthenticationResponse = 0xAC09,
+        AuthenticationResponse = 0xAC10,
+        AuthenticationException = 0xAC90,
 
 
         /// Mode 0x01 : Directory query

@@ -36,6 +36,7 @@ namespace FileManager.Pages
         public PageServer()
         {
             InitializeComponent();
+            this.TextBoxPort.Text = Config.DefaultServerPort.ToString();
             /// Log UI 更新对应 delegate
             PageServerView.RichTextBoxUpdate = (time, logLevel, log) =>
             {
@@ -74,12 +75,13 @@ namespace FileManager.Pages
             {
                 server.Config.Create(Config.ServerConfigPath);
             }
+            server.Config.Load(Config.ServerConfigPath);
             server.Logger = ServerLogger;
             server.CheckIdentity = CheckIdentity;
-            server.Config.Load(Config.ServerConfigPath);
             try
             {
-                server.InitializeServer(Config.DefaultServerPort);
+                int port = int.Parse(this.TextBoxPort.Text);
+                server.InitializeServer(port);
                 server.StartListening();
             }
             catch (Exception ex)

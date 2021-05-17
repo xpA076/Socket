@@ -151,23 +151,32 @@ namespace FileManager.Pages
         }
 
 
+        private TCPAddress ParseAddressText(string text, int port = 12138)
+        {
+            if (text.Contains(":"))
+            {
+                port = int.Parse(text.Split(':')[1]);
+                text = text.Split(':')[0];
+            }
+            return new TCPAddress
+            {
+                IP = IPAddress.Parse(text),
+                Port = port,
+            };
+        }
+
 
         private void ButtonConnect_Click(object sender, RoutedEventArgs e)
         {
-            if (IsConnecting) { 
-                return; }
+            if (IsConnecting) { return; }
             ConnectionRoute route = new ConnectionRoute();
             try
             {
-                int port = Config.DefaultServerPort;
-                string ip_str = this.TextBoxIP.Text;
-                if (ip_str.Contains(":"))
+                route.ServerAddress = ParseAddressText(this.TextBoxIP.Text, Config.DefaultServerPort);
+                if (!string.IsNullOrEmpty(this.TextBoxProxy.Text))
                 {
-                    port = int.Parse(ip_str.Split(':')[1]);
-                    ip_str = ip_str.Split(':')[0];
+                    route.ProxyRoute.Add(ParseAddressText(this.TextBoxProxy.Text, Config.DefaultProxyPort));
                 }
-                route.ServerAddress.IP = IPAddress.Parse(ip_str);
-                route.ServerAddress.Port = port;
             }
             catch (Exception)
             {

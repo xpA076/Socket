@@ -24,14 +24,7 @@
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="FontSize" Value="16" />
         </Style>
-        <Style x:Key="TextBoxConfig" TargetType="TextBox">
-            <Setter Property="Foreground" Value="#ccc"/>
-            <Setter Property="Background" Value="#444"/>
-            <Setter Property="TextAlignment" Value="Center" />
-            <Setter Property="Margin" Value="10 10 10 10" />
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Width" Value="100" />
+        <Style x:Key="TextBoxConfig" TargetType="TextBox" BasedOn="{StaticResource PageTextBox}">
         </Style>
         <Style x:Key="SetButton" TargetType="Button">
             <Setter Property="Width" Value="60" />
