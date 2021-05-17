@@ -25,7 +25,7 @@ namespace FileManager.SocketLib
         /// <param name="buffer">缓冲区</param>
         /// <param name="size">receive 字节数, 为 -1 则接收buffer长度字节</param>
         /// <param name="offset">buffer写入字节偏移</param>
-        private void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
+        protected void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
         {
             if (buffer.Length == 0) { return; }
             int _size = (size == -1) ? buffer.Length : size;

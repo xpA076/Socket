@@ -100,8 +100,8 @@
                     <TextBlock x:Name="SidebarCode" Text="Code" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarCode_MouseLeftDown"/>
                     <TextBlock x:Name="SidebarSettings" Text="Settings" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarSettings_MouseLeftDown"/>
                     <TextBlock x:Name="SidebarServer" Text="Server" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarServer_MouseLeftDown"/>
-                    <TextBlock x:Name="SidebarServerConfig" Text="ServerConfig" Style="{StaticResource SidebarButton}" />
-                    <TextBlock x:Name="SidebarProxy" Text="Proxy" Style="{StaticResource SidebarButton}" />
+                    <TextBlock x:Name="SidebarServerConfig" Text="Proxy" Style="{StaticResource SidebarButton}" />
+                    <TextBlock x:Name="SidebarProxy" Text="ServerConfig" Style="{StaticResource SidebarButton}" />
 
                 </StackPanel>
 

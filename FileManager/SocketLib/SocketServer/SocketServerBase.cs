@@ -16,7 +16,7 @@ namespace FileManager.SocketLib.SocketServer
     {
         public Socket server = null;
 
-        public SocketServerConfig Config { get; set; } = new SocketServerConfig();
+        
 
         public IPAddress HostIP { get; set; }
 
@@ -95,6 +95,11 @@ namespace FileManager.SocketLib.SocketServer
         public virtual void ReceiveData(object acceptSocketObject)
         {
 
+        }
+
+        public void Close()
+        {
+            server.Close();
         }
     }
 }

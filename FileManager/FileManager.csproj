@@ -78,7 +78,6 @@
     </ApplicationDefinition>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ConnectionStatusToForeColorConverter.cs" />
-    <Compile Include="Models\Communicator.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatConnectionMonitor.cs" />
@@ -107,6 +106,8 @@
     <Compile Include="SocketLib\Models\TCPAddress.cs" />
     <Compile Include="SocketLib\SocketClient.cs" />
     <Compile Include="SocketLib\SocketIO.cs" />
+    <Compile Include="SocketLib\SocketProxy\SocketProxy.cs" />
+    <Compile Include="SocketLib\SocketProxy\SocketProxyConfig.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServerBase.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServerConfig.cs" />

@@ -786,8 +786,19 @@ namespace FileManager.Models
                     packet = GeneratePacketIndex(task);
                 }
                 catch (Exception)
-                { 
-                    client = SocketFactory.GenerateConnectedSocketClient(task);
+                {
+                    while (!IsStopDownloading)
+                    {
+                        try
+                        {
+                            client = SocketFactory.GenerateConnectedSocketClient(task, 1);
+                            break;
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
                 }
             }
             client.Close();

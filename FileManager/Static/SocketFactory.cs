@@ -48,6 +48,13 @@ namespace FileManager.Static
         }
 
 
+        /// <summary>
+        /// 非代理模式: 直接发 KeyBytes
+        /// 代理模式  : 发 ConnectionRoute.GetBytes() + KeyBytes
+        /// </summary>
+        /// <param name="route"></param>
+        /// <param name="bytes_to_send"></param>
+        /// <returns></returns>
         private static SocketClient GenerateSocketClient(ConnectionRoute route, out byte[] bytes_to_send)
         {
             byte[] key_bytes = Config.KeyBytes;
@@ -76,9 +83,10 @@ namespace FileManager.Static
             int tryCount = 0;
             while (true)
             {
+                string err_msg = "";
                 if (maxTry > 0 && tryCount >= maxTry)
                 {
-                    throw new ArgumentException("exceed max try times");
+                    throw new ArgumentException("Generating valid socket failed : exceed max try times.\n" + err_msg);
                 }
                 try
                 {
@@ -88,8 +96,9 @@ namespace FileManager.Static
                     client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
                     return client;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    err_msg += ex.Message + "\n";
                     tryCount++;
                     Thread.Sleep(retryInterval);
                 }

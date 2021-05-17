@@ -43,7 +43,7 @@ namespace FileManager.SocketLib
             }
             byte[] bytes = new byte[2 + 6 + 6 * (ProxyRoute.Count - 1)];
             bytes[0] = 1;
-            bytes[1] = (byte)ProxyRoute.Count;
+            bytes[1] = (byte)(ProxyRoute.Count - 1);
             Array.Copy(ServerAddress.GetBytes(), 0, bytes, 2, 6);
             int pt = 8;
             for (int i = 1; i < ProxyRoute.Count; ++i)
@@ -60,10 +60,11 @@ namespace FileManager.SocketLib
             int pt = index;
             if (bytes[pt] == 1)
             {
+                byte count = bytes[pt + 1];
                 ConnectionRoute c = new ConnectionRoute();
                 c.ServerAddress = TCPAddress.FromBytes(bytes, pt + 2);
                 pt += 8;
-                for (int i = 0; i < bytes[1]; ++i)
+                for (int i = 0; i < count; ++i)
                 {
                     c.ProxyRoute.Add(TCPAddress.FromBytes(bytes, pt));
                     pt += 6;

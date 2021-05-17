@@ -17,6 +17,8 @@ namespace FileManager.SocketLib.SocketServer
     {
         public SocketIdentityCheckHandler CheckIdentity = null;
 
+        public SocketServerConfig Config { get; set; } = new SocketServerConfig();
+
         public SocketServer(IPAddress ip):base(ip)
         {
 
@@ -142,7 +144,7 @@ namespace FileManager.SocketLib.SocketServer
             }
             catch (Exception ex)
             {
-                Log("WTF ReceiveData exception :" + ex.Message, LogLevel.Error);
+                Log("Identity authentication exception :" + ex.Message, LogLevel.Error);
                 ClientIdentities.Remove(client);
             }
         }
@@ -184,9 +186,6 @@ namespace FileManager.SocketLib.SocketServer
         }
 
 
-        public void Close()
-        {
-            server.Close();
-        }
+
     }
 }
