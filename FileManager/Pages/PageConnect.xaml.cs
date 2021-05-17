@@ -47,6 +47,7 @@ namespace FileManager.Pages
             if (Config.Histories.Count > 0)
             {
                 this.TextBoxIP.Text = Config.Histories[0].Info;
+                this.TextBoxProxy.Text = this.TextBoxIP.Text;
             }
             
             /*
@@ -58,6 +59,7 @@ namespace FileManager.Pages
             this.ListViewHistory.ItemsSource = Config.Histories;
             this.ListViewStar.ItemsSource = Config.Stars;
             //Config.Stars.Add(new ConnectionRecord { Info = "127.123.456.255:12345" });
+            
         }
 
 

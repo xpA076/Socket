@@ -59,6 +59,7 @@ namespace FileManager.Pages
                 this.RichTextBoxLog.UpdateLayout();
             };
             this.TextBoxNull.DataContext = PageProxyView;
+            //ButtonStartProxy_Click(null, null);
         }
 
         private void ButtonStartProxy_Click(object sender, RoutedEventArgs e)

@@ -62,6 +62,7 @@ namespace FileManager.Pages
                 this.RichTextBoxLog.UpdateLayout();
             };
             this.TextBoxNull.DataContext = PageServerView;
+            //ButtonStartListen_Click(null, null);
         }
 
 

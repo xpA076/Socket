@@ -63,7 +63,8 @@ namespace FileManager.SocketLib
             header.TotalByteLength = 0;
             header.PacketIndex = 0;
             header.ValidByteLength = 0;
-            socket.Send(GetHeaderBytesFunc(header), HB32Encoding.HeaderSize, SocketFlags.None);
+            byte[] header_bytes = GetHeaderBytesFunc(header);
+            socket.Send(header_bytes, header_bytes.Length, SocketFlags.None);
         }
 
 
@@ -104,17 +105,19 @@ namespace FileManager.SocketLib
                 if (bytes.Length - offset < HB32Encoding.DataSize)
                 {
                     header.ValidByteLength = bytes.Length - offset;
-                    byte[] _toSend = new byte[HB32Encoding.PacketSize];
-                    Array.Copy(GetHeaderBytesFunc(header), 0, _toSend, 0, HB32Encoding.HeaderSize);
-                    Array.Copy(bytes, offset, _toSend, HB32Encoding.HeaderSize, bytes.Length - offset);
+                    byte[] header_bytes = GetHeaderBytesFunc(header);
+                    byte[] _toSend = new byte[header_bytes.Length + HB32Encoding.DataSize];
+                    Array.Copy(header_bytes, 0, _toSend, 0, header_bytes.Length);
+                    Array.Copy(bytes, offset, _toSend, header_bytes.Length, bytes.Length - offset);
                     socket.Send(_toSend);
                 }
                 else
                 {
                     header.ValidByteLength = HB32Encoding.DataSize;
-                    byte[] _toSend = new byte[HB32Encoding.PacketSize];
-                    Array.Copy(GetHeaderBytesFunc(header), 0, _toSend, 0, HB32Encoding.HeaderSize);
-                    Array.Copy(bytes, offset, _toSend, HB32Encoding.HeaderSize, HB32Encoding.DataSize);
+                    byte[] header_bytes = GetHeaderBytesFunc(header);
+                    byte[] _toSend = new byte[header_bytes.Length + HB32Encoding.DataSize];
+                    Array.Copy(header_bytes, 0, _toSend, 0, header_bytes.Length);
+                    Array.Copy(bytes, offset, _toSend, header_bytes.Length, HB32Encoding.DataSize);
                     socket.Send(_toSend);
                 }
                 /// 若当前数据包之后还有数据包, 在等待对方 发送StreamRequest包头 后发送

@@ -580,7 +580,7 @@ namespace FileManager.Models
                 TransferSubThreads[i].Start(task);
                 Thread.Sleep(50);
             }
-            //Config.ThreadLimit = 2;
+            //Config.ThreadLimit = 1;
             /// 阻塞至子线程工作完毕
             for (int i = 0; i < Config.ThreadLimit; ++i)
             {
