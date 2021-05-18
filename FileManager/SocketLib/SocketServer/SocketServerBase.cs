@@ -79,7 +79,6 @@ namespace FileManager.SocketLib.SocketServer
                     Socket client = server.Accept();
                     // 可以在这里通过字典记录所有已连接socket
                     // 参考 https://www.cnblogs.com/kellen451/p/7127670.html
-                    //Display.TimeWriteLine("client connected");
                     Thread th_receive = new Thread(ReceiveData);
                     th_receive.IsBackground = true;
                     th_receive.Start(client);

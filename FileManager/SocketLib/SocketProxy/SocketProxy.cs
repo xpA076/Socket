@@ -14,6 +14,7 @@ namespace FileManager.SocketLib.SocketProxy
 {
     public class SocketProxy : SocketServerBase
     {
+        public static readonly byte ProxyHeaderByte = 0xA3;
 
         public SocketProxyConfig Config { get; set; } = new SocketProxyConfig();
 
@@ -25,12 +26,12 @@ namespace FileManager.SocketLib.SocketProxy
         public override void ReceiveData(object acceptSocketObject)
         {
             Socket client = (Socket)acceptSocketObject;
-            SocketClient socket_client = null;
+            SocketEndPoint socket_ep = null;
             try
             {
                 client.SendTimeout = Config.SocketSendTimeOut;
                 client.ReceiveTimeout = Config.SocketReceiveTimeOut;
-                AuthenticationProxy(client, out socket_client);
+                socket_ep = AuthenticationProxy(client);
                 int error_count = 0;
                 while (error_count < 5)
                 {
@@ -43,14 +44,14 @@ namespace FileManager.SocketLib.SocketProxy
                         {
                             case ProxyHeader.SendHeader:
                                 this.ReceiveBytes(client, out recv_header, out recv_bytes);
-                                socket_client.SendHeader(recv_header);
+                                socket_ep.SendHeader(recv_header);
                                 break;
                             case ProxyHeader.SendBytes:
                                 this.ReceiveBytes(client, out recv_header, out recv_bytes);
-                                socket_client.SendBytes(recv_header, recv_bytes);
+                                socket_ep.SendBytes(recv_header, recv_bytes);
                                 break;
                             case ProxyHeader.ReceiveBytes:
-                                socket_client.ReceiveBytes(out recv_header, out recv_bytes);
+                                socket_ep.ReceiveBytes(out recv_header, out recv_bytes);
                                 this.SendBytes(client, recv_header, recv_bytes);
                                 break;
                         }
@@ -63,7 +64,7 @@ namespace FileManager.SocketLib.SocketProxy
                         {
                             // 远程 client 主机关闭连接
                             case 10054:
-                                DisposeClient(client, socket_client);
+                                DisposeClient(client, socket_ep);
                                 Log("Connection closed (client closed). " + ex.Message, LogLevel.Info);
                                 return;
                             // Socket 超时
@@ -81,13 +82,13 @@ namespace FileManager.SocketLib.SocketProxy
                         error_count++;
                         if (ex.Message.Contains("Buffer receive error: cannot receive package"))
                         {
-                            DisposeClient(client, socket_client);
+                            DisposeClient(client, socket_ep);
                             Log(ex.Message, LogLevel.Trace);
                             return;
                         }
                         if (ex.Message.Contains("Invalid socket header"))
                         {
-                            DisposeClient(client, socket_client);
+                            DisposeClient(client, socket_ep);
                             Log("Connection closed : " + ex.Message, LogLevel.Warn);
                             return;
                         }
@@ -101,7 +102,7 @@ namespace FileManager.SocketLib.SocketProxy
             catch (Exception ex)
             {
                 Log("Socket initiate exception :" + ex.Message, LogLevel.Error);
-                DisposeClient(client, socket_client);
+                DisposeClient(client, socket_ep);
             }
         }
 
@@ -123,13 +124,13 @@ namespace FileManager.SocketLib.SocketProxy
         /// 完成创建 Socket 过程身份认证的代理过程
         /// </summary>
         /// <param name="client"></param>
-        /// <returns>已与Server或下级代理连接成功的 SocketClient 对象</returns>
-        private void AuthenticationProxy(Socket client, out SocketClient socket_client)
+        /// <returns>已与Server或下级代理连接成功的 SocketEndPoint 对象</returns>
+        private SocketEndPoint AuthenticationProxy(Socket client)
         {
             byte[] proxy_header = ReceiveProxyHeader(client);
             this.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
             GetAimInfo(route_bytes, out TCPAddress AimAddress, out bool IsAimProxy, out byte[] AimBytes);
-            socket_client = new SocketClient(AimAddress);
+            SocketClient socket_client = new SocketClient(AimAddress);
             socket_client.IsWithProxy = IsAimProxy;
             try
             {
@@ -145,6 +146,7 @@ namespace FileManager.SocketLib.SocketProxy
             proxy_header = ReceiveProxyHeader(client);
             socket_client.ReceiveBytes(out HB32Header auth_header, out byte[] auth_bytes);
             this.SendBytes(client, auth_header, auth_bytes);
+            return socket_client;
         }
 
 
@@ -177,7 +179,7 @@ namespace FileManager.SocketLib.SocketProxy
         }
 
 
-        private void DisposeClient(Socket client, SocketClient socket_client)
+        private void DisposeClient(Socket client, SocketEndPoint socket_ep)
         {
             try
             {
@@ -186,7 +188,7 @@ namespace FileManager.SocketLib.SocketProxy
             catch (Exception) { }
             try
             {
-                socket_client.Close();
+                socket_ep.Close();
             }
             catch (Exception) { }
         }

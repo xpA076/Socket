@@ -101,10 +101,9 @@
                     <TextBlock x:Name="SidebarSettings" Text="Settings" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarSettings_MouseLeftDown"/>
                     <TextBlock x:Name="SidebarServer" Text="Server" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarServer_MouseLeftDown"/>
                     <TextBlock x:Name="SidebarProxy" Text="Proxy" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarProxy_MouseLeftButtonDown"/>
+                    <TextBlock x:Name="SidebarReverseProxy" Text="ReverseProxy" Style="{StaticResource SidebarButton}" MouseLeftButtonDown="SidebarReverseProxy_MouseLeftButtonDown"/>
                     <TextBlock x:Name="SidebarServerConfig" Text="ServerConfig" Style="{StaticResource SidebarButton}" />
-
                 </StackPanel>
-
             </Grid>
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#1e1e1e"/>
             <Grid Grid.Column="2" x:Name="MainGrid" Background="#1e1e1e">

@@ -405,5 +405,9 @@ namespace FileManager
             catch (Exception) {; }
         }
 
+        private void SidebarReverseProxy_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+
+        }
     }
 }
