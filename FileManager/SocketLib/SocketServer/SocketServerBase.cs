@@ -91,6 +91,7 @@ namespace FileManager.SocketLib.SocketServer
             }
         }
 
+
         public virtual void ReceiveData(object acceptSocketObject)
         {
 
