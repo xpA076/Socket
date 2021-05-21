@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.Enums
 {
-    public delegate void SocketLogger(string log, LogLevel logLevel);
 
     public enum LogLevel:int
     {

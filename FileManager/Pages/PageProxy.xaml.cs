@@ -16,10 +16,12 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using FileManager.Events;
 using FileManager.SocketLib.Enums;
 using FileManager.SocketLib.SocketProxy;
 using FileManager.SocketLib.SocketServer;
 using FileManager.Static;
+using FileManager.ViewModels;
 
 namespace FileManager.Pages
 {
@@ -28,37 +30,15 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageProxy : Page
     {
-        private PageProxyViewModel PageProxyView = new PageProxyViewModel();
+        private ServerRichTextBoxViewModel RichTextBoxView = new ServerRichTextBoxViewModel();
+
 
         public PageProxy()
         {
             InitializeComponent();
             this.TextBoxPort.Text = Config.DefaultProxyPort.ToString();
-            /// Log UI 更新对应 delegate
-            PageProxyView.RichTextBoxUpdate = (time, logLevel, log) =>
-            {
-                SolidColorBrush b1 = new SolidColorBrush(Colors.White);
-                SolidColorBrush b2 = new SolidColorBrush(Colors.White);
-                switch (logLevel)
-                {
-                    case LogLevel.Error:
-                        b2 = new SolidColorBrush(Color.FromRgb(255, 192, 192));
-                        break;
-                    case LogLevel.Warn:
-                        b2 = new SolidColorBrush(Colors.LightYellow);
-                        break;
-                    case LogLevel.Info:
-                        b2 = new SolidColorBrush(Color.FromRgb(0, 127, 255));
-                        break;
-                }
-                Paragraph p = new Paragraph();
-                p.Inlines.Add(new Run() { Text = time.ToString("yyyy-MM-dd HH:mm:ss.fff "), Foreground = b1 });
-                p.Inlines.Add(new Run() { Text = "[" + logLevel.ToString().PadRight(5) + "] ", Foreground = b2 });
-                p.Inlines.Add(new Run() { Text = log, Foreground = b1 });
-                this.RichTextBoxLog.Document.Blocks.Add(p);
-                this.RichTextBoxLog.UpdateLayout();
-            };
-            this.TextBoxNull.DataContext = PageProxyView;
+            RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
+            this.TextBoxNull.DataContext = RichTextBoxView;
             //ButtonStartProxy_Click(null, null);
         }
 
@@ -68,7 +48,7 @@ namespace FileManager.Pages
             IPAddress host = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip =>
                 ip.AddressFamily == AddressFamily.InterNetwork && !ip.ToString().StartsWith("172")).FirstOrDefault();
             SocketProxy proxy = new SocketProxy(host);
-            proxy.Logger = ProxyLogger;
+            proxy.SocketLog += Proxy_OnLog;
             try
             {
                 int port = int.Parse(this.TextBoxPort.Text);
@@ -79,7 +59,7 @@ namespace FileManager.Pages
             {
                 proxy.Close();
                 //MessageBox.Show("Server window start listening error: " + ex.Message);
-                ProxyLogger("Proxy window start listening error: " + ex.Message, LogLevel.Error);
+                Proxy_OnLog(this, new SocketLogEventArgs("Proxy window start listening error: " + ex.Message, LogLevel.Error));
             }
 
         }
@@ -90,52 +70,41 @@ namespace FileManager.Pages
         }
 
 
-        private void ProxyLogger(string log, LogLevel logLevel)
+        private void Proxy_OnLog(object sender, SocketLogEventArgs e)
         {
-            if ((int)logLevel > (int)LogLevel.Info)
+            if ((int)e.logLevel > (int)LogLevel.Info)
             {
                 //return;
             }
-            DateTime now = DateTime.Now;
-            Logger.ServerLog(log, logLevel, now);
-            this.PageProxyView.InvokeLog(now, logLevel, log);
+            Logger.ServerLog(e.log, e.logLevel, e.time);
+            this.RichTextBoxView.InvokeLog(e);
         }
 
 
-        internal delegate void RichTextBoxUpdateHandler(DateTime time, LogLevel logLevel, string log);
-
-
-        /// <summary>
-        /// 用这种不太优雅的方式实现 RichTextBox 界面更新
-        /// 因为 SocketServer 的 Log 操作基本都在新建线程中, 没有在 WPF 更新 UI 的权限
-        /// 通过数据绑定触发UI更新事件, 在UI更新线程中通过delegate更新 RichTextBox 中的 FlowDocument
-        /// </summary>
-        internal class PageProxyViewModel : INotifyPropertyChanged
+        private void RichTextBoxLog_OnUpdate(object sender, SocketLogEventArgs e)
         {
-            public RichTextBoxUpdateHandler RichTextBoxUpdate;
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            public string Nothing
+            SolidColorBrush b1 = new SolidColorBrush(Colors.White);
+            SolidColorBrush b2 = new SolidColorBrush(Colors.White);
+            switch (e.logLevel)
             {
-                get
-                {
-                    RichTextBoxUpdate(_time, _logLevel, _log);
-                    return "";
-                }
+                case LogLevel.Error:
+                    b2 = new SolidColorBrush(Color.FromRgb(255, 192, 192));
+                    break;
+                case LogLevel.Warn:
+                    b2 = new SolidColorBrush(Colors.LightYellow);
+                    break;
+                case LogLevel.Info:
+                    b2 = new SolidColorBrush(Color.FromRgb(0, 127, 255));
+                    break;
             }
-
-            DateTime _time = DateTime.Now;
-            LogLevel _logLevel = LogLevel.Info;
-            string _log = "Init";
-
-            public void InvokeLog(DateTime time, LogLevel logLevel, string log)
-            {
-                _time = time;
-                _logLevel = logLevel;
-                _log = log;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Nothing"));
-            }
+            Paragraph p = new Paragraph();
+            p.Inlines.Add(new Run() { Text = e.time.ToString("yyyy-MM-dd HH:mm:ss.fff "), Foreground = b1 });
+            p.Inlines.Add(new Run() { Text = "[" + e.logLevel.ToString().PadRight(5) + "] ", Foreground = b2 });
+            p.Inlines.Add(new Run() { Text = e.log, Foreground = b1 });
+            this.RichTextBoxLog.Document.Blocks.Add(p);
+            this.RichTextBoxLog.UpdateLayout();
         }
+
 
     }
 }

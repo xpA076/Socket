@@ -78,11 +78,13 @@
     </ApplicationDefinition>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ConnectionStatusToForeColorConverter.cs" />
+    <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
+    <Compile Include="Events\SocketLogEventArgs.cs" />
+    <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatConnectionMonitor.cs" />
     <Compile Include="Models\HeartBeatTransferRecord.cs" />
-    <Compile Include="Models\_UI_Callback.cs" />
     <Compile Include="Pages\PageProxy.xaml.cs">
       <DependentUpon>PageProxy.xaml</DependentUpon>
     </Compile>
@@ -122,6 +124,7 @@
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
     <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
+    <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Windows\ConfirmWindow.xaml.cs">
       <DependentUpon>ConfirmWindow.xaml</DependentUpon>

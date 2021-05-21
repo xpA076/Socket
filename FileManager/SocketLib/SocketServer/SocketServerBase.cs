@@ -6,8 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-
+using FileManager.Events;
 using FileManager.SocketLib.Enums;
 
 namespace FileManager.SocketLib.SocketServer
@@ -20,9 +19,9 @@ namespace FileManager.SocketLib.SocketServer
 
         public IPAddress HostIP { get; set; }
 
-        
 
-        public SocketLogger Logger { get; set; } = null;
+
+        public event SocketLogEventHandler SocketLog;
 
         private readonly object LoggerLock = new object();
 
@@ -32,13 +31,10 @@ namespace FileManager.SocketLib.SocketServer
 
         protected void Log(string info, LogLevel logLevel)
         {
-            if (Logger != null)
+            // 必须要加锁保证Log文件写时不被占用
+            lock (LoggerLock)
             {
-                // 必须要加锁保证Log文件写时不被占用
-                lock (LoggerLock)
-                {
-                    Logger(info, logLevel);
-                }
+                SocketLog?.Invoke(this, new SocketLogEventArgs(info, logLevel));
             }
         }
 

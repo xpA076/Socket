@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.Enums
 {
-    public delegate SocketIdentity SocketIdentityCheckHandler(HB32Header header, byte[] bytes);
+    
 
     public enum SocketIdentity : int
     {

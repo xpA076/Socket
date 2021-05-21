@@ -11,8 +11,7 @@ using System.Threading.Tasks;
 using FileManager.Static;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
-
-
+using FileManager.Events;
 
 namespace FileManager.Models
 {
@@ -23,9 +22,9 @@ namespace FileManager.Models
     public class FileTaskManager
     {
         #region 属性与变量
-        public PageUICallback UpdateUICallback { private get; set; }
-        public PageUICallback UpdateProgressCallback { private get; set; }
-        public PageUIInvokeCallback UpdateTasklistCallback { private get; set; }
+        public event UpdateUIEventHandler UpdateUI;
+        public event UpdateUIEventHandler UpdateProgress;
+        public event UpdateUIInvokeEventHandler UpdateTasklist;
 
         public bool IsTransfering { get; private set; } = false;
         public bool IsStopDownloading { get; set; } = false;
@@ -243,7 +242,7 @@ namespace FileManager.Models
                 }
                 else
                 {
-                    UpdateUICallback();
+                    UpdateUI(this, EventArgs.Empty);
                     Record.StartNewTask(current_task);
                     TransferSingleTask(current_task);
                     if (IsStopDownloading)
@@ -260,7 +259,7 @@ namespace FileManager.Models
             TicTokBytes = 0;
             this.Record.CurrentFinished = this.Record.CurrentLength;
             this.Record.Clear();
-            UpdateProgressCallback();
+            UpdateProgress(this, EventArgs.Empty);
             IsTransfering = false;
         }
 
@@ -308,25 +307,26 @@ namespace FileManager.Models
                 return;
             }
             /// 更新 TaskList, 重新定位当前任务
-            UpdateTasklistCallback(new Action(() => {
-                this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
-                int bias = Record.CurrentTaskIndex;
-                for (int i = 0; i < files.Count; ++i)
-                {
-                    SocketFileInfo f = files[i];
-                    FileTask task_add = new FileTask
+            UpdateTasklist(this,
+                new UpdateUIInvokeEventArgs(new Action(() => {
+                    this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
+                    int bias = Record.CurrentTaskIndex;
+                    for (int i = 0; i < files.Count; ++i)
                     {
-                        Route = task.Route.Copy(),
-                        IsDirectory = f.IsDirectory,
-                        Type = TransferType.Download,
-                        RemotePath = Path.Combine(task.RemotePath, f.Name),
-                        LocalPath = task.LocalPath + "\\" + f.Name,
-                        Length = f.Length,
-                    };
-                    UpdateTaskLength(task_add);
-                    this.Record.InsertTask(bias + i, task_add);
-                }
-            }));
+                        SocketFileInfo f = files[i];
+                        FileTask task_add = new FileTask
+                        {
+                            Route = task.Route.Copy(),
+                            IsDirectory = f.IsDirectory,
+                            Type = TransferType.Download,
+                            RemotePath = Path.Combine(task.RemotePath, f.Name),
+                            LocalPath = task.LocalPath + "\\" + f.Name,
+                            Length = f.Length,
+                        };
+                        UpdateTaskLength(task_add);
+                        this.Record.InsertTask(bias + i, task_add);
+                    }
+                })));
         }
 
         private void UploadSingleTaskDirectory(FileTask task)
@@ -347,21 +347,22 @@ namespace FileManager.Models
                 return;
             }
             /// 更新 TaskList, 重新定位当前任务
-            UpdateTasklistCallback(new Action(() => {
-                lock (this.Record)
-                {
-                    FileTask father_task = Record.CurrentTask;
-                    int bias = Record.CurrentTaskIndex;
-                    this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
-                    List<FileTask> tasks_son = GetUploadTasksInDirectory(father_task);
-                    for (int i = 0; i < tasks_son.Count; ++i)
+            UpdateTasklist(this,
+                new UpdateUIInvokeEventArgs(new Action(() => {
+                    lock (this.Record)
                     {
-                        FileTask task_son = tasks_son[i];
-                        UpdateTaskLength(task_son);
-                        this.Record.InsertTask(bias + i, task_son);
+                        FileTask father_task = Record.CurrentTask;
+                        int bias = Record.CurrentTaskIndex;
+                        this.Record.RemoveTaskAt(Record.CurrentTaskIndex);
+                        List<FileTask> tasks_son = GetUploadTasksInDirectory(father_task);
+                        for (int i = 0; i < tasks_son.Count; ++i)
+                        {
+                            FileTask task_son = tasks_son[i];
+                            UpdateTaskLength(task_son);
+                            this.Record.InsertTask(bias + i, task_son);
+                        }
                     }
-                }
-            }));
+                })));
         }
 
         /// <summary>
@@ -544,6 +545,7 @@ namespace FileManager.Models
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
                 client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest | mask, task.RemotePath);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
+                client.Close();
                 string response = Encoding.UTF8.GetString(bytes);
                 return int.Parse(response);
             }
@@ -675,7 +677,7 @@ namespace FileManager.Models
                         Record.CurrentFinished += header.ValidByteLength;
                         if (this.AllowUpdateUI())
                         {
-                            UpdateUICallback();
+                            UpdateUI(this, EventArgs.Empty);
                             if (Record.NeedSaveRecord())
                             {
                                 Record.SaveXml();
@@ -778,7 +780,7 @@ namespace FileManager.Models
                         Record.CurrentFinished += length;
                         if (this.AllowUpdateUI())
                         {
-                            UpdateUICallback();
+                            UpdateUI(this, EventArgs.Empty);
                             // Save record xml
                             Record.SaveXml();
                         }

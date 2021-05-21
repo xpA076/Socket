@@ -8,14 +8,16 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using FileManager.Events;
 using FileManager.SocketLib.Enums;
 
 
 namespace FileManager.SocketLib.SocketServer
 {
+
     public partial class SocketServer : SocketServerBase
     {
-        public SocketIdentityCheckHandler CheckIdentity = null;
+        public event SocketIdentityCheckEventHandler CheckIdentity;
 
         public SocketServerConfig Config { get; set; } = new SocketServerConfig();
 
@@ -41,7 +43,9 @@ namespace FileManager.SocketLib.SocketServer
                 client.SendTimeout = Config.SocketSendTimeOut;
                 client.ReceiveTimeout = Config.SocketReceiveTimeOut;
                 this.ReceiveBytes(client, out HB32Header ac_header, out byte[] ac_bytes);
-                SocketIdentity identity = CheckIdentity(ac_header, ac_bytes);
+                SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(ac_header, ac_bytes);
+                CheckIdentity(this, e);
+                SocketIdentity identity = e.CheckedIndentity;
                 ClientIdentities.Add(client, identity);
                 this.SendHeader(client, SocketPacketFlag.AuthenticationResponse, (int)identity);
                 int error_count = 0;

@@ -22,6 +22,8 @@ using FileManager.SocketLib;
 using FileManager.SocketLib.SocketServer;
 using FileManager.Static;
 using FileManager.SocketLib.Enums;
+using FileManager.Events;
+using FileManager.ViewModels;
 
 namespace FileManager.Pages
 {
@@ -30,38 +32,15 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageServer : Page
     {
-        private PageServerViewModel PageServerView = new PageServerViewModel();
+        private ServerRichTextBoxViewModel RichTextBoxView = new ServerRichTextBoxViewModel();
 
 
         public PageServer()
         {
             InitializeComponent();
             this.TextBoxPort.Text = Config.DefaultServerPort.ToString();
-            /// Log UI 更新对应 delegate
-            PageServerView.RichTextBoxUpdate = (time, logLevel, log) =>
-            {
-                SolidColorBrush b1 = new SolidColorBrush(Colors.White);
-                SolidColorBrush b2 = new SolidColorBrush(Colors.White);
-                switch (logLevel)
-                {
-                    case LogLevel.Error:
-                        b2 = new SolidColorBrush(Color.FromRgb(255, 192, 192));
-                        break;
-                    case LogLevel.Warn:
-                        b2 = new SolidColorBrush(Colors.LightYellow);
-                        break;
-                    case LogLevel.Info:
-                        b2 = new SolidColorBrush(Color.FromRgb(0, 127, 255));
-                        break;
-                }
-                Paragraph p = new Paragraph();
-                p.Inlines.Add(new Run() { Text = time.ToString("yyyy-MM-dd HH:mm:ss.fff "), Foreground = b1 });
-                p.Inlines.Add(new Run() { Text = "[" + logLevel.ToString().PadRight(5) + "] ", Foreground = b2 });
-                p.Inlines.Add(new Run() { Text = log, Foreground = b1 });
-                this.RichTextBoxLog.Document.Blocks.Add(p);
-                this.RichTextBoxLog.UpdateLayout();
-            };
-            this.TextBoxNull.DataContext = PageServerView;
+            RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
+            this.TextBoxNull.DataContext = RichTextBoxView;
             //ButtonStartListen_Click(null, null);
         }
 
@@ -77,8 +56,8 @@ namespace FileManager.Pages
                 server.Config.Create(Config.ServerConfigPath);
             }
             server.Config.Load(Config.ServerConfigPath);
-            server.Logger = ServerLogger;
-            server.CheckIdentity = CheckIdentity;
+            server.SocketLog += Server_OnLog;
+            server.CheckIdentity += CheckIdentity;
             try
             {
                 int port = int.Parse(this.TextBoxPort.Text);
@@ -88,8 +67,7 @@ namespace FileManager.Pages
             catch (Exception ex)
             {
                 server.Close();
-                //MessageBox.Show("Server window start listening error: " + ex.Message);
-                ServerLogger("Server window start listening error: " + ex.Message, LogLevel.Error);
+                Server_OnLog(this, new SocketLogEventArgs("Server window start listening error: " + ex.Message, LogLevel.Error));
             }
         }
 
@@ -101,57 +79,55 @@ namespace FileManager.Pages
         }
 
 
-        private SocketLib.Enums.SocketIdentity CheckIdentity(HB32Header header, byte[] bytes)
+
+
+
+        private void CheckIdentity(object sender, SocketIdentityCheckEventArgs e)
         {
-            return SocketLib.Enums.SocketIdentity.All;
+            e.CheckedIndentity = SocketLib.Enums.SocketIdentity.All;
         }
 
 
-        private void ServerLogger(string log, LogLevel logLevel)
+        private void Server_OnLog(object sender, SocketLogEventArgs e)
         {
-            if ((int)logLevel > (int)LogLevel.Info)
+            if ((int)e.logLevel > (int)LogLevel.Info)
             {
                 //return;
             }
-            DateTime now = DateTime.Now;
-            Logger.ServerLog(log, logLevel, now);
-            this.PageServerView.InvokeLog(now, logLevel, log);
+            Logger.ServerLog(e.log, e.logLevel, e.time);
+            this.RichTextBoxView.InvokeLog(e);
         }
 
 
-        internal delegate void RichTextBoxUpdateHandler(DateTime time, LogLevel logLevel, string log);
-
-
-        /// <summary>
-        /// 用这种不太优雅的方式实现 RichTextBox 界面更新
-        /// 因为 SocketServer 的 Log 操作基本都在新建线程中, 没有在 WPF 更新 UI 的权限
-        /// 通过数据绑定触发UI更新事件, 在UI更新线程中通过delegate更新 RichTextBox 中的 FlowDocument
-        /// </summary>
-        internal class PageServerViewModel : INotifyPropertyChanged
+        private void RichTextBoxLog_OnUpdate(object sender, SocketLogEventArgs e)
         {
-            public RichTextBoxUpdateHandler RichTextBoxUpdate;
-            public event PropertyChangedEventHandler PropertyChanged;
-            
-            public string Nothing
+            SolidColorBrush b1 = new SolidColorBrush(Colors.White);
+            SolidColorBrush b2 = new SolidColorBrush(Colors.White);
+            switch (e.logLevel)
             {
-                get
-                {
-                    RichTextBoxUpdate(_time, _logLevel, _log);
-                    return "";
-                }
+                case LogLevel.Error:
+                    b2 = new SolidColorBrush(Color.FromRgb(255, 192, 192));
+                    break;
+                case LogLevel.Warn:
+                    b2 = new SolidColorBrush(Colors.LightYellow);
+                    break;
+                case LogLevel.Info:
+                    b2 = new SolidColorBrush(Color.FromRgb(0, 127, 255));
+                    break;
             }
-
-            DateTime _time = DateTime.Now;
-            LogLevel _logLevel = LogLevel.Info;
-            string _log = "Init";
-
-            public void InvokeLog(DateTime time, LogLevel logLevel, string log)
-            {
-                _time = time;
-                _logLevel = logLevel;
-                _log = log;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Nothing"));
-            }
+            Paragraph p = new Paragraph();
+            p.Inlines.Add(new Run() { Text = e.time.ToString("yyyy-MM-dd HH:mm:ss.fff "), Foreground = b1 });
+            p.Inlines.Add(new Run() { Text = "[" + e.logLevel.ToString().PadRight(5) + "] ", Foreground = b2 });
+            p.Inlines.Add(new Run() { Text = e.log, Foreground = b1 });
+            this.RichTextBoxLog.Document.Blocks.Add(p);
+            this.RichTextBoxLog.UpdateLayout();
         }
+
+
+        
+
+
+
+
     }
 }

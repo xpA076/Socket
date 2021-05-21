@@ -18,6 +18,7 @@ using System.Windows.Shapes;
 using FileManager.Models;
 using FileManager.ViewModels;
 using FileManager.SocketLib;
+using FileManager.Events;
 
 namespace FileManager.Pages
 {
@@ -32,14 +33,11 @@ namespace FileManager.Pages
         {
             this.parent = parent;
             InitializeComponent();
-            // buttons
-            //this.ButtonPause.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonPause_Click);
-            //this.ButtonStart.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonStart_Click);
             this.ListViewTask.ItemsSource = FTManager.FileTasks;
             this.GridProgress.DataContext = ProgressView;
-            FTManager.UpdateUICallback = new PageUICallback(this.UpdateUI);
-            FTManager.UpdateProgressCallback = new PageUICallback(this.UpdateProgress);
-            FTManager.UpdateTasklistCallback = new PageUIInvokeCallback((Action a) => { this.Dispatcher.Invoke(a); });
+            FTManager.UpdateUI += this.UpdateUI;
+            FTManager.UpdateProgress += this.UpdateProgress;
+            FTManager.UpdateTasklist += (object sender, UpdateUIInvokeEventArgs e) => { this.Dispatcher.Invoke(e.action); };
         }
 
         #region 下载和 UI 相关 private 变量
@@ -59,12 +57,12 @@ namespace FileManager.Pages
         private void GridCurrentProgress_Click(object sender, MouseButtonEventArgs e)
         {
             showCurrentPercent = !showCurrentPercent;
-            UpdateProgress();
+            UpdateProgress(this, EventArgs.Empty);
         }
         private void GridTotalProgress_Click(object sender, MouseButtonEventArgs e)
         {
             showTotalPercent = !showTotalPercent;
-            UpdateProgress();
+            UpdateProgress(this, EventArgs.Empty);
         }
 
         public void ButtonPause_Click(object sender, RoutedEventArgs e)
@@ -106,32 +104,33 @@ namespace FileManager.Pages
 
 
         #region UI更新 
-        /// 作为 Callback 在 FileTaskManager 中调用
         /// <summary>
         /// 更新 UI 
         /// </summary>
-        private void UpdateUI()
+        private void UpdateUI(object sender, EventArgs e)
         {
-            UpdateSpeed();
-            UpdateProgress();
+            UpdateSpeed(sender, e);
+            UpdateProgress(sender, e);
         }
 
-        private void UpdateSpeed()
+        private void UpdateSpeed(object sender, EventArgs e)
         {
-            double speed = FTManager.GetSpeed();
-            int seconds = (int)((this.FTManager.TotalLength - this.FTManager.TotalFinished) / speed);
+            FileTaskManager ftm = sender as FileTaskManager;
+            double speed = ftm.GetSpeed();
+            int seconds = (int)((ftm.TotalLength - ftm.TotalFinished) / speed);
             ProgressView.Speed = Size2String(speed).PadLeft(18, ' ') + "/s";
             ProgressView.TimeRemaining = (seconds / 3600).ToString().PadLeft(10, ' ') +
                 ": " + (seconds % 3600 / 60).ToString().PadLeft(2, '0') +
                 ": " + (seconds % 60).ToString().PadLeft(2, '0');
         }
 
-        private void UpdateProgress()
+        private void UpdateProgress(object sender, EventArgs e)
         {
-            long cf = this.FTManager.CurrentFinished;
-            long cl = this.FTManager.CurrentLength;
-            long tf = this.FTManager.TotalFinished;
-            long tl = this.FTManager.TotalLength;
+            FileTaskManager ftm = sender as FileTaskManager;
+            long cf = ftm.CurrentFinished;
+            long cl = ftm.CurrentLength;
+            long tf = ftm.TotalFinished;
+            long tl = ftm.TotalLength;
 
             if (showCurrentPercent)
             {

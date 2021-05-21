@@ -2,7 +2,7 @@
 
 namespace FileManager.SocketLib
 {
-    public delegate void TransferProgressCallback(double speed, long bytes);
+    
     /// <summary>
     /// Socket 异步操作回调函数句柄
     /// </summary>
