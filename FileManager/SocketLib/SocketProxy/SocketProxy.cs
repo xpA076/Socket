@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using FileManager.SocketLib.SocketServer;
 using FileManager.SocketLib.Enums;
 using System.Threading;
+using System.Diagnostics;
 
-namespace FileManager.SocketLib.SocketProxy
+namespace FileManager.SocketLib
 {
     public class SocketProxy : SocketServerBase
     {
         public static readonly byte ProxyHeaderByte = 0xA3;
+        public static readonly byte ReversedProxyHeaderByte = 0xA4;
 
         public SocketProxyConfig Config { get; set; } = new SocketProxyConfig();
 
@@ -23,88 +25,7 @@ namespace FileManager.SocketLib.SocketProxy
 
         }
 
-        public override void ReceiveData(object acceptSocketObject)
-        {
-            Socket client = (Socket)acceptSocketObject;
-            SocketEndPoint socket_ep = null;
-            try
-            {
-                client.SendTimeout = Config.SocketSendTimeOut;
-                client.ReceiveTimeout = Config.SocketReceiveTimeOut;
-                socket_ep = AuthenticationProxy(client);
-                int error_count = 0;
-                while (error_count < 5)
-                {
-                    try
-                    {
-                        byte[] proxy_header = ReceiveProxyHeader(client);
-                        HB32Header recv_header;
-                        byte[] recv_bytes;
-                        switch ((ProxyHeader)proxy_header[1])
-                        {
-                            case ProxyHeader.SendHeader:
-                                this.ReceiveBytes(client, out recv_header, out recv_bytes);
-                                socket_ep.SendHeader(recv_header);
-                                break;
-                            case ProxyHeader.SendBytes:
-                                this.ReceiveBytes(client, out recv_header, out recv_bytes);
-                                socket_ep.SendBytes(recv_header, recv_bytes);
-                                break;
-                            case ProxyHeader.ReceiveBytes:
-                                socket_ep.ReceiveBytes(out recv_header, out recv_bytes);
-                                this.SendBytes(client, recv_header, recv_bytes);
-                                break;
-                        }
-                        error_count = 0;
-                    }
-                    catch (SocketException ex)
-                    {
-                        error_count++;
-                        switch (ex.ErrorCode)
-                        {
-                            // 远程 client 主机关闭连接
-                            case 10054:
-                                DisposeClient(client, socket_ep);
-                                Log("Connection closed (client closed). " + ex.Message, LogLevel.Info);
-                                return;
-                            // Socket 超时
-                            case 10060:
-                                Thread.Sleep(200);
-                                Log("Socket timeout. " + ex.Message, LogLevel.Trace);
-                                continue;
-                            default:
-                                Log("Server receive data :" + ex.Message, LogLevel.Warn);
-                                continue;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        error_count++;
-                        if (ex.Message.Contains("Buffer receive error: cannot receive package"))
-                        {
-                            DisposeClient(client, socket_ep);
-                            Log(ex.Message, LogLevel.Trace);
-                            return;
-                        }
-                        if (ex.Message.Contains("Invalid socket header"))
-                        {
-                            DisposeClient(client, socket_ep);
-                            Log("Connection closed : " + ex.Message, LogLevel.Warn);
-                            return;
-                        }
-                        Log("Server exception :" + ex.Message, LogLevel.Warn);
-                        Thread.Sleep(200);
-                        continue;
-                    }
-                }
-                Log("Connection closed.", LogLevel.Warn);
-            }
-            catch (Exception ex)
-            {
-                Log("Socket initiate exception :" + ex.Message, LogLevel.Error);
-                DisposeClient(client, socket_ep);
-            }
-        }
+        private Dictionary<string, EventWaitHandle> ReversedProxyServers = new Dictionary<string, EventWaitHandle>();
 
 
         /// <summary>
@@ -120,6 +41,131 @@ namespace FileManager.SocketLib.SocketProxy
         }
 
 
+        protected override void ReceiveData(object acceptSocketObject)
+        {
+            Socket client = (Socket)acceptSocketObject;
+            SocketEndPoint socket_ep = null;
+            try
+            {
+                client.SendTimeout = Config.SocketSendTimeOut;
+                client.ReceiveTimeout = Config.SocketReceiveTimeOut;
+                byte[] recv_1st_header = ReceiveProxyHeader(client);
+                if (recv_1st_header[0] == ProxyHeaderByte)
+                {
+                    bool result = DoForwardProxy(client, socket_ep);
+                    if (!result)
+                    {
+                        Log("Connection closed.", LogLevel.Warn);
+                    }
+                }
+                else
+                {
+                    /// Not proxy header. Receive bytes:
+                    ///   //(?)1. client 端请求与挂在该代理上的反向代理 Server 连接
+                    ///   2. 反向代理Server向该代理的长连接轮询
+                    byte[] header_bytes = new byte[HB32Encoding.HeaderSize];
+                    Array.Copy(recv_1st_header, header_bytes, recv_1st_header.Length);
+                    this.ReceiveBuffer(client, header_bytes, offset: recv_1st_header.Length);
+                    this.ReceiveBytes(client, out HB32Header header, out byte[] bytes, HB32Header.ReadFromBytes(header_bytes));
+                    /// 
+                    string name = Encoding.UTF8.GetString(bytes);
+                    this.SendHeader(client, SocketPacketFlag.ReversedProxyResponse);
+                    client.SendTimeout = 20 * 1000;
+                    client.ReceiveTimeout = 20 * 1000;
+                    // todo : long connection
+                }
+
+
+
+                
+            }
+            catch (Exception ex)
+            {
+                Log("Socket initiate exception :" + ex.Message, LogLevel.Error);
+                DisposeClient(client, socket_ep);
+            }
+        }
+
+
+        private bool DoForwardProxy(Socket client, SocketEndPoint socket_ep)
+        {
+            socket_ep = AuthenticationProxy(client);
+            int error_count = 0;
+            while (error_count < 5)
+            {
+                try
+                {
+                    byte[] proxy_header = ReceiveProxyHeader(client);
+                    HB32Header recv_header;
+                    byte[] recv_bytes;
+                    switch ((ProxyHeader)proxy_header[1])
+                    {
+                        case ProxyHeader.SendHeader:
+                            this.ReceiveBytes(client, out recv_header, out recv_bytes);
+                            socket_ep.SendHeader(recv_header);
+                            if (recv_header.Flag == SocketPacketFlag.DisconnectRequest)
+                            {
+                                DisposeClient(client, socket_ep);
+                                return true;
+                            }
+                            break;
+                        case ProxyHeader.SendBytes:
+                            this.ReceiveBytes(client, out recv_header, out recv_bytes);
+                            socket_ep.SendBytes(recv_header, recv_bytes);
+                            break;
+                        case ProxyHeader.ReceiveBytes:
+                            socket_ep.ReceiveBytes(out recv_header, out recv_bytes);
+                            this.SendBytes(client, recv_header, recv_bytes);
+                            break;
+                    }
+                    error_count = 0;
+                }
+                catch (SocketException ex)
+                {
+                    error_count++;
+                    switch (ex.ErrorCode)
+                    {
+                        // 远程 client 主机关闭连接
+                        case 10054:
+                            DisposeClient(client, socket_ep);
+                            Log("Connection closed (client closed). " + ex.Message, LogLevel.Info);
+                            return false;
+                        // Socket 超时
+                        case 10060:
+                            Thread.Sleep(200);
+                            Log("Socket timeout. " + ex.Message, LogLevel.Trace);
+                            continue;
+                        default:
+                            Log("Server receive data :" + ex.Message, LogLevel.Warn);
+                            continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    error_count++;
+                    if (ex.Message.Contains("Buffer receive error: cannot receive package"))
+                    {
+                        DisposeClient(client, socket_ep);
+                        Log(ex.Message, LogLevel.Trace);
+                        return false;
+                    }
+                    if (ex.Message.Contains("Invalid socket header"))
+                    {
+                        DisposeClient(client, socket_ep);
+                        Log("Connection closed : " + ex.Message, LogLevel.Warn);
+                        return false;
+                    }
+                    Log("Server exception :" + ex.Message, LogLevel.Warn);
+                    Thread.Sleep(200);
+                    continue;
+                }
+            }
+            return false;
+        }
+
+
+
+
         /// <summary>
         /// 完成创建 Socket 过程身份认证的代理过程
         /// </summary>
@@ -127,8 +173,31 @@ namespace FileManager.SocketLib.SocketProxy
         /// <returns>已与Server或下级代理连接成功的 SocketEndPoint 对象</returns>
         private SocketEndPoint AuthenticationProxy(Socket client)
         {
-            byte[] proxy_header = ReceiveProxyHeader(client);
+            byte[] proxy_header;
             this.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
+            Debug.Assert(route_bytes[0] == 1);
+            int pt = 0;
+            ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes, ref pt);
+            if (route.ProxyRoute.Count == 0)
+            {
+                /// 无下级代理, 直连 server
+            }
+            else if (route.ProxyRoute[0].Address.Equals(this.HostAddress))
+            {
+                /// 下级为挂载在此的反向代理
+            }
+            else
+            {
+                /// 下级为正向代理
+            }
+
+
+
+
+
+
+
+
             GetAimInfo(route_bytes, out TCPAddress AimAddress, out bool IsAimProxy, out byte[] AimBytes);
             SocketClient socket_client = new SocketClient(AimAddress);
             socket_client.IsWithProxy = IsAimProxy;
@@ -150,6 +219,14 @@ namespace FileManager.SocketLib.SocketProxy
         }
 
 
+        /// <summary>
+        /// 从收到的 route_bytes 中获取需与下级服务器通信相关内容
+        /// 本方法不产生 socket 通信
+        /// </summary>
+        /// <param name="recv_bytes">接收到来自client的路由数据</param>
+        /// <param name="address">返回代理下级服务器地址</param>
+        /// <param name="is_aim_proxy">代理下级服务器是否为代理 (决定socket_ep包头)</param>
+        /// <param name="bytes_to_send">需向下级代理发送的内容</param>
         private void GetAimInfo(byte[] recv_bytes, out TCPAddress address, out bool is_aim_proxy, out byte[] bytes_to_send)
         {
             if (recv_bytes[0] == 1)
@@ -188,7 +265,7 @@ namespace FileManager.SocketLib.SocketProxy
             catch (Exception) { }
             try
             {
-                socket_ep.Close();
+                socket_ep.CloseSocket();
             }
             catch (Exception) { }
         }

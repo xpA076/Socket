@@ -46,13 +46,20 @@ namespace FileManager.SocketLib
 
         public static TCPAddress FromBytes(byte[] bytes, int index = 0)
         {
-            return new TCPAddress
+            return FromBytes(bytes, ref index);
+        }
+
+        public static TCPAddress FromBytes(byte[] bytes, ref int index)
+        {
+            TCPAddress address = new TCPAddress
             {
                 IP = new IPAddress(new byte[4] {
                     bytes[index + 0], bytes[index + 1], bytes[index + 2], bytes[index + 3]
                 }),
                 Port = (((int)bytes[index + 4]) << 8) + (int)bytes[index + 5]
             };
+            index += 6;
+            return address;
         }
 
         public TCPAddress Copy()
@@ -62,6 +69,18 @@ namespace FileManager.SocketLib
                 IP = new IPAddress(this.IP.GetAddressBytes()),
                 Port = this.Port
             };
+        }
+
+
+        public override bool Equals(object obj)
+        {
+            TCPAddress addr = obj as TCPAddress;
+            return this.IP.Equals(addr.IP) && this.Port.Equals(addr.Port);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
     }
 }

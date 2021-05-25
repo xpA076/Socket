@@ -21,6 +21,11 @@ namespace FileManager.SocketLib.SocketServer
 
         public SocketServerConfig Config { get; set; } = new SocketServerConfig();
 
+        protected SocketServer()
+        {
+
+        }
+
         public SocketServer(IPAddress ip):base(ip)
         {
 
@@ -35,7 +40,7 @@ namespace FileManager.SocketLib.SocketServer
         /// 这个函数为 client 的整个生存周期
         /// </summary>
         /// <param name="acceptSocketObject">client socket</param>
-        public override void ReceiveData(object acceptSocketObject)
+        protected override void ReceiveData(object acceptSocketObject)
         {
             Socket client = (Socket)acceptSocketObject;
             try

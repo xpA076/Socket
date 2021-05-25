@@ -114,6 +114,7 @@ namespace FileManager
 
         public MainWindow()
         {
+
             // Load configurations
             Config.LoadConfig();
 
@@ -333,10 +334,10 @@ namespace FileManager
         public void StartConnectionMonitor()
         {
             connectionMonitor.Init();
-            connectionMonitor.HeartBeatUnitCallback = (() =>
+            connectionMonitor.HeartBeatUnitCallback += (object sender, EventArgs e) =>
             {
-                ConnectionStatusView.SetStatus(connectionMonitor);
-            });
+                ConnectionStatusView.SetStatus(sender as HeartBeatConnectionMonitor);
+            };
             connectionMonitor.StartHeartBeat();
         }
 

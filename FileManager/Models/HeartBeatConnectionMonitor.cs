@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using FileManager.Events;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Static;
@@ -29,7 +29,7 @@ namespace FileManager.Models
     public class HeartBeatConnectionMonitor : HeartBeatBase
     {
 
-        public PageUICallback HeartBeatUnitCallback = null;
+        public event UpdateUIEventHandler HeartBeatUnitCallback = null;
 
         public List<HeartBeatConnectionStatusRecord> StatusRecords = new List<HeartBeatConnectionStatusRecord>();
 
@@ -91,7 +91,7 @@ namespace FileManager.Models
             finally
             {
                 StatusRecords.Clear();
-                HeartBeatUnitCallback();
+                HeartBeatUnitCallback(this, EventArgs.Empty);
             }
         }
 
@@ -103,7 +103,7 @@ namespace FileManager.Models
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(1, Interval);
                 
-                client.Close();
+                client.ClientClose();
                 AddRecord(true);
             }
             catch (Exception)
@@ -113,7 +113,7 @@ namespace FileManager.Models
             }
             finally
             {
-                HeartBeatUnitCallback();
+                HeartBeatUnitCallback(this, EventArgs.Empty);
             }
             //throw new NotImplementedException();
         }

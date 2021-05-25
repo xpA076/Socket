@@ -9,8 +9,6 @@ using FileManager.SocketLib.Enums;
 namespace FileManager.SocketLib
 {
 
-    public delegate byte[] GetHeaderBytesHandler(HB32Header header);
-
     public class HB32Header
     {
         public SocketPacketFlag Flag { get; set; } = 0;

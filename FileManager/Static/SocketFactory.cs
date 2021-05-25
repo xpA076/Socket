@@ -15,19 +15,7 @@ namespace FileManager.Static
 {
     public static class SocketFactory
     {
-        public static TCPAddress ServerAddress { get; set; }
-
-        public static TCPAddress ProxyAddress { get; set; } = null;
-
         public static ConnectionRoute CurrentRoute { get; set; } = null;
-
-
-
-
-        // ******* todo *********** 21.05.11 rebuild with proxy
-
-
-
 
 
         /// <summary>
@@ -69,7 +57,7 @@ namespace FileManager.Static
             {
                 SocketClient client = new SocketClient(route.ProxyRoute[0]);
                 client.IsWithProxy = true;
-                byte[] proxy_bytes = route.GetBytesExceptFirstProxy();
+                byte[] proxy_bytes = route.GetBytes(1);
                 bytes_to_send = new byte[proxy_bytes.Length + key_bytes.Length];
                 Array.Copy(proxy_bytes, bytes_to_send, proxy_bytes.Length);
                 Array.Copy(key_bytes, 0, bytes_to_send, proxy_bytes.Length, key_bytes.Length);
@@ -81,9 +69,9 @@ namespace FileManager.Static
         public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route, int maxTry = 1, int retryInterval = 3000)
         {
             int tryCount = 0;
+            string err_msg = "";
             while (true)
             {
-                string err_msg = "";
                 if (maxTry > 0 && tryCount >= maxTry)
                 {
                     throw new ArgumentException("Generating valid socket failed : exceed max try times.\n" + err_msg);
@@ -115,7 +103,7 @@ namespace FileManager.Static
                 client.SendBytes(SocketPacketFlag.AuthenticationPacket, bytes_to_send, 0, 0, 1);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
                 identity = (SocketIdentity)header.I1;
-                client.Close();
+                client.ClientClose();
                 asyncCallback();
             }, exceptionCallback, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
             return identity;
@@ -124,18 +112,6 @@ namespace FileManager.Static
 
 
 
-        /*
-        public static Communicator GetConnectedCommunicator(TCPAddress server_address, int maxTry = -1, int retryInterval = 3000)
-        {
 
-        }
-
-
-        public static Communicator GetConnectedCommunicator(TCPAddress server_address, TCPAddress proxy_address, int maxTry = -1, int retryInterval = 3000)
-        {
-
-        }
-
-        */
     }
 }

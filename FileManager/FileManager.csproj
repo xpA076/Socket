@@ -104,6 +104,7 @@
     <Compile Include="SocketLib\HB32Encoding.cs" />
     <Compile Include="SocketLib\HB32Header.cs" />
     <Compile Include="SocketLib\Models\ConnectionRoute.cs" />
+    <Compile Include="SocketLib\Models\RouteNode.cs" />
     <Compile Include="SocketLib\Models\SocketFileInfo.cs" />
     <Compile Include="SocketLib\Models\TCPAddress.cs" />
     <Compile Include="SocketLib\SocketClient.cs" />

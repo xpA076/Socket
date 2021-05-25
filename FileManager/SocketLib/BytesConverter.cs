@@ -8,6 +8,20 @@ namespace FileManager.SocketLib
 {
     public static class BytesConverter
     {
+        public static byte[] Concatenate(byte[] bytes1, byte[] bytes2)
+        {
+            byte[] bytes = new byte[bytes1.Length + bytes2.Length];
+            Array.Copy(bytes1, 0, bytes, 0, bytes1.Length);
+            Array.Copy(bytes2, bytes1.Length, bytes, 0, bytes2.Length);
+            return bytes;
+        }
+
+
+
+
+
+
+
         #region int
 
         public static byte[] WriteInt(byte[] bytes, int num, ref int idx)
@@ -106,6 +120,13 @@ namespace FileManager.SocketLib
             idx += 8;
             return num;
         }
+
+
+        public static byte[] WriteString(byte[] bytes, string str, int idx)
+        {
+            return WriteString(bytes, str, ref idx);
+        }
+
 
         public static byte[] WriteString(byte[] bytes, string str, ref int idx)
         {

@@ -253,7 +253,7 @@ namespace FileManager.Pages
                     client.SendBytes(SocketPacketFlag.DirectoryRequest, RemoteDirectory);
                     client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
                     this.fileClasses = SocketFileInfo.BytesToList(recv_bytes);
-                    client.Close();
+                    client.ClientClose();
                     this.Dispatcher.Invoke(() => {
                         //this.ListBoxFile.ItemsSource = this.fileClasses;
                         this.ListViewFile.ItemsSource = this.fileClasses;

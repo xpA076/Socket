@@ -13,51 +13,41 @@ namespace FileManager.SocketLib.SocketServer
 {
     public class SocketServerBase : SocketIO
     {
-        public Socket server = null;
+        private Socket server = null;
 
-        
+        protected TCPAddress HostAddress { get; set; }
 
-        public IPAddress HostIP { get; set; }
-
-
-
-        public event SocketLogEventHandler SocketLog;
-
-        private readonly object LoggerLock = new object();
 
         protected bool flag_listen = true;
 
         protected bool flag_receive = true;
 
-        protected void Log(string info, LogLevel logLevel)
+        protected SocketServerBase()
         {
-            // 必须要加锁保证Log文件写时不被占用
-            lock (LoggerLock)
-            {
-                SocketLog?.Invoke(this, new SocketLogEventArgs(info, logLevel));
-            }
+
         }
 
 
 
         public SocketServerBase(IPAddress ip)
         {
-            HostIP = ip;
+            HostAddress.IP = ip;
         }
 
 
         public void InitializeServer(int port)
         {
-            IPEndPoint ipe = new IPEndPoint(HostIP, port);
+            HostAddress.Port = port;
+            IPEndPoint ipe = new IPEndPoint(HostAddress.IP, port);
             //IPEndPoint ipe = new IPEndPoint(HostIP, 12139);
             server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(ipe);
             server.Listen(20);
-            Log(string.Format("Server initiated - {0}:{1}", HostIP, port), LogLevel.Info);
+            Log(string.Format("Server initiated - {0}:{1}", HostAddress.IP, port), LogLevel.Info);
         }
 
 
-        public void StartListening()
+        public virtual void StartListening()
         {
             Thread th_listen = new Thread(ServerListen);
             th_listen.IsBackground = true;
@@ -88,7 +78,7 @@ namespace FileManager.SocketLib.SocketServer
         }
 
 
-        public virtual void ReceiveData(object acceptSocketObject)
+        protected virtual void ReceiveData(object acceptSocketObject)
         {
 
         }

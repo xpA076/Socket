@@ -1,8 +1,8 @@
 ﻿using FileManager.SocketLib.Enums;
-using FileManager.SocketLib.SocketProxy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,30 +15,25 @@ namespace FileManager.SocketLib
 
         public bool IsWithProxy { get; set; } = false;
 
-        private ProxyHeader NextProxyHeader { get; set; }
-
-        protected byte[] GetHeaderBytesWithProxy(HB32Header header)
-        {
-            if (IsWithProxy)
-            {
-                byte[] bytes = new byte[34];
-                bytes[0] = FileManager.SocketLib.SocketProxy.SocketProxy.ProxyHeaderByte;
-                bytes[1] = (byte)NextProxyHeader;
-                Array.Copy(header.GetBytes(), 0, bytes, 2, 32);
-                return bytes;
-            }
-            else
-            {
-                return header.GetBytes();
-            }
-        }
 
         #region Send / Receive
 
+        public void SendRawbytes(byte[] bytes)
+        {
+            client.Send(bytes);
+        }
+
+
         public void SendHeader(HB32Header header)
         {
-            this.NextProxyHeader = ProxyHeader.SendHeader;
-            SendHeader(client, header);
+            if (IsWithProxy)
+            {
+                SendHeader(client, header, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendHeader });
+            }
+            else
+            {
+                SendHeader(client, header);
+            }
         }
 
 
@@ -56,8 +51,15 @@ namespace FileManager.SocketLib
 
         public void SendBytes(HB32Header header, byte[] bytes)
         {
-            this.NextProxyHeader = ProxyHeader.SendBytes;
-            SendBytes(client, header, bytes);
+            if (IsWithProxy)
+            {
+                SendBytes(client, header, bytes, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendBytes });
+            }
+            else
+            {
+                SendBytes(client, header, bytes);
+            }
+
         }
 
 
@@ -119,10 +121,15 @@ namespace FileManager.SocketLib
         #endregion
 
 
-        public void Close()
+
+
+        public void CloseSocket()
         {
-            SendHeader(SocketPacketFlag.DisconnectRequest);
-            client.Close();
+            try
+            {
+                client.Close();
+            }
+            catch { }
         }
     }
 }

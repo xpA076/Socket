@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using FileManager.SocketLib.Enums;
+using FileManager.SocketLib.Models;
 
 namespace FileManager.SocketLib
 {
@@ -15,17 +16,15 @@ namespace FileManager.SocketLib
 
         /// <summary>
         /// 目标Server (或直接连接的第一层Proxy) 地址
+        /// 从 SocketFactory 中建立时 HostAddress 一定为非代理服务器, 即 Name == ""
         /// </summary>
-        public TCPAddress HostAddress { get; set; } = null;
+        public RouteNode HostAddress { get; set; } = null;
 
 
-        public SocketClient(TCPAddress tcpAddress)
+        public SocketClient(RouteNode node_address)
         {
-            HostAddress = tcpAddress.Copy();
-            this.GetHeaderBytesFunc = this.GetHeaderBytesWithProxy;
+            HostAddress = node_address.Copy();
         }
-
-        
 
 
         /// <summary>
@@ -34,7 +33,7 @@ namespace FileManager.SocketLib
         /// <param name="asyncCallback"></param>
         public void AsyncConnect(SocketAsyncCallback asyncCallback, SocketAsyncExceptionCallback exceptionCallback, int SendTimeout, int ReceiveTimeout)
         {
-            IPEndPoint ipe = new IPEndPoint(HostAddress.IP, HostAddress.Port);
+            IPEndPoint ipe = new IPEndPoint(HostAddress.Address.IP, HostAddress.Address.Port);
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             client.SendTimeout = SendTimeout;
             client.ReceiveTimeout = ReceiveTimeout;
@@ -52,9 +51,10 @@ namespace FileManager.SocketLib
             }, null);
         }
 
+
         public void Connect(int SendTimeout, int ReceiveTimeout)
         {
-            IPEndPoint ipe = new IPEndPoint(HostAddress.IP, HostAddress.Port);
+            IPEndPoint ipe = new IPEndPoint(HostAddress.Address.IP, HostAddress.Address.Port);
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             client.SendTimeout = SendTimeout;
             client.ReceiveTimeout = ReceiveTimeout;
@@ -62,6 +62,15 @@ namespace FileManager.SocketLib
             //client.Blocking = true;
         }
 
+        public void ClientClose()
+        {
+            try
+            {
+                SendHeader(SocketPacketFlag.DisconnectRequest);
+                client.Close();
+            }
+            catch { }
+        }
 
 
 
