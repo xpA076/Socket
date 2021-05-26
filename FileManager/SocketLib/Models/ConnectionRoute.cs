@@ -14,6 +14,33 @@ namespace FileManager.SocketLib
         /// 代理规则 保证 ProxyRoute[0] 必为不含 Name 的路由节点
         public List<RouteNode> ProxyRoute { get; set; } = new List<RouteNode>();
 
+        public RouteNode NextNode
+        {
+            get
+            {
+                if (ProxyRoute.Count == 0)
+                {
+                    return ServerAddress;
+                }
+                else
+                {
+                    return ProxyRoute[0];
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 下级代理是否为服务器 (byte传输是否不要发ProxyHeader包)
+        /// </summary>
+        public bool IsNextNodeServer
+        {
+            get
+            {
+                return ProxyRoute.Count == 0;
+            }
+        }
+
 
         /// <summary>
         /// 2 bytes : 01 + [proxy count]

@@ -9,13 +9,17 @@ using System.Net;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Models;
-
+using System.Net.Sockets;
 
 namespace FileManager.Static
 {
     public static class SocketFactory
     {
         public static ConnectionRoute CurrentRoute { get; set; } = null;
+
+
+
+
 
 
         /// <summary>
@@ -103,7 +107,7 @@ namespace FileManager.Static
                 client.SendBytes(SocketPacketFlag.AuthenticationPacket, bytes_to_send, 0, 0, 1);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
                 identity = (SocketIdentity)header.I1;
-                client.ClientClose();
+                client.Close();
                 asyncCallback();
             }, exceptionCallback, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
             return identity;

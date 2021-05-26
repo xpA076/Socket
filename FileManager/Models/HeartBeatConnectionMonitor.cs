@@ -103,7 +103,7 @@ namespace FileManager.Models
             {
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(1, Interval);
                 
-                client.ClientClose();
+                client.Close();
                 AddRecord(true);
             }
             catch (Exception)

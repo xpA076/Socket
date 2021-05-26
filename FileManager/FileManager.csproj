@@ -111,6 +111,7 @@
     <Compile Include="SocketLib\SocketEndPoint.cs" />
     <Compile Include="SocketLib\SocketIO.cs" />
     <Compile Include="SocketLib\SocketLongConnectionMaintainer.cs" />
+    <Compile Include="SocketLib\SocketProxy\SocketProxyClient.cs" />
     <Compile Include="SocketLib\SocketProxy\SocketProxy.cs" />
     <Compile Include="SocketLib\SocketProxy\SocketProxyConfig.cs" />
     <Compile Include="SocketLib\SocketServer\SocketReversedServer.cs" />

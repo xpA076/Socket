@@ -11,9 +11,13 @@ namespace FileManager.SocketLib
 {
     public class SocketEndPoint : SocketIO
     {
+
+
+
         protected Socket client = null;
 
         public bool IsWithProxy { get; set; } = false;
+
 
 
         #region Send / Receive
@@ -121,6 +125,19 @@ namespace FileManager.SocketLib
         #endregion
 
 
+        public void Connect(TCPAddress address, int send_timeout, int recv_timeout)
+        {
+            IPEndPoint ipe = new IPEndPoint(address.IP, address.Port);
+            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            client.SendTimeout = send_timeout;
+            client.ReceiveTimeout = recv_timeout;
+            client.Connect(ipe);
+        }
+
+        public virtual void Close()
+        {
+            CloseSocket();
+        }
 
 
         public void CloseSocket()

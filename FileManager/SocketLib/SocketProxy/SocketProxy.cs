@@ -171,13 +171,47 @@ namespace FileManager.SocketLib
         /// </summary>
         /// <param name="client"></param>
         /// <returns>已与Server或下级代理连接成功的 SocketEndPoint 对象</returns>
-        private SocketEndPoint AuthenticationProxy(Socket client)
+        private SocketProxyClient AuthenticationProxy(Socket client)
         {
             byte[] proxy_header;
             this.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
             Debug.Assert(route_bytes[0] == 1);
             int pt = 0;
             ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes, ref pt);
+            byte[] key_bytes = new byte[route_bytes.Length - pt];
+            Array.Copy(route_bytes, pt, key_bytes, 0, key_bytes.Length);
+            SocketProxyClient proxy_client = new SocketProxyClient(null);
+            proxy_client.IsWithProxy = !route.IsNextNodeServer;
+            byte[] bytes_to_send = new byte[0]; // todo
+            // todo 异常处理
+            if (route.NextNode.Address.Equals(this.HostAddress))
+            {
+                /// 下级为挂载在此的反向代理
+                /// 利用与反向代理的长连接新建 socket 并通信
+            }
+            else
+            {
+                /// 下级需正向代理
+                proxy_client.Connect(route.NextNode.Address, Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
+            }
+            proxy_client.SendBytes(route_header, bytes_to_send);
+            if (proxy_client.IsWithProxy)
+            {
+                ReceiveProxyHeader(client);
+            }
+            proxy_client.ReceiveBytes(out HB32Header auth_header, out byte[] auth_bytes);
+            this.SendBytes(client, auth_header, auth_bytes);
+            return proxy_client;
+
+
+
+
+
+
+
+
+
+
             if (route.ProxyRoute.Count == 0)
             {
                 /// 无下级代理, 直连 server

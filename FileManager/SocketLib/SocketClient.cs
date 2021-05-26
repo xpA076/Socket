@@ -54,15 +54,10 @@ namespace FileManager.SocketLib
 
         public void Connect(int SendTimeout, int ReceiveTimeout)
         {
-            IPEndPoint ipe = new IPEndPoint(HostAddress.Address.IP, HostAddress.Address.Port);
-            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.SendTimeout = SendTimeout;
-            client.ReceiveTimeout = ReceiveTimeout;
-            client.Connect(ipe);
-            //client.Blocking = true;
+            Connect(HostAddress.Address, SendTimeout, ReceiveTimeout);
         }
 
-        public void ClientClose()
+        public override void Close()
         {
             try
             {

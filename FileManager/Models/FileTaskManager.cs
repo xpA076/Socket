@@ -299,7 +299,7 @@ namespace FileManager.Models
                 client.SendBytes(SocketPacketFlag.DirectoryRequest, task.RemotePath);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
                 files = SocketFileInfo.BytesToList(recv_bytes);
-                client.ClientClose();
+                client.Close();
             }
             catch (Exception)
             {
@@ -339,7 +339,7 @@ namespace FileManager.Models
                 byte[] headerBytes = BytesConverter.WriteString(new byte[4], task.RemotePath, ref pt);
                 client.SendBytes(SocketPacketFlag.CreateDirectoryRequest, headerBytes);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.CreateDirectoryAllowed, out byte[] recvBytes);
-                client.ClientClose();
+                client.Close();
             }
             catch (Exception)
             {
@@ -453,13 +453,13 @@ namespace FileManager.Models
                     Array.Copy(contentBytes, 0, bytes, headerBytes.Length, contentBytes.Length);
                     client.SendBytes(SocketPacketFlag.UploadRequest, bytes);
                     client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.UploadAllowed, out byte[] recvBytes);
-                    client.ClientClose();
+                    client.Close();
                 }
                 else
                 {
                     client.SendBytes(SocketPacketFlag.DownloadRequest, task.RemotePath);
                     client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed, out byte[] bytes);
-                    client.ClientClose();
+                    client.Close();
                     File.WriteAllBytes(task.LocalPath, bytes);
                 }
                 this.Record.CurrentFinished = task.Length;
@@ -513,7 +513,7 @@ namespace FileManager.Models
                 {
                     sc.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, -1);
                 }
-                sc.ClientClose();
+                sc.Close();
             }
             catch (Exception ex)
             {
@@ -545,7 +545,7 @@ namespace FileManager.Models
                 SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
                 client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest | mask, task.RemotePath);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
-                client.ClientClose();
+                client.Close();
                 string response = Encoding.UTF8.GetString(bytes);
                 return int.Parse(response);
             }
@@ -703,7 +703,7 @@ namespace FileManager.Models
                     }
                 }
             }
-            client.ClientClose();
+            client.Close();
         }
 
 
@@ -803,7 +803,7 @@ namespace FileManager.Models
                     }
                 }
             }
-            client.ClientClose();
+            client.Close();
         }
 
 
