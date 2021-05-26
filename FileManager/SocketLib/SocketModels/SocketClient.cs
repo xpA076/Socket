@@ -21,9 +21,10 @@ namespace FileManager.SocketLib
         public RouteNode HostAddress { get; set; } = null;
 
 
-        public SocketClient(RouteNode node_address)
+        public SocketClient(RouteNode node_address, bool is_client_with_proxy)
         {
             HostAddress = node_address.Copy();
+            IsRequireProxyHeader = is_client_with_proxy;
         }
 
 

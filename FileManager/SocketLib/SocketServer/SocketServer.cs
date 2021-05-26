@@ -31,7 +31,7 @@ namespace FileManager.SocketLib.SocketServer
 
         }
 
-        private readonly Dictionary<Socket, SocketIdentity> ClientIdentities = new Dictionary<Socket, SocketIdentity>();
+        private readonly Dictionary<SocketResponder, SocketIdentity> ClientIdentities = new Dictionary<SocketResponder, SocketIdentity>();
         private readonly object ClientIdentitiesLock = new object();
 
 
@@ -43,66 +43,63 @@ namespace FileManager.SocketLib.SocketServer
         protected override void ReceiveData(object acceptSocketObject)
         {
             Socket client = (Socket)acceptSocketObject;
+            client.SendTimeout = Config.SocketSendTimeOut;
+            client.ReceiveTimeout = Config.SocketReceiveTimeOut;
+            SocketResponder responder = new SocketResponder(client);
             try
             {
-                client.SendTimeout = Config.SocketSendTimeOut;
-                client.ReceiveTimeout = Config.SocketReceiveTimeOut;
-                this.ReceiveBytes(client, out HB32Header ac_header, out byte[] ac_bytes);
+                responder.ReceiveBytes(out HB32Header ac_header, out byte[] ac_bytes);
                 SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(ac_header, ac_bytes);
                 CheckIdentity(this, e);
                 SocketIdentity identity = e.CheckedIndentity;
-                ClientIdentities.Add(client, identity);
-                this.SendHeader(client, SocketPacketFlag.AuthenticationResponse, (int)identity);
+                ClientIdentities.Add(responder, identity);
+                responder.SendHeader(SocketPacketFlag.AuthenticationResponse, (int)identity);
                 int error_count = 0;
                 while (flag_receive & error_count < 5)
                 {
                     try
                     {
-                        ReceiveBytes(client, out HB32Header header, out byte[] bytes);
+                        responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
                         switch (header.Flag)
                         {
                             case SocketPacketFlag.DirectoryRequest:
-                                ResponseDirectory(client, bytes);
+                                ResponseDirectory(responder, bytes);
                                 break;
                             case SocketPacketFlag.DirectorySizeRequest:
-                                ResponseDirectorySize(client, bytes);
+                                ResponseDirectorySize(responder, bytes);
                                 break;
 
                             case SocketPacketFlag.CreateDirectoryRequest:
-                                ResponseCreateDirectory(client, bytes);
+                                ResponseCreateDirectory(responder, bytes);
                                 break;
 
                             #region download
                             case SocketPacketFlag.DownloadRequest:
-                                ResponseDownloadSmallFile(client, bytes);
+                                ResponseDownloadSmallFile(responder, bytes);
                                 break;
                             case SocketPacketFlag.DownloadFileStreamIdRequest:
-                                ResponseFileStreamId(client, header, bytes);
+                                ResponseFileStreamId(responder, header, bytes);
                                 break;
                             case SocketPacketFlag.DownloadPacketRequest:
-                                ResponseTransferPacket(client, header, bytes);
+                                ResponseTransferPacket(responder, header, bytes);
                                 break;
                             #endregion
 
                             #region upload
                             case SocketPacketFlag.UploadRequest:
-                                ResponseUploadSmallFile(client, bytes);
+                                ResponseUploadSmallFile(responder, bytes);
                                 break;
                             case SocketPacketFlag.UploadFileStreamIdRequest:
-                                ResponseFileStreamId(client, header, bytes);
+                                ResponseFileStreamId(responder, header, bytes);
                                 break;
                             case SocketPacketFlag.UploadPacketRequest:
-                                ResponseTransferPacket(client, header, bytes);
+                                ResponseTransferPacket(responder, header, bytes);
                                 break;
                             #endregion
 
-                            case SocketPacketFlag.StatusReport:
-                                RecordStatusReport(client, bytes);
-                                break;
-
 
                             case SocketPacketFlag.DisconnectRequest:
-                                DisposeClient(client);
+                                DisposeClient(responder);
                                 return;
                             default:
                                 throw new Exception("Invalid socket header in receiving: " + header.Flag.ToString());
@@ -116,7 +113,7 @@ namespace FileManager.SocketLib.SocketServer
                         {
                             // 远程 client 主机关闭连接
                             case 10054:
-                                DisposeClient(client);
+                                DisposeClient(responder);
                                 Log("Connection closed (client closed). " + ex.Message, LogLevel.Info);
                                 return;
                             // Socket 超时
@@ -134,13 +131,13 @@ namespace FileManager.SocketLib.SocketServer
                         error_count++;
                         if (ex.Message.Contains("Buffer receive error: cannot receive package"))
                         {
-                            DisposeClient(client);
+                            DisposeClient(responder);
                             Log(ex.Message, LogLevel.Trace);
                             return;
                         }
                         if (ex.Message.Contains("Invalid socket header"))
                         {
-                            DisposeClient(client);
+                            DisposeClient(responder);
                             Log("Connection closed : " + ex.Message, LogLevel.Warn);
                             return;
                         }
@@ -154,38 +151,33 @@ namespace FileManager.SocketLib.SocketServer
             catch (Exception ex)
             {
                 Log("Identity authentication exception :" + ex.Message, LogLevel.Error);
-                ClientIdentities.Remove(client);
+                ClientIdentities.Remove(responder);
             }
         }
 
 
 
-        private void DisposeClient(Socket client)
+        private void DisposeClient(SocketResponder responder)
         {
             try
             {
-                client.Close();
+                responder.Close();
             }
             catch (Exception) { }
             finally
             {
-                ClientIdentities.Remove(client);
+                ClientIdentities.Remove(responder);
             }
         }
 
 
-        private void RecordStatusReport(Socket client, byte[] bytes)
-        {
-            Log(Encoding.UTF8.GetString(bytes), LogLevel.Info);
-        }
-
-        private SocketIdentity GetIdentity(Socket socket)
+        private SocketIdentity GetIdentity(SocketResponder responder)
         {
             lock (ClientIdentitiesLock)
             {
                 try
                 {
-                    return ClientIdentities[socket];
+                    return ClientIdentities[responder];
                 }
                 catch (Exception)
                 {

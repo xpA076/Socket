@@ -13,9 +13,8 @@ using FileManager.Events;
 
 namespace FileManager.SocketLib
 {
-    public class SocketIO
+    public static class SocketIO
     {
-
         /// <summary>
         /// 循环操作socket接收数据写入buffer, 收不到数据抛出异常
         /// 字节流发送与接收应调用此方法
@@ -24,7 +23,7 @@ namespace FileManager.SocketLib
         /// <param name="buffer">缓冲区</param>
         /// <param name="size">receive 字节数, 为 -1 则接收buffer长度字节</param>
         /// <param name="offset">buffer写入字节偏移</param>
-        protected void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
+        public static void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
         {
             if (buffer.Length == 0) { return; }
             int _size = (size == -1) ? buffer.Length : size;
@@ -55,12 +54,16 @@ namespace FileManager.SocketLib
         /// <param name="socket"></param>
         /// <param name="header"></param>
         /// <param name="addition_bytes"></param>
-        protected void SendHeader(Socket socket, HB32Header header, byte[] addition_bytes)
+        public static void SendHeader(Socket socket, HB32Header header, byte[] addition_bytes)
         {
             header.PacketCount = 0;
             header.TotalByteLength = 0;
             header.PacketIndex = 0;
             header.ValidByteLength = 0;
+
+            socket.Send(header.GetBytes(addition_bytes));
+
+            /*
             if (addition_bytes.Length == 0)
             {
                 socket.Send(header.GetBytes());
@@ -69,8 +72,10 @@ namespace FileManager.SocketLib
             {
                 socket.Send(BytesConverter.Concatenate(addition_bytes, header.GetBytes()));
             }
+            */
         }
 
+        /*
 
         /// <summary>
         /// Send socket 只发送包头
@@ -79,7 +84,7 @@ namespace FileManager.SocketLib
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>
-        protected void SendHeader(Socket socket, HB32Header header)
+        private static void SendHeader(Socket socket, HB32Header header)
         {
             SendHeader(socket, header, new byte[0]);
         }
@@ -93,7 +98,7 @@ namespace FileManager.SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        protected void SendHeader(Socket socket, SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
+        public static void SendHeader(Socket socket, SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendHeader(socket, new HB32Header
             {
@@ -103,16 +108,21 @@ namespace FileManager.SocketLib
                 I3 = i3
             });
         }
+        */
+
 
 
         /// <summary>
-        /// 调用此方法可以在发送数据前添加 addition_bytes (发送代理包头)
+        /// 发送 Socket 数据包, 过长的 byte流 会被拆成多个包发送
+        /// 包头的 PacketCount , ByteLength 等参数会视 bytes 长度被修改
+        /// 拆成多包发送时, 只有第一个包头会带 ProxyHeader 供 SocketProxy 或 SocketServer 解析
+        /// 后面的包均为 HB32Header + HB32Data
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>
         /// <param name="bytes"></param>
         /// <param name="addition_bytes"></param>
-        protected void SendBytes(Socket socket, HB32Header header, byte[] bytes, byte[] addition_bytes)
+        public static void SendBytes(Socket socket, HB32Header header, byte[] bytes, byte[] addition_bytes)
         {
             header.PacketCount = Math.Max((bytes.Length - 1) / (HB32Encoding.DataSize) + 1, 1);
             header.TotalByteLength = bytes.Length;
@@ -121,9 +131,9 @@ namespace FileManager.SocketLib
             {
                 header.ValidByteLength = Math.Min(bytes.Length - offset, HB32Encoding.DataSize);
                 byte[] header_bytes;
-                if (offset == 0 && addition_bytes.Length > 0)
+                if (offset == 0)
                 {
-                    header_bytes = BytesConverter.Concatenate(addition_bytes, header.GetBytes());
+                    header_bytes = header.GetBytes(addition_bytes);
                 }
                 else
                 {
@@ -133,16 +143,17 @@ namespace FileManager.SocketLib
                 Array.Copy(header_bytes, 0, _toSend, 0, header_bytes.Length);
                 Array.Copy(bytes, offset, _toSend, header_bytes.Length, header.ValidByteLength);
                 socket.Send(_toSend);
-                /// 若当前数据包之后还有数据包, 在等待对方 发送StreamRequest包头 后发送
+                /// 若当前数据包之后还有数据包, 在等待对方 发送2个byte 后发送
                 if (offset + HB32Encoding.DataSize < bytes.Length)
                 {
-                    ReceiveHeader(socket, out _);
+                    ReceiveBuffer(socket, new byte[2]);
+                    //ReceiveHeader(socket, out _);
                 }
                 header.PacketIndex++;
             }
         }
 
-
+        /*
         /// <summary>
         /// 发送 Socket 数据包, 过长的 byte流 会被拆成多个包发送
         /// 包头的 PacketCount , ByteLength 等参数会视 bytes 长度被修改
@@ -150,7 +161,7 @@ namespace FileManager.SocketLib
         /// <param name="socket"></param>
         /// <param name="header"></param>
         /// <param name="bytes"></param>
-        protected void SendBytes(Socket socket, HB32Header header, byte[] bytes)
+        public static void SendBytes(Socket socket, HB32Header header, byte[] bytes)
         {
             SendBytes(socket, header, bytes, new byte[0]);
         }
@@ -163,11 +174,13 @@ namespace FileManager.SocketLib
         /// <param name="socket"></param>
         /// <param name="header"></param>
         /// <param name="str"></param>
-        protected void SendBytes(Socket socket, HB32Header header, string str)
+        public static void SendBytes(Socket socket, HB32Header header, string str)
         {
             SendBytes(socket, header, Encoding.UTF8.GetBytes(str));
         }
 
+
+        
         /// <summary>
         /// 发送 Socket 数据包
         /// </summary>
@@ -177,7 +190,7 @@ namespace FileManager.SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        protected void SendBytes(Socket socket, SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public static void SendBytes(Socket socket, SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(socket, new HB32Header
             {
@@ -197,18 +210,22 @@ namespace FileManager.SocketLib
         /// <param name="i1"></param>
         /// <param name="i2"></param>
         /// <param name="i3"></param>
-        protected void SendBytes(Socket socket, SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        public static void SendBytes(Socket socket, SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(socket, flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
         }
+        */
+
 
 
         /// <summary>
-        /// Receive socket 只接收包头
+        /// Receive socket 只接收包头, 但不可以处理 ProxyHeader (处理 ProxyHeader 方法应位于 SocketResponder 类中)
+        /// 此方法只能用于对于字节流的Header部份截取处理
+        /// 若要完整接收只含 Header 的字节流, 应使用 ReceiveBytes() 方法
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>
-        protected void ReceiveHeader(Socket socket, out HB32Header header)
+        public static void ReceiveHeader(Socket socket, out HB32Header header)
         {
             byte[] bytes_header = new byte[HB32Encoding.HeaderSize];
             ReceiveBuffer(socket, bytes_header);
@@ -219,11 +236,12 @@ namespace FileManager.SocketLib
         /// <summary>
         /// 尽量不要用, 可以用 ReceiveBytes() 代替
         /// Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
+        /// 擅用后果自负
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header">输出包头</param>
         /// <param name="bytes_data"></param>
-        protected void ReceivePacket(Socket socket, out HB32Header header, out byte[] bytes_data)
+        public static void ReceivePacket(Socket socket, out HB32Header header, out byte[] bytes_data)
         {
             ReceiveHeader(socket, out header);
             bytes_data = new byte[HB32Encoding.DataSize];
@@ -231,10 +249,15 @@ namespace FileManager.SocketLib
         }
 
 
-
+        /// <summary>
         /// 接收 Socket 数据包, 在接收不定长byte流时使用, 过长byte流会分开接收并拼接成byte数组
         /// 收到的数据只有包头时, 返回空byte数组
-        protected void ReceiveBytes(Socket socket, out HB32Header header, out byte[] bytes, HB32Header header_in = null)
+        /// 只能处理去掉 ProxyHeader 后的字节流, 所以 socket 收到数据应先经过 SocketResponder 类处理 ProxyHeader
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="header"></param>
+        /// <param name="bytes"></param>
+        public static void ReceiveBytes(Socket socket, out HB32Header header, out byte[] bytes)
         {
             /// 通过包头判断byte流长度, 确定byte数组大小 包数量 等基本信息
             ReceiveHeader(socket, out header);
@@ -260,8 +283,10 @@ namespace FileManager.SocketLib
                     /// 读取缓冲区数据
                     ReceiveBuffer(socket, bytes, header.ValidByteLength, offset);
                     offset += header.ValidByteLength;
-                    /// 发送 StreamRequset header
-                    SendHeader(socket, SocketPacketFlag.StreamRequest);
+                    // /// 发送 StreamRequset header
+                    // SendHeader(socket, new HB32Header { Flag = SocketPacketFlag.StreamRequest }, new byte[2]);
+                    /// 发送 2 个byte, 获取下一个数据包
+                    socket.Send(new byte[2]);
                     /// 读取下一个包头
                     ReceiveHeader(socket, out header);
                 }
@@ -270,18 +295,7 @@ namespace FileManager.SocketLib
 
 
         #endregion
-        public event SocketLogEventHandler SocketLog;
 
-        private readonly object LoggerLock = new object();
-
-        protected void Log(string info, LogLevel logLevel)
-        {
-            // 必须要加锁保证Log文件写时不被占用
-            lock (LoggerLock)
-            {
-                SocketLog?.Invoke(this, new SocketLogEventArgs(info, logLevel));
-            }
-        }
 
     }
 }

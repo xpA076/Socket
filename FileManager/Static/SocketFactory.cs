@@ -52,15 +52,13 @@ namespace FileManager.Static
             byte[] key_bytes = Config.KeyBytes;
             if (route.ProxyRoute.Count == 0)
             {
-                SocketClient client = new SocketClient(route.ServerAddress);
-                client.IsWithProxy = false;
+                SocketClient client = new SocketClient(route.ServerAddress, false);
                 bytes_to_send = key_bytes;
                 return client;
             }
             else
             {
-                SocketClient client = new SocketClient(route.ProxyRoute[0]);
-                client.IsWithProxy = true;
+                SocketClient client = new SocketClient(route.ProxyRoute[0], true);
                 byte[] proxy_bytes = route.GetBytes(1);
                 bytes_to_send = new byte[proxy_bytes.Length + key_bytes.Length];
                 Array.Copy(proxy_bytes, bytes_to_send, proxy_bytes.Length);

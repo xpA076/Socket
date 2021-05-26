@@ -16,12 +16,6 @@ namespace FileManager.SocketLib
             return bytes;
         }
 
-
-
-
-
-
-
         #region int
 
         public static byte[] WriteInt(byte[] bytes, int num, ref int idx)
@@ -69,18 +63,45 @@ namespace FileManager.SocketLib
             return _bytes;
         }
 
+
+        public static byte[] WriteIntArray(byte[] bytes, int[] array, int idx)
+        {
+            return WriteIntArray(bytes, array, ref idx);
+        }
+
+
+        public static byte[] WriteIntArray(byte[] bytes, int[] array, ref int idx)
+        {
+            byte[] _bytes;
+            if (bytes.Length < idx + array.Length * 4)
+            {
+                _bytes = new byte[idx + array.Length * 4];
+                Array.Copy(bytes, 0, _bytes, 0, bytes.Length);
+            }
+            else
+            {
+                _bytes = bytes;
+            }
+            foreach (int i in array)
+            {
+                WriteInt(_bytes, i, ref idx);
+            }
+            return _bytes;
+        }
+
+
         /// <summary>
-        /// 
+        /// 从字节流指定位置开始解码int数组
         /// </summary>
         /// <param name="bytes"></param>
         /// <param name="index">byte解码起始位置</param>
-        /// <param name="count">byte解码长度</param>
+        /// <param name="byte_count">byte解码长度</param>
         /// <returns></returns>
-        public static int[] ParseIntArray(byte[] bytes, int index, int count)
+        public static int[] ParseIntArray(byte[] bytes, int index, int byte_count)
         {
-            int[] array = new int[count / 4];
+            int[] array = new int[byte_count / 4];
             int start = index;
-            for (int int_idx = 0; int_idx < count / 4; ++int_idx)
+            for (int int_idx = 0; int_idx < byte_count / 4; ++int_idx)
             {
                 array[int_idx] = ParseInt(bytes, ref start);
             }

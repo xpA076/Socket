@@ -12,7 +12,7 @@ using FileManager.SocketLib.SocketServer;
 
 namespace FileManager.SocketLib
 {
-    public class SocketLongConnectionMaintainer : SocketIO
+    public class SocketLongConnectionMaintainer
     {
         public string Name { get; set; }
 
@@ -39,7 +39,7 @@ namespace FileManager.SocketLib
             ProxyServerAddres = proxy_address.Copy();
             Name = name;
             //todo RouteNode
-            LongConnectClient = new SocketClient(proxy_address);
+            //LongConnectClient = new SocketClient(proxy_address);
         }
 
 
@@ -103,6 +103,20 @@ namespace FileManager.SocketLib
                 {
                     Log("Start long connection exception : " + ex.Message, LogLevel.Error);
                 }
+            }
+        }
+
+
+        public event SocketLogEventHandler SocketLog;
+
+        private readonly object LoggerLock = new object();
+
+        protected void Log(string info, LogLevel logLevel)
+        {
+            // 必须要加锁保证Log文件写时不被占用
+            lock (LoggerLock)
+            {
+                SocketLog?.Invoke(this, new SocketLogEventArgs(info, logLevel));
             }
         }
 

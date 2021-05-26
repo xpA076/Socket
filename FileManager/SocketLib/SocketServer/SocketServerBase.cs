@@ -11,7 +11,7 @@ using FileManager.SocketLib.Enums;
 
 namespace FileManager.SocketLib.SocketServer
 {
-    public class SocketServerBase : SocketIO
+    public class SocketServerBase
     {
         private Socket server = null;
 
@@ -86,6 +86,20 @@ namespace FileManager.SocketLib.SocketServer
         public void Close()
         {
             server.Close();
+        }
+
+
+        public event SocketLogEventHandler SocketLog;
+
+        private readonly object LoggerLock = new object();
+
+        protected void Log(string info, LogLevel logLevel)
+        {
+            // 必须要加锁保证Log文件写时不被占用
+            lock (LoggerLock)
+            {
+                SocketLog?.Invoke(this, new SocketLogEventArgs(info, logLevel));
+            }
         }
     }
 }

@@ -20,6 +20,23 @@ namespace FileManager.SocketLib
         public int PacketIndex { get; set; } = 0;
         public int ValidByteLength { get; set; } = 0;
 
+
+        public byte[] GetBytes(byte[] proxy_header)
+        {
+            return BytesConverter.WriteIntArray(proxy_header, new int[]
+            {
+                (int)Flag,
+                I1,
+                I2,
+                I3,
+                PacketCount,
+                TotalByteLength,
+                PacketIndex,
+                ValidByteLength
+            }, proxy_header.Length);
+        }
+
+
         public byte[] GetBytes()
         {
             return BytesConverter.WriteIntArray(new int[] 
@@ -42,9 +59,9 @@ namespace FileManager.SocketLib
         }
 
 
-        public static HB32Header ReadFromBytes(byte[] bytes)
+        public static HB32Header ReadFromBytes(byte[] bytes, int idx = 0)
         {
-            int[] array = BytesConverter.ParseIntArray(bytes, 0, 32);
+            int[] array = BytesConverter.ParseIntArray(bytes, idx, idx + 32);
             return new HB32Header()
             {
                 Flag = (SocketPacketFlag)array[0],

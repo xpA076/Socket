@@ -23,16 +23,16 @@ namespace FileManager.SocketLib.SocketServer
         /// server : SocketPacketFlag.DirectoryResponse + List<SocketFileInfo> -> bytes
         ///     or : SocketPacketFlag.DirectoryException + err_msg
         /// </summary>
-        /// <param name="client"></param>
+        /// <param name="responder"></param>
         /// <param name="bytes"></param>
-        private void ResponseDirectory(Socket client, byte[] bytes)
+        private void ResponseDirectory(SocketResponder responder, byte[] bytes)
         {
             List<SocketFileInfo> fileClasses = new List<SocketFileInfo>();
             string err_msg = "";
             /// get SocketFileInfo[]
             try
             {
-                if ((GetIdentity(client) & SocketIdentity.ReadFile) == 0)
+                if ((GetIdentity(responder) & SocketIdentity.ReadFile) == 0)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -46,11 +46,11 @@ namespace FileManager.SocketLib.SocketServer
             /// Send bytes
             if (string.IsNullOrEmpty(err_msg))
             {
-                SendBytes(client, SocketPacketFlag.DirectoryResponse, SocketFileInfo.ListToBytes(fileClasses));
+                responder.SendBytes(SocketPacketFlag.DirectoryResponse, SocketFileInfo.ListToBytes(fileClasses));
             }
             else
             {
-                SendBytes(client, SocketPacketFlag.DirectoryException, err_msg);
+                responder.SendBytes(SocketPacketFlag.DirectoryException, err_msg);
             }
         }
 
@@ -109,16 +109,16 @@ namespace FileManager.SocketLib.SocketServer
         /// server : SocketPacketFlag.DirectorySizeResponse + size.toString() -> UTF-8
         ///     or : SocketPacketFlag.DirectoryException + err_msg
         /// </summary>
-        /// <param name="client"></param>
+        /// <param name="responder"></param>
         /// <param name="bytes"></param>
-        private void ResponseDirectorySize(Socket client, byte[] bytes)
+        private void ResponseDirectorySize(SocketResponder responder, byte[] bytes)
         {
             /// Get size
             long size = 0;
             string err_msg = "";
             try
             {
-                if ((GetIdentity(client) & SocketIdentity.ReadFile) == 0)
+                if ((GetIdentity(responder) & SocketIdentity.ReadFile) == 0)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -132,11 +132,11 @@ namespace FileManager.SocketLib.SocketServer
             /// Send bytes
             if (string.IsNullOrEmpty(err_msg))
             {
-                SendBytes(client, SocketPacketFlag.DirectorySizeResponse, size.ToString());
+                responder.SendBytes(SocketPacketFlag.DirectorySizeResponse, size.ToString());
             }
             else
             {
-                SendBytes(client, SocketPacketFlag.DirectoryException, err_msg);
+                responder.SendBytes(SocketPacketFlag.DirectoryException, err_msg);
             }
         }
 
@@ -171,9 +171,9 @@ namespace FileManager.SocketLib.SocketServer
         /// server : SocketPacketFlag.CreateDirectoryAllowed + new byte[1]
         ///     or : SocketPacketFlag.CreateDirectoryDenied + err_msg
         /// </summary>
-        /// <param name="client"></param>
+        /// <param name="responder"></param>
         /// <param name="bytes"></param>
-        private void ResponseCreateDirectory(Socket client, byte[] bytes)
+        private void ResponseCreateDirectory(SocketResponder responder, byte[] bytes)
         {
             string err_msg = "";
             try
@@ -191,11 +191,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.CreateDirectoryAllowed }, new byte[1]);
+                responder.SendBytes(SocketPacketFlag.CreateDirectoryAllowed, new byte[1]);
             }
             else
             {
-                SendBytes(client, new HB32Header { Flag = SocketPacketFlag.CreateDirectoryDenied }, err_msg);
+                responder.SendBytes(SocketPacketFlag.CreateDirectoryDenied, err_msg);
             }
         }
         

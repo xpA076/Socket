@@ -36,7 +36,7 @@ namespace FileManager.SocketLib
         private byte[] ReceiveProxyHeader(Socket client)
         {
             byte[] bytes = new byte[2];
-            this.ReceiveBuffer(client, bytes, 2);
+            SocketIO.ReceiveBuffer(client, bytes, 2);
             return bytes;
         }
 
@@ -63,16 +63,18 @@ namespace FileManager.SocketLib
                     /// Not proxy header. Receive bytes:
                     ///   //(?)1. client 端请求与挂在该代理上的反向代理 Server 连接
                     ///   2. 反向代理Server向该代理的长连接轮询
+                    /* 底层 Send / Receive 协议改了, 这段重写
                     byte[] header_bytes = new byte[HB32Encoding.HeaderSize];
                     Array.Copy(recv_1st_header, header_bytes, recv_1st_header.Length);
-                    this.ReceiveBuffer(client, header_bytes, offset: recv_1st_header.Length);
-                    this.ReceiveBytes(client, out HB32Header header, out byte[] bytes, HB32Header.ReadFromBytes(header_bytes));
+                    SocketIO.ReceiveBuffer(client, header_bytes, offset: recv_1st_header.Length);
+                    SocketIO.ReceiveBytes(client, out HB32Header header, out byte[] bytes, HB32Header.ReadFromBytes(header_bytes));
                     /// 
                     string name = Encoding.UTF8.GetString(bytes);
-                    this.SendHeader(client, SocketPacketFlag.ReversedProxyResponse);
+                    SocketIO.SendHeader(client, SocketPacketFlag.ReversedProxyResponse);
                     client.SendTimeout = 20 * 1000;
                     client.ReceiveTimeout = 20 * 1000;
                     // todo : long connection
+                    */
                 }
 
 
@@ -98,10 +100,11 @@ namespace FileManager.SocketLib
                     byte[] proxy_header = ReceiveProxyHeader(client);
                     HB32Header recv_header;
                     byte[] recv_bytes;
+                    /*
                     switch ((ProxyHeader)proxy_header[1])
                     {
                         case ProxyHeader.SendHeader:
-                            this.ReceiveBytes(client, out recv_header, out recv_bytes);
+                            SocketIO.ReceiveBytes(client, out recv_header, out recv_bytes);
                             socket_ep.SendHeader(recv_header);
                             if (recv_header.Flag == SocketPacketFlag.DisconnectRequest)
                             {
@@ -110,14 +113,15 @@ namespace FileManager.SocketLib
                             }
                             break;
                         case ProxyHeader.SendBytes:
-                            this.ReceiveBytes(client, out recv_header, out recv_bytes);
+                            SocketIO.ReceiveBytes(client, out recv_header, out recv_bytes);
                             socket_ep.SendBytes(recv_header, recv_bytes);
                             break;
                         case ProxyHeader.ReceiveBytes:
                             socket_ep.ReceiveBytes(out recv_header, out recv_bytes);
-                            this.SendBytes(client, recv_header, recv_bytes);
+                            SocketIO.SendBytes(client, recv_header, recv_bytes);
                             break;
                     }
+                    */
                     error_count = 0;
                 }
                 catch (SocketException ex)
@@ -171,17 +175,16 @@ namespace FileManager.SocketLib
         /// </summary>
         /// <param name="client"></param>
         /// <returns>已与Server或下级代理连接成功的 SocketEndPoint 对象</returns>
-        private SocketProxyClient AuthenticationProxy(Socket client)
+        private SocketSender AuthenticationProxy(Socket client)
         {
             byte[] proxy_header;
-            this.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
+            SocketIO.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
             Debug.Assert(route_bytes[0] == 1);
             int pt = 0;
             ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes, ref pt);
             byte[] key_bytes = new byte[route_bytes.Length - pt];
             Array.Copy(route_bytes, pt, key_bytes, 0, key_bytes.Length);
-            SocketProxyClient proxy_client = new SocketProxyClient(null);
-            proxy_client.IsWithProxy = !route.IsNextNodeServer;
+            SocketSender proxy_client = new SocketSender(null, !route.IsNextNodeServer);
             byte[] bytes_to_send = new byte[0]; // todo
             // todo 异常处理
             if (route.NextNode.Address.Equals(this.HostAddress))
@@ -195,12 +198,12 @@ namespace FileManager.SocketLib
                 proxy_client.Connect(route.NextNode.Address, Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
             }
             proxy_client.SendBytes(route_header, bytes_to_send);
-            if (proxy_client.IsWithProxy)
+            if (proxy_client.IsRequireProxyHeader)
             {
                 ReceiveProxyHeader(client);
             }
             proxy_client.ReceiveBytes(out HB32Header auth_header, out byte[] auth_bytes);
-            this.SendBytes(client, auth_header, auth_bytes);
+            //SocketIO.SendBytes(client, auth_header, auth_bytes);
             return proxy_client;
 
 
@@ -210,26 +213,7 @@ namespace FileManager.SocketLib
 
 
 
-
-
-            if (route.ProxyRoute.Count == 0)
-            {
-                /// 无下级代理, 直连 server
-            }
-            else if (route.ProxyRoute[0].Address.Equals(this.HostAddress))
-            {
-                /// 下级为挂载在此的反向代理
-            }
-            else
-            {
-                /// 下级为正向代理
-            }
-
-
-
-
-
-
+            /*
 
 
             GetAimInfo(route_bytes, out TCPAddress AimAddress, out bool IsAimProxy, out byte[] AimBytes);
@@ -250,6 +234,7 @@ namespace FileManager.SocketLib
             socket_client.ReceiveBytes(out HB32Header auth_header, out byte[] auth_bytes);
             this.SendBytes(client, auth_header, auth_bytes);
             return socket_client;
+            */
         }
 
 

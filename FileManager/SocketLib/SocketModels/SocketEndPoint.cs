@@ -9,14 +9,15 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib
 {
-    public class SocketEndPoint : SocketIO
+    public class SocketEndPoint
     {
-
-
-
         protected Socket client = null;
 
-        public bool IsWithProxy { get; set; } = false;
+        /// <summary>
+        /// 当前 SocketEndPoint 是否为向代理端主动通信的对象
+        /// 这种情况下数据通信需要额外添加代理包头
+        /// </summary>
+        public bool IsRequireProxyHeader { get; protected set; } = false;
 
 
 
@@ -30,13 +31,13 @@ namespace FileManager.SocketLib
 
         public void SendHeader(HB32Header header)
         {
-            if (IsWithProxy)
+            if (IsRequireProxyHeader)
             {
-                SendHeader(client, header, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendHeader });
+                SocketIO.SendHeader(client, header, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendHeader });
             }
             else
             {
-                SendHeader(client, header);
+                SocketIO.SendHeader(client, header, new byte[2] { 0, 0 });
             }
         }
 
@@ -55,13 +56,13 @@ namespace FileManager.SocketLib
 
         public void SendBytes(HB32Header header, byte[] bytes)
         {
-            if (IsWithProxy)
+            if (IsRequireProxyHeader)
             {
-                SendBytes(client, header, bytes, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendBytes });
+                SocketIO.SendBytes(client, header, bytes, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendBytes });
             }
             else
             {
-                SendBytes(client, header, bytes);
+                SocketIO.SendBytes(client, header, bytes, new byte[2] { 0, 0 });
             }
 
         }
@@ -86,11 +87,11 @@ namespace FileManager.SocketLib
 
         public void ReceiveBytes(out HB32Header header, out byte[] bytes)
         {
-            if (IsWithProxy)
+            if (IsRequireProxyHeader)
             {
                 client.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
             }
-            ReceiveBytes(client, out header, out bytes);
+            SocketIO.ReceiveBytes(client, out header, out bytes);
         }
 
 
