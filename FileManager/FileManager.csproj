@@ -119,7 +119,7 @@
     <Compile Include="SocketLib\SocketServer\SocketServer.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServerBase.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServerConfig.cs" />
-    <Compile Include="SocketLib\SocketServer\SocketServerFileStreamInfo.cs" />
+    <Compile Include="SocketLib\Models\SocketServerFileStreamInfo.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_DirectoryPart.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_FileTransferPart.cs" />
     <Compile Include="Static\CommandInfo.cs" />
