@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FileManager.SocketLib.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -17,6 +18,20 @@ namespace FileManager.SocketLib
         {
             this.client = socket;
             this.IsRequireProxyHeader = false;
+        }
+
+
+
+
+        public ProxyHeader ReceiveProxyHeader()
+        {
+            byte[] proxy_bytes = new byte[2];
+            SocketIO.ReceiveBuffer(client, proxy_bytes);
+            if (proxy_bytes[0] == 0x01)
+            {
+                return (ProxyHeader)proxy_bytes[1];
+            }
+            return ProxyHeader.None;
         }
     }
 }

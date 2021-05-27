@@ -252,7 +252,7 @@ namespace FileManager.SocketLib
         /// <summary>
         /// 接收 Socket 数据包, 在接收不定长byte流时使用, 过长byte流会分开接收并拼接成byte数组
         /// 收到的数据只有包头时, 返回空byte数组
-        /// 只能处理去掉 ProxyHeader 后的字节流, 所以 socket 收到数据应先经过 SocketResponder 类处理 ProxyHeader
+        /// 只能处理去掉 ProxyHeader 后的字节流, 所以 socket 接收数据应先经过 SocketResponder 类处理 ProxyHeader
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>

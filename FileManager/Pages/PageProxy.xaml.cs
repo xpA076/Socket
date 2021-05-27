@@ -85,7 +85,7 @@ namespace FileManager.Pages
         {
             SolidColorBrush b1 = new SolidColorBrush(Colors.White);
             SolidColorBrush b2 = new SolidColorBrush(Colors.White);
-            switch (e.logLevel)
+            switch (e?.logLevel)
             {
                 case LogLevel.Error:
                     b2 = new SolidColorBrush(Color.FromRgb(255, 192, 192));
@@ -96,6 +96,8 @@ namespace FileManager.Pages
                 case LogLevel.Info:
                     b2 = new SolidColorBrush(Color.FromRgb(0, 127, 255));
                     break;
+                default:
+                    return;
             }
             Paragraph p = new Paragraph();
             p.Inlines.Add(new Run() { Text = e.time.ToString("yyyy-MM-dd HH:mm:ss.fff "), Foreground = b1 });

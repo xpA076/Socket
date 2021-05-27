@@ -100,7 +100,6 @@
     <Compile Include="SocketLib\Enums\SocketIdentity.cs" />
     <Compile Include="SocketLib\Enums\SocketPacketFlag.cs" />
     <Compile Include="SocketLib\Enums\TransferType.cs" />
-    <Compile Include="SocketLib\Handles.cs" />
     <Compile Include="SocketLib\HB32Encoding.cs" />
     <Compile Include="SocketLib\HB32Header.cs" />
     <Compile Include="SocketLib\Models\ConnectionRoute.cs" />

@@ -48,17 +48,13 @@ namespace FileManager.SocketLib.SocketServer
             SocketResponder responder = new SocketResponder(client);
             try
             {
-                responder.ReceiveBytes(out HB32Header ac_header, out byte[] ac_bytes);
-                SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(ac_header, ac_bytes);
-                CheckIdentity(this, e);
-                SocketIdentity identity = e.CheckedIndentity;
-                ClientIdentities.Add(responder, identity);
-                responder.SendHeader(SocketPacketFlag.AuthenticationResponse, (int)identity);
+                ResponseIdentity(responder);
                 int error_count = 0;
                 while (flag_receive & error_count < 5)
                 {
                     try
                     {
+                        responder.ReceiveProxyHeader();
                         responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
                         switch (header.Flag)
                         {
@@ -157,6 +153,9 @@ namespace FileManager.SocketLib.SocketServer
 
 
 
+
+
+
         private void DisposeClient(SocketResponder responder)
         {
             try
@@ -168,6 +167,28 @@ namespace FileManager.SocketLib.SocketServer
             {
                 ClientIdentities.Remove(responder);
             }
+        }
+
+
+        /// <summary>
+        /// 应在 ReceiveData() 最开始调用
+        /// 接收 KeyBytes, 调用 CheckIdentity();
+        /// 向 Dictionary 添加 SocketResponder 权限;
+        /// 并向 Client 端返回 SocketIdentity
+        /// </summary>
+        /// <param name="responder"></param>
+        private void ResponseIdentity(SocketResponder responder)
+        {
+            responder.ReceiveProxyHeader();
+            responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
+            SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
+            CheckIdentity(this, e);
+            SocketIdentity identity = e.CheckedIndentity;
+            lock (ClientIdentitiesLock)
+            {
+                ClientIdentities.Add(responder, identity);
+            }
+            responder.SendHeader(SocketPacketFlag.AuthenticationResponse, i1: (int)identity);
         }
 
 

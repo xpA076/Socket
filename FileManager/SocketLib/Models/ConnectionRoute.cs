@@ -41,12 +41,14 @@ namespace FileManager.SocketLib
             }
         }
 
-
         /// <summary>
+        /// 从 ProxyRoute列表 指定位置开始获取其后的路由路径 bytes
+        /// 若指定位置为ProxyRoute总长度时, 获取的bytes只含ServerAddress + 长度为零的List, 没有exception
         /// 2 bytes : 01 + [proxy count]
         /// xx bytes : ServerAddress
         /// xx * proxy bytes : ProxyRoute
         /// </summary>
+        /// <param name="node_start_index"></param>
         /// <returns></returns>
         public byte[] GetBytes(int node_start_index = 0)
         {

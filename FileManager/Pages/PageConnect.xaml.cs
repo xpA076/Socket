@@ -50,15 +50,8 @@ namespace FileManager.Pages
                 this.TextBoxProxy.Text = this.TextBoxIP.Text;
             }
             
-            /*
-            Histories.Add(new ConnectionRecord { Info = "114.214.176.136" });
-
-            Histories.Add(new ConnectionRecord { Info = "127.123.456.255:12345" });
-            Histories.Add(new ConnectionRecord { Info = "127.123.456.255:12385" });
-            */
             this.ListViewHistory.ItemsSource = Config.Histories;
             this.ListViewStar.ItemsSource = Config.Stars;
-            //Config.Stars.Add(new ConnectionRecord { Info = "127.123.456.255:12345" });
             
         }
 
@@ -157,13 +150,13 @@ namespace FileManager.Pages
         private void ButtonConnect_Click(object sender, RoutedEventArgs e)
         {
             if (IsConnecting) { return; }
-            ConnectionRoute route = new ConnectionRoute();
             try
             {
-                route = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, Config.DefaultServerPort, Config.DefaultProxyPort);
+                SocketFactory.CurrentRoute = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, Config.DefaultServerPort, Config.DefaultProxyPort);
             }
             catch (Exception)
             {
+                SocketFactory.CurrentRoute = null;
                 MessageBox.Show("Invalid address syntax");
                 Logger.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
                 return;
@@ -173,60 +166,61 @@ namespace FileManager.Pages
                 IsConnecting = true;
                 Logger.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
-                SocketIdentity identity = SocketFactory.AsyncConnectForIndetity(route,
-                    () =>
-                    {
-                        /// 线程锁应该是lock(this), 所以所有this内部成员的访问都要通过Invoke进行
-                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            this.ButtonConnect.Content = "Connect";
-                            SocketFactory.CurrentRoute = route;
-                            Logger.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
-                            Config.InsertHistory(new ConnectionRecord
-                            {
-                                Info = this.TextBoxIP.Text
-                            });
-                            this.parent.StartConnectionMonitor();
-                            this.parent.RedirectPage("Browser");
-                            System.Threading.Thread.Sleep(100);
-                            this.parent.SubPageBrowser.ResetRemoteDirectory();
-                            this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
-                        }));
-                        IsConnecting = false;
-                    },
-                    (ex) =>
-                    {
-                        this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            this.ButtonConnect.Content = "Connect";
-                        }));
-                        MessageBox.Show(ex.Message);
-                        IsConnecting = false;
-                    });
+                SocketIdentity identity = SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
             }
             catch (Exception ex)
             {
                 /// AsyncConnect 的异常在上面的 SocketAsyncExceptionCallback 中处理
                 /// 这里的代码应该不会执行
-                Logger.Log("(Not expected exception) Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
+                SocketFactory.CurrentRoute = null;
+                Logger.Log("[Not expected exception] Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
                 MessageBox.Show(ex.Message);
                 IsConnecting = false;
             }
             /// 这里如果写 finally 的话, 会执行于异步代码 AsyncConnect 之前
             /// 所以不应在这里用 finally 处理, 后续处理应该写进 AysncConnect 的代理方法内
-            /*
-            finally
-            {
-                //this.ButtonConnect.Content = "Connect";
-                //IsConnecting = false;
-            }
-            */
         }
+
+        private void AsyncConnect_OnSuccess(object sender, EventArgs e)
+        {
+            /// 因为异步执行AsyncConnect在新线程, 所以所有this的UI更新都要通过BeginInvoke进行
+            this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                this.ButtonConnect.Content = "Connect";
+                Logger.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
+                Config.InsertHistory(new ConnectionRecord
+                {
+                    Info = this.TextBoxIP.Text
+                });
+                this.parent.StartConnectionMonitor();
+                this.parent.RedirectPage("Browser");
+                System.Threading.Thread.Sleep(100);
+                this.parent.SubPageBrowser.ResetRemoteDirectory();
+                this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
+            }));
+            IsConnecting = false;
+        }
+
+
+        private void AsyncConnect_OnException(object sender, SocketAsyncExceptionEventArgs e)
+        {
+            SocketFactory.CurrentRoute = null;
+            this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                this.ButtonConnect.Content = "Connect";
+            }));
+            MessageBox.Show(e.ExceptionMessage);
+            IsConnecting = false;
+        }
+
+
+
+
 
         private void TextBoxIP_LostFocus(object sender, RoutedEventArgs e)
         {
             // todo
-            int a =1;
+            //int a =1;
         }
     }
 }

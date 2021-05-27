@@ -10,6 +10,13 @@ namespace FileManager.SocketLib.Enums
     {
         None = 0x0,
 
+        /// Mode 0xA3 : Proxy
+        /// 
+        ProxyRouteRequest = 0xA301,
+        ProxyResponse = 0xA310,
+        ProxyException = 0xA390,
+
+
         /// Mode 0xA4 : ReversedProxy
         /// 
         ReversedProxyBuild = 0xA401,
@@ -19,7 +26,7 @@ namespace FileManager.SocketLib.Enums
 
         /// Mode 0xAC : Authentication
         /// 
-        AuthenticationPacket = 0xAC01,
+        AuthenticationRequest = 0xAC01,
         AuthenticationResponse = 0xAC10,
         AuthenticationException = 0xAC90,
 

@@ -15,7 +15,7 @@ namespace FileManager.SocketLib.SocketServer
     {
         private Socket server = null;
 
-        protected TCPAddress HostAddress { get; set; }
+        protected TCPAddress HostAddress { get; set; } = null;
 
 
         protected bool flag_listen = true;
@@ -31,7 +31,10 @@ namespace FileManager.SocketLib.SocketServer
 
         public SocketServerBase(IPAddress ip)
         {
-            HostAddress.IP = ip;
+            HostAddress = new TCPAddress()
+            {
+                IP = ip
+            };
         }
 
 

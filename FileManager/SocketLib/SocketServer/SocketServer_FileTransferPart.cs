@@ -168,7 +168,7 @@ namespace FileManager.SocketLib.SocketServer
             }
             else
             {
-                responder.SendBytes(SocketPacketFlag.DownloadDenied, err_msg, i1);
+                responder.SendBytes(SocketPacketFlag.DownloadDenied, err_msg, i1: i1);
             }
         }
 
@@ -222,7 +222,7 @@ namespace FileManager.SocketLib.SocketServer
             }
             else
             {
-                responder.SendHeader(SocketPacketFlag.UploadDenied, i1);
+                responder.SendHeader(SocketPacketFlag.UploadDenied, i1: i1);
             }
         }
 

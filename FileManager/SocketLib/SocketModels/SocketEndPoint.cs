@@ -23,11 +23,6 @@ namespace FileManager.SocketLib
 
         #region Send / Receive
 
-        public void SendRawbytes(byte[] bytes)
-        {
-            client.Send(bytes);
-        }
-
 
         public void SendHeader(HB32Header header)
         {
@@ -110,6 +105,11 @@ namespace FileManager.SocketLib
             }
         }
 
+
+        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag)
+        {
+            ReceiveBytesWithHeaderFlag(flag, out _, out _);
+        }
 
         public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out HB32Header header)
         {
