@@ -57,9 +57,9 @@ namespace FileManager.Static
                 }
                 try
                 {
-                    SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeServer);
+                    SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
                     client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                    if (route.IsNextNodeServer)
+                    if (route.IsNextNodeProxy)
                     {
                         /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
                         client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
@@ -88,10 +88,10 @@ namespace FileManager.Static
         {
             SocketIdentity identity = SocketIdentity.None;
             // (to_do) 可以通过 BeginInvoke/EndInvoke 控制Conenct超时时间
-            SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeServer);
+            SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
             client.SocketAsyncCallback += (object sender, EventArgs e) =>
             {
-                if (route.IsNextNodeServer)
+                if (route.IsNextNodeProxy)
                 {
                     /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
                     client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));

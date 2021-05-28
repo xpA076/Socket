@@ -177,6 +177,7 @@ namespace FileManager.SocketLib
         /// <returns>已与Server或下级代理连接成功的 SocketEndPoint 对象</returns>
         private SocketSender AuthenticationProxy(Socket client)
         {
+            // todo 重写 21.05.28
             byte[] proxy_header;
             SocketIO.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
             Debug.Assert(route_bytes[0] == 1);
@@ -184,7 +185,7 @@ namespace FileManager.SocketLib
             ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes, ref pt);
             byte[] key_bytes = new byte[route_bytes.Length - pt];
             Array.Copy(route_bytes, pt, key_bytes, 0, key_bytes.Length);
-            SocketSender proxy_client = new SocketSender(null, !route.IsNextNodeServer);
+            SocketSender proxy_client = new SocketSender(null, route.IsNextNodeProxy);
             byte[] bytes_to_send = new byte[0]; // todo
             // todo 异常处理
             if (route.NextNode.Address.Equals(this.HostAddress))

@@ -255,7 +255,6 @@ namespace FileManager.Pages
                     this.fileClasses = SocketFileInfo.BytesToList(recv_bytes);
                     client.Close();
                     this.Dispatcher.Invoke(() => {
-                        //this.ListBoxFile.ItemsSource = this.fileClasses;
                         this.ListViewFile.ItemsSource = this.fileClasses;
                         this.TextRemoteDirectory.Text = RemoteDirectory;
                     });

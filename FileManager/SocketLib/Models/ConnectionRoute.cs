@@ -33,11 +33,11 @@ namespace FileManager.SocketLib
         /// <summary>
         /// 下级代理是否为服务器 (byte传输是否不要发ProxyHeader包)
         /// </summary>
-        public bool IsNextNodeServer
+        public bool IsNextNodeProxy
         {
             get
             {
-                return ProxyRoute.Count == 0;
+                return ProxyRoute.Count > 0;
             }
         }
 
@@ -132,7 +132,7 @@ namespace FileManager.SocketLib
             else
             {
                 if (!server_string.Contains(':')) { server_string += ":" + default_server_port.ToString(); }
-                cr.ProxyRoute.Add(new RouteNode(TCPAddress.FromString(server_string)));
+                cr.ServerAddress = new RouteNode(TCPAddress.FromString(server_string));
             }
             if (!string.IsNullOrEmpty(proxy_string))
             {

@@ -54,7 +54,6 @@ namespace FileManager.SocketLib.SocketServer
                 {
                     try
                     {
-                        responder.ReceiveProxyHeader();
                         responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
                         switch (header.Flag)
                         {
@@ -179,7 +178,6 @@ namespace FileManager.SocketLib.SocketServer
         /// <param name="responder"></param>
         private void ResponseIdentity(SocketResponder responder)
         {
-            responder.ReceiveProxyHeader();
             responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
             SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
             CheckIdentity(this, e);

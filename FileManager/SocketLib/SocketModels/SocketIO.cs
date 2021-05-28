@@ -60,8 +60,8 @@ namespace FileManager.SocketLib
             header.TotalByteLength = 0;
             header.PacketIndex = 0;
             header.ValidByteLength = 0;
-
-            socket.Send(header.GetBytes(addition_bytes));
+            byte[] bytes = header.GetBytes(addition_bytes);
+            socket.Send(bytes);
 
             /*
             if (addition_bytes.Length == 0)
@@ -219,7 +219,7 @@ namespace FileManager.SocketLib
 
 
         /// <summary>
-        /// Receive socket 只接收包头, 但不可以处理 ProxyHeader (处理 ProxyHeader 方法应位于 SocketResponder 类中)
+        /// Receive socket 只接收包头, 但不可以处理 ProxyHeader (处理 ProxyHeader 方法应位于 SocketEndPoint 类中)
         /// 此方法只能用于对于字节流的Header部份截取处理
         /// 若要完整接收只含 Header 的字节流, 应使用 ReceiveBytes() 方法
         /// </summary>
@@ -252,7 +252,7 @@ namespace FileManager.SocketLib
         /// <summary>
         /// 接收 Socket 数据包, 在接收不定长byte流时使用, 过长byte流会分开接收并拼接成byte数组
         /// 收到的数据只有包头时, 返回空byte数组
-        /// 只能处理去掉 ProxyHeader 后的字节流, 所以 socket 接收数据应先经过 SocketResponder 类处理 ProxyHeader
+        /// 只能处理去掉 ProxyHeader 后的字节流, 所以 socket 接收数据应先经过 SocketEndPoint 类处理 ProxyHeader
         /// </summary>
         /// <param name="socket"></param>
         /// <param name="header"></param>

@@ -80,13 +80,35 @@ namespace FileManager.SocketLib
         }
 
 
+        public ProxyHeader ReceiveProxyHeader()
+        {
+            byte[] proxy_bytes = new byte[2];
+            SocketIO.ReceiveBuffer(client, proxy_bytes);
+            if (proxy_bytes[0] == 0x01)
+            {
+                return (ProxyHeader)proxy_bytes[1];
+            }
+            return ProxyHeader.None;
+        }
+
+
         public void ReceiveBytes(out HB32Header header, out byte[] bytes)
         {
             if (IsRequireProxyHeader)
             {
                 client.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
             }
+            /// Responder 回复的数据仍有一个空的ProxyHeader, 应处理后再接收数据
+            ReceiveProxyHeader();
             SocketIO.ReceiveBytes(client, out header, out bytes);
+        }
+
+        public byte[] ReceiveBuffer(int length)
+        {
+            byte[] bs = new byte[length];
+            SocketIO.ReceiveBuffer(client, bs);
+            //throw new Exception("cannot use this method");
+            return bs;
         }
 
 

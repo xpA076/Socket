@@ -21,17 +21,5 @@ namespace FileManager.SocketLib
         }
 
 
-
-
-        public ProxyHeader ReceiveProxyHeader()
-        {
-            byte[] proxy_bytes = new byte[2];
-            SocketIO.ReceiveBuffer(client, proxy_bytes);
-            if (proxy_bytes[0] == 0x01)
-            {
-                return (ProxyHeader)proxy_bytes[1];
-            }
-            return ProxyHeader.None;
-        }
     }
 }

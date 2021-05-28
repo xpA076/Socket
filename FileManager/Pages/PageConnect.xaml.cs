@@ -47,7 +47,7 @@ namespace FileManager.Pages
             if (Config.Histories.Count > 0)
             {
                 this.TextBoxIP.Text = Config.Histories[0].Info;
-                this.TextBoxProxy.Text = this.TextBoxIP.Text;
+                //this.TextBoxProxy.Text = this.TextBoxIP.Text;
             }
             
             this.ListViewHistory.ItemsSource = Config.Histories;
