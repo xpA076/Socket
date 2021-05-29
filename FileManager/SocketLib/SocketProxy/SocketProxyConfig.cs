@@ -10,10 +10,10 @@ namespace FileManager.SocketLib
     {
         public int ProxyPort { get; set; } = 12139;
 
-        public int SocketSendTimeOut { get; set; } = 10000;
+        public int SocketSendTimeout { get; set; } = 10000;
 
-        public int SocketReceiveTimeOut { get; set; } = 10000;
+        public int SocketReceiveTimeout { get; set; } = 10000;
 
-
+        public int BuildConnectionTimeout { get; set; } = 2000;
     }
 }

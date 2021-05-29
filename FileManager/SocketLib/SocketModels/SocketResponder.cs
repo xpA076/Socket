@@ -21,5 +21,15 @@ namespace FileManager.SocketLib
         }
 
 
+        /// <summary>
+        /// 在 SocketProxy 中调用, 对于socket 在 ReceiveProxyHeader 后调用
+        /// </summary>
+        /// <param name="header"></param>
+        /// <param name="bytes"></param>
+        public void ReceiveBytesWithoutProxyHeader(out HB32Header header, out byte[] bytes)
+        {
+            SocketIO.ReceiveBytes(client, out header, out bytes);
+        }
+
     }
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FileManager.SocketLib
@@ -18,6 +19,14 @@ namespace FileManager.SocketLib
         /// 这种情况下数据通信需要额外添加代理包头
         /// </summary>
         public bool IsRequireProxyHeader { get; protected set; } = false;
+
+
+        public void SetTimeout(int send_timeout, int receive_timeout)
+        {
+            client.SendTimeout = send_timeout;
+            client.ReceiveTimeout = receive_timeout;
+        }
+
 
 
 
@@ -146,6 +155,93 @@ namespace FileManager.SocketLib
 
 
         #endregion
+
+
+        public void Connect(TCPAddress address)
+        {
+            IPEndPoint ipe = new IPEndPoint(address.IP, address.Port);
+            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            client.Connect(ipe);
+        }
+
+
+        private class ConnectTimeoutHandler
+        {
+            public readonly ManualResetEvent ConnectTimeoutObject = new ManualResetEvent(false);
+
+            public bool IsSuccess { get; set; } = false;
+
+            public Exception ConnectException { get; set; } = new Exception("null connect exception");
+
+
+            public void Set()
+            {
+                ConnectTimeoutObject.Set();
+            }
+
+            public void Reset()
+            {
+                ConnectTimeoutObject.Reset();
+            }
+
+            public bool WaitOne(int millisecondsTimeout, bool exitContext)
+            {
+                return ConnectTimeoutObject.WaitOne(millisecondsTimeout, exitContext);
+            }
+
+
+        }
+
+        private readonly ConnectTimeoutHandler cth = new ConnectTimeoutHandler();
+
+
+
+        public void ConnectWithTimeout(TCPAddress address, int timeout)
+        {
+            cth.Reset();
+            IPEndPoint ipe = new IPEndPoint(address.IP, address.Port);
+            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            client.BeginConnect(ipe, asyncResult =>
+            {
+                try
+                {
+                    cth.IsSuccess = false;
+                    if (asyncResult.AsyncState is Socket s)
+                    {
+                        s.EndConnect(asyncResult);
+                        cth.IsSuccess = true;
+                    }
+                }
+                catch(Exception ex)
+                {
+                    cth.IsSuccess = false;
+                    cth.ConnectException = ex;
+                }
+                finally
+                {
+                    cth.Set();
+                }
+            }, client);
+            if (cth.WaitOne(timeout, false))
+            {
+                if (cth.IsSuccess)
+                {
+                    return;
+                }
+                else
+                {
+                    throw cth.ConnectException;
+                }
+
+            }
+            else
+            {
+                client.Close();
+                throw new TimeoutException("Connection timeout");
+            }
+
+        }
+
 
 
         public void Connect(TCPAddress address, int send_timeout, int recv_timeout)

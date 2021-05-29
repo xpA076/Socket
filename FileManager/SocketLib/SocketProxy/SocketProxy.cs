@@ -44,19 +44,33 @@ namespace FileManager.SocketLib
         protected override void ReceiveData(object acceptSocketObject)
         {
             Socket client = (Socket)acceptSocketObject;
-            SocketEndPoint socket_ep = null;
+            SocketResponder responder = new SocketResponder(client);
+            responder.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+            SocketSender sender = null;
             try
             {
-                client.SendTimeout = Config.SocketSendTimeOut;
-                client.ReceiveTimeout = Config.SocketReceiveTimeOut;
+
+
+
+
+
+
+
+
+
+
+
+
                 byte[] recv_1st_header = ReceiveProxyHeader(client);
                 if (recv_1st_header[0] == ProxyHeaderByte)
                 {
+                    /*
                     bool result = DoForwardProxy(client, socket_ep);
                     if (!result)
                     {
                         Log("Connection closed.", LogLevel.Warn);
                     }
+                    */
                 }
                 else
                 {
@@ -84,9 +98,61 @@ namespace FileManager.SocketLib
             catch (Exception ex)
             {
                 Log("Socket initiate exception :" + ex.Message, LogLevel.Error);
-                DisposeClient(client, socket_ep);
+                DisposeClient(sender, responder);
             }
         }
+
+
+
+        /// <summary>
+        /// 创建完整代理隧道, 向下级发送建立连接是否成功信号, 返回与上级通信的 SocketSender 
+        /// [上级可能是 Proxy, Server, Reversed Server, Reversed Server's Proxy, etc....]
+        /// </summary>
+        /// <param name="responder"></param>
+        /// <returns></returns>
+        private SocketSender ConnectionProxy(SocketResponder responder)
+        {
+            ProxyHeader p_header = responder.ReceiveProxyHeader();
+            Debug.Assert(p_header == ProxyHeader.SendBytes);
+            responder.ReceiveBytesWithoutProxyHeader(out HB32Header header, out byte[] route_bytes);
+            ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes);
+            if (route.NextNode.Address.Equals(this.HostAddress))
+            {
+                // 为连接到此的反向代理
+            }
+            else if (route.IsNextNodeProxy)
+            {
+                // 继续正向代理
+                SocketSender sender = new SocketSender(null, true);
+                sender.Connect(route.NextNode.Address, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                sender.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
+
+                return sender;
+
+
+            }
+            else
+            {
+                // 直连 server
+                SocketSender sender = new SocketSender(null, false);
+                try
+                {
+                    sender.ConnectWithTimeout(route.ServerAddress.Address, Config.BuildConnectionTimeout);
+                    sender.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                }
+                catch (Exception ex)
+                {
+                    responder.SendBytes(SocketPacketFlag.ProxyException, ex.Message);
+                }
+                responder.SendHeader(SocketPacketFlag.ProxyResponse);
+                return sender;
+            }
+            return null;
+        }
+
+
+
+
 
 
         private bool DoForwardProxy(Socket client, SocketEndPoint socket_ep)
@@ -196,7 +262,7 @@ namespace FileManager.SocketLib
             else
             {
                 /// 下级需正向代理
-                proxy_client.Connect(route.NextNode.Address, Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
+                proxy_client.Connect(route.NextNode.Address, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
             }
             proxy_client.SendBytes(route_header, bytes_to_send);
             if (proxy_client.IsRequireProxyHeader)
@@ -276,16 +342,16 @@ namespace FileManager.SocketLib
         }
 
 
-        private void DisposeClient(Socket client, SocketEndPoint socket_ep)
+        private void DisposeClient(SocketSender sender, SocketResponder responder)
         {
             try
             {
-                client.Close();
+                sender.Close();
             }
             catch (Exception) { }
             try
             {
-                socket_ep.CloseSocket();
+                responder.Close();
             }
             catch (Exception) { }
         }

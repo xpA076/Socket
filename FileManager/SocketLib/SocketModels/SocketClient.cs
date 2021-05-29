@@ -80,6 +80,13 @@ namespace FileManager.SocketLib
             Connect(HostAddress.Address, SendTimeout, ReceiveTimeout);
         }
 
+
+        public void ConnectWithTimeout(int timeout)
+        {
+            ConnectWithTimeout(HostAddress.Address, timeout);
+        }
+
+
         public override void Close()
         {
             try

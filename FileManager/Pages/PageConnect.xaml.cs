@@ -166,7 +166,8 @@ namespace FileManager.Pages
                 IsConnecting = true;
                 Logger.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
-                SocketIdentity identity = SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
+                //SocketIdentity identity = SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
+                SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
             }
             catch (Exception ex)
             {
@@ -209,7 +210,7 @@ namespace FileManager.Pages
             {
                 this.ButtonConnect.Content = "Connect";
             }));
-            MessageBox.Show(e.ExceptionMessage);
+            MessageBox.Show("Build connection failed : " + e.ExceptionMessage);
             IsConnecting = false;
         }
 
