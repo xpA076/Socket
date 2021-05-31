@@ -15,8 +15,14 @@ namespace FileManager.SocketLib
 {
     public class SocketProxy : SocketServerBase
     {
+        private class ReversedServerInfo
+        {
+            public EventWaitHandle WaitHandle;
+        }
+
+
         public static readonly byte ProxyHeaderByte = 0xA3;
-        public static readonly byte ReversedProxyHeaderByte = 0xA4;
+        //public static readonly byte ReversedProxyHeaderByte = 0xA4;
 
         public SocketProxyConfig Config { get; set; } = new SocketProxyConfig();
 
@@ -25,7 +31,7 @@ namespace FileManager.SocketLib
 
         }
 
-        private Dictionary<string, EventWaitHandle> ReversedProxyServers = new Dictionary<string, EventWaitHandle>();
+        private readonly Dictionary<string, ReversedServerInfo> ReversedProxyServers = new Dictionary<string, ReversedServerInfo>();
 
 
         /// <summary>
@@ -41,100 +47,90 @@ namespace FileManager.SocketLib
         }
 
 
-        protected override void ReceiveData(object acceptSocketObject)
+        protected override void ReceiveData(object responderObject)
         {
-            Socket client = (Socket)acceptSocketObject;
-            SocketResponder responder = new SocketResponder(client);
+            SocketResponder responder = responderObject as SocketResponder;
             responder.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
             SocketSender sender = null;
             try
             {
-
-
-
-
-
-
-
-
-
-
-
-
-                byte[] recv_1st_header = ReceiveProxyHeader(client);
-                if (recv_1st_header[0] == ProxyHeaderByte)
+                responder.ReceiveBytes(out HB32Header route_header, out byte[] route_bytes);
+                if (route_header.Flag == SocketPacketFlag.ProxyRouteRequest)
                 {
-                    /*
-                    bool result = DoForwardProxy(client, socket_ep);
-                    if (!result)
-                    {
-                        Log("Connection closed.", LogLevel.Warn);
-                    }
-                    */
+                    /// Forward connection proxy (from client-side)
+                    sender = ForwardConnectionProxy(responder, route_header, route_bytes);
+                    /// Communication proxy
+                    
                 }
-                else
+                else if (route_header.Flag == SocketPacketFlag.ReversedProxyConnectionRequest)
                 {
-                    /// Not proxy header. Receive bytes:
-                    ///   //(?)1. client 端请求与挂在该代理上的反向代理 Server 连接
-                    ///   2. 反向代理Server向该代理的长连接轮询
-                    /* 底层 Send / Receive 协议改了, 这段重写
-                    byte[] header_bytes = new byte[HB32Encoding.HeaderSize];
-                    Array.Copy(recv_1st_header, header_bytes, recv_1st_header.Length);
-                    SocketIO.ReceiveBuffer(client, header_bytes, offset: recv_1st_header.Length);
-                    SocketIO.ReceiveBytes(client, out HB32Header header, out byte[] bytes, HB32Header.ReadFromBytes(header_bytes));
-                    /// 
-                    string name = Encoding.UTF8.GetString(bytes);
-                    SocketIO.SendHeader(client, SocketPacketFlag.ReversedProxyResponse);
-                    client.SendTimeout = 20 * 1000;
-                    client.ReceiveTimeout = 20 * 1000;
-                    // todo : long connection
-                    */
+                    /// Reversed connection proxy (from server-side, triggered in server by long connection)
+                    sender = ReversedConnectionProxy(ref responder, route_header, route_bytes);
+                    /// Communication proxy
+
                 }
-
-
-
-                
+                else if (route_header.Flag == SocketPacketFlag.ReversedProxyLongConnectionRequest)
+                {
+                    /// Reversed-server long connection socket
+                }
+                else { }
             }
             catch (Exception ex)
             {
                 Log("Socket initiate exception :" + ex.Message, LogLevel.Error);
-                DisposeClient(sender, responder);
+                //DisposeClient(sender, responder); 这行不能删
             }
         }
 
 
-
         /// <summary>
-        /// 创建完整代理隧道, 向下级发送建立连接是否成功信号, 返回与上级通信的 SocketSender 
-        /// [上级可能是 Proxy, Server, Reversed Server, Reversed Server's Proxy, etc....]
+        /// 当上一级代理不是挂载在当前代理上的节点上时, 利用此方法完成同方向代理的中继, 并返回上级代理结果
         /// </summary>
         /// <param name="responder"></param>
+        /// <param name="route"></param>
         /// <returns></returns>
-        private SocketSender ConnectionProxy(SocketResponder responder)
+        private SocketSender ConnectionRelay(SocketResponder responder, ConnectionRoute route, int proxy_depth)
         {
-            ProxyHeader p_header = responder.ReceiveProxyHeader();
-            Debug.Assert(p_header == ProxyHeader.SendBytes);
-            responder.ReceiveBytesWithoutProxyHeader(out HB32Header header, out byte[] route_bytes);
-            ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes);
-            if (route.NextNode.Address.Equals(this.HostAddress))
+            if (route.IsNextNodeProxy)
             {
-                // 为连接到此的反向代理
-            }
-            else if (route.IsNextNodeProxy)
-            {
-                // 继续正向代理
-                SocketSender sender = new SocketSender(null, true);
-                sender.Connect(route.NextNode.Address, Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                sender.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
-
+                /// 继续正向代理
+                SocketSender sender = new SocketSender(true);
+                string err_msg = "";
+                try
+                {
+                    sender.ConnectWithTimeout(route.NextNode.Address, Config.BuildConnectionTimeout);
+                    sender.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                }
+                catch (Exception ex)
+                {
+                    /// 当前代理建立连接失败
+                    err_msg = ex.Message;
+                }
+                if (string.IsNullOrEmpty(err_msg))
+                {
+                    sender.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: proxy_depth + 1);
+                    sender.ReceiveBytes(out HB32Header respond_header, out byte[] respond_bytes);
+                    if (respond_header.Flag == SocketPacketFlag.ProxyResponse)
+                    {
+                        responder.SendHeader(SocketPacketFlag.ProxyResponse);
+                    }
+                    else
+                    {
+                        /// 上级或更上级代理建立连接失败, header 中包含抛出异常的代理位置
+                        responder.SendBytes(respond_header, respond_bytes);
+                    }
+                }
+                else
+                {
+                    responder.SendBytes(SocketPacketFlag.ProxyException, err_msg, i1: proxy_depth);
+                }
                 return sender;
-
-
             }
             else
             {
-                // 直连 server
-                SocketSender sender = new SocketSender(null, false);
+                /// 直连 server
+                SocketSender sender = new SocketSender(false);
+                string err_msg = "";
                 try
                 {
                     sender.ConnectWithTimeout(route.ServerAddress.Address, Config.BuildConnectionTimeout);
@@ -142,18 +138,81 @@ namespace FileManager.SocketLib
                 }
                 catch (Exception ex)
                 {
-                    responder.SendBytes(SocketPacketFlag.ProxyException, ex.Message);
+                    err_msg = ex.Message;
                 }
-                responder.SendHeader(SocketPacketFlag.ProxyResponse);
+                /// response
+                if (string.IsNullOrEmpty(err_msg))
+                {
+                    responder.SendHeader(SocketPacketFlag.ProxyResponse);
+                }
+                else
+                {
+                    responder.SendBytes(SocketPacketFlag.ProxyException, err_msg, i1: proxy_depth);
+                }
                 return sender;
             }
-            return null;
         }
 
 
+        /// <summary>
+        /// 创建完整代理隧道, 向下级发送建立连接是否成功信号, 返回与上级通信的 SocketSender 
+        /// [上级可能是 Proxy, Server, Reversed Server, Reversed Server's Proxy, etc....]
+        /// </summary>
+        /// <param name="responder"></param>
+        /// <param name="route_bytes"></param>
+        /// <returns></returns>
+        private SocketSender ForwardConnectionProxy(SocketResponder responder, HB32Header route_header, byte[] route_bytes)
+        {
+            ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes);
+            if (route.NextNode.Address.Equals(this.HostAddress))
+            {
+                /// 为连接到此的反向代理
+                // todo
+                // 可以试试 ReadWriteLock
+                if (ReversedProxyServers.ContainsKey(route.NextNode.Name))
+                {
+                    ReversedServerInfo server = ReversedProxyServers[route.NextNode.Name];
+                    /// Set EventWaitHandle
+                    
+                    /// Wait for new connection built from server
+                }
+                else
+                {
+                    //todo 没有对应挂载的 Server
+                }
 
 
 
+
+                return null;
+            }
+            else
+            {
+                return ConnectionRelay(responder, route, route_header.I1);
+            }
+        }
+
+
+        private SocketSender ReversedConnectionProxy(ref SocketResponder responder, HB32Header route_header, byte[] route_bytes)
+        {
+            ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes);
+            if (route.NextNode.Address.Equals(this.HostAddress))
+            {
+                // todo: 反向代理
+                return null;
+            }
+            else
+            {
+                SocketSender sender = ConnectionRelay(responder, route, route_header.I1);
+                SocketResponder r = sender.ConvertToResponder();
+                SocketSender s = responder.ConvertToSender(route_header.I1 > 0);
+                responder = r;
+                return s;
+            }
+        }
+
+
+        /*
 
         private bool DoForwardProxy(Socket client, SocketEndPoint socket_ep)
         {
@@ -166,7 +225,7 @@ namespace FileManager.SocketLib
                     byte[] proxy_header = ReceiveProxyHeader(client);
                     HB32Header recv_header;
                     byte[] recv_bytes;
-                    /*
+                    
                     switch ((ProxyHeader)proxy_header[1])
                     {
                         case ProxyHeader.SendHeader:
@@ -187,7 +246,7 @@ namespace FileManager.SocketLib
                             SocketIO.SendBytes(client, recv_header, recv_bytes);
                             break;
                     }
-                    */
+                    
                     error_count = 0;
                 }
                 catch (SocketException ex)
@@ -232,7 +291,7 @@ namespace FileManager.SocketLib
             }
             return false;
         }
-
+        */
 
 
 

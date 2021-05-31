@@ -75,5 +75,18 @@ namespace FileManager.SocketLib.Models
         }
 
 
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(Name)) 
+            {
+                return Address.ToString();
+            }
+            else
+            {
+                return Address.ToString() + "-" + Name;
+            }
+            
+        }
+
     }
 }

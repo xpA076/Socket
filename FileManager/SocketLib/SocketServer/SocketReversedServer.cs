@@ -13,16 +13,22 @@ namespace FileManager.SocketLib.SocketServer
 {
     public class SocketReversedServer : SocketServer
     {
-        public TCPAddress ProxyAddress { get; set; } = null;
+        /// <summary>
+        /// 若此反向代理服务器直接挂载在 IP 1.2.3.4:10000 上名为 abc
+        /// RouteToProxy 应为 
+        ///     ServerAddress    1.2.3.4:10000-abc
+        ///     ProxyRoute       [1.2.3.4:10000]
+        /// </summary>
+        private ConnectionRoute RouteToProxy { get; set; }
 
-        public Socket heartbeat_socket = null;
 
-        private SocketLongConnectionMaintainer maintainer;
 
-        public SocketReversedServer(TCPAddress proxy_address, string name)
+        private SocketLongConnectionMaintainer maintainer = null;
+
+        public SocketReversedServer(ConnectionRoute route)
         {
-            ProxyAddress = proxy_address.Copy();
-            maintainer = new SocketLongConnectionMaintainer(proxy_address, name);
+            RouteToProxy = route.Copy();
+            maintainer = new SocketLongConnectionMaintainer(route);
         }
 
 
@@ -42,10 +48,10 @@ namespace FileManager.SocketLib.SocketServer
             {
                 while (flag_listen)
                 {
-                    Socket client = maintainer.Accept();
+                    SocketResponder responder = maintainer.Accept();
                     Thread th_receive = new Thread(ReceiveData);
                     th_receive.IsBackground = true;
-                    th_receive.Start(client);
+                    th_receive.Start(responder);
                     Thread.Sleep(20);
                 }
             }

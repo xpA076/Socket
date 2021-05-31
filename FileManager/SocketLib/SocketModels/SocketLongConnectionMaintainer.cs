@@ -12,7 +12,7 @@ using FileManager.SocketLib.SocketServer;
 
 namespace FileManager.SocketLib
 {
-    public class SocketLongConnectionMaintainer
+    public class SocketLongConnectionMaintainer : SocketEndPoint
     {
         public string Name { get; set; }
 
@@ -26,76 +26,41 @@ namespace FileManager.SocketLib
 
         public int LongConnectionTimeout { get; set; } = 20 * 1000;
 
+        public int BuildConnectionTimeout { get; set; } = 2000;
 
-        private SocketClient LongConnectClient;
+        public int ReconnectInterval { get; set; } = 3000;
 
-        /// <summary>
-        /// Maintainer 一定会直接连接到一个ProxyServer上 (不再经过其它代理, 否则反向代理无意义)
-        /// </summary>
-        public TCPAddress ProxyServerAddres { get; set; }
 
-        public SocketLongConnectionMaintainer(TCPAddress proxy_address, string name)
+        private SocketSender LongConnectSender;
+
+
+        private ConnectionRoute CurrentRoute { get; set; }
+
+
+
+        public SocketLongConnectionMaintainer(ConnectionRoute route)
         {
-            ProxyServerAddres = proxy_address.Copy();
-            Name = name;
-            //todo RouteNode
-            //LongConnectClient = new SocketClient(proxy_address);
+            CurrentRoute = route.Copy();
         }
-
-
-
-        public Socket Accept()
-        {
-            while (IsAccepting)
-            {
-                HB32Header header;
-                byte[] bytes;
-                try
-                {
-                    LongConnectClient.SendHeader(SocketPacketFlag.ReverserProxyQuery);
-                    LongConnectClient.ReceiveBytes(out header, out bytes);
-                }
-                catch(Exception ex)
-                {
-                    Log("Long connection exception : " + ex.Message, LogLevel.Warn);
-                    StartLongConnection();
-                    continue;
-                }
-                try
-                {
-                    if (header.I1 == 1)
-                    {
-                        IPEndPoint ipe = new IPEndPoint(ProxyServerAddres.IP, ProxyServerAddres.Port);
-                        Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                        s.SendTimeout = DefaultSendTimeout;
-                        s.ReceiveTimeout = DefaultReceiveTimeout;
-                        s.Connect(ipe);
-                        return s;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log("Reversed server Accept() exception : " + ex.Message, LogLevel.Error);
-                }
-            }
-            return null;
-        }
-
-
         public void StartLongConnection()
         {
             while (IsKeepLongConnection)
             {
                 try
                 {
-                    // todo 可以考虑改
-                    LongConnectClient.Connect(LongConnectionTimeout, LongConnectionTimeout);
-                    //LongConnectClient.SendRawbytes(new byte[2] { SocketProxy.ReversedProxyHeaderByte, 0x00 });
-                    LongConnectClient.SendBytes(SocketPacketFlag.ReversedProxyBuild, Name);
-                    LongConnectClient.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                    if (header.Flag != SocketPacketFlag.ReversedProxyResponse)
+                    LongConnectSender = new SocketSender(CurrentRoute.IsNextNodeProxy);
+                    LongConnectSender.ConnectWithTimeout(CurrentRoute.NextNode.Address, BuildConnectionTimeout);
+                    LongConnectSender.SetTimeout(LongConnectionTimeout, LongConnectionTimeout);
+                    if (CurrentRoute.IsNextNodeProxy)
                     {
-                        throw new ArgumentException(Encoding.UTF8.GetString(bytes));
+                        LongConnectSender.SendBytes(SocketPacketFlag.ReversedProxyLongConnectionRequest, CurrentRoute.GetBytes(node_start_index: 1));
+                        LongConnectSender.ReceiveBytes(out HB32Header header, out byte[] bytes);
+                        if (header.Flag != SocketPacketFlag.ProxyResponse)
+                        {
+                            throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
+                                header.I1, CurrentRoute.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
+                        }
+
                     }
                     return;
                 }
@@ -103,8 +68,57 @@ namespace FileManager.SocketLib
                 {
                     Log("Start long connection exception : " + ex.Message, LogLevel.Error);
                 }
+                Thread.Sleep(ReconnectInterval);
             }
         }
+
+
+        public SocketResponder Accept()
+        {
+            while (IsAccepting)
+            {
+                HB32Header query_header;
+                try
+                {
+                    LongConnectSender.SendHeader(SocketPacketFlag.ReverserProxyLongConnectionQuery);
+                    LongConnectSender.ReceiveBytes(out query_header, out _);
+                }
+                catch(Exception ex)
+                {
+                    Log("Long connection exception : " + ex.Message, LogLevel.Warn);
+                    StartLongConnection();
+                    continue;
+                }
+                if (query_header.I1 == 1)
+                {
+                    try
+                    {
+                        SocketResponder responder = new SocketResponder();
+                        responder.ConnectWithTimeout(CurrentRoute.NextNode.Address, BuildConnectionTimeout);
+                        responder.SetTimeout(DefaultSendTimeout, DefaultReceiveTimeout);
+                        if (CurrentRoute.IsNextNodeProxy)
+                        {
+                            responder.SendBytes(SocketPacketFlag.ReversedProxyConnectionRequest, CurrentRoute.GetBytes(node_start_index: 1), i1: 0);
+                            LongConnectSender.ReceiveBytes(out HB32Header header, out byte[] bytes);
+                            if (header.Flag != SocketPacketFlag.ProxyResponse)
+                            {
+                                throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
+                                    header.I1, CurrentRoute.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
+                            }
+                        }
+                        return responder;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log("Reversed server Accept() exception : " + ex.Message, LogLevel.Error);
+                    }
+                }
+            }
+            return null;
+        }
+
+
+
 
 
         public event SocketLogEventHandler SocketLog;

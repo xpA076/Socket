@@ -115,13 +115,18 @@ namespace FileManager.Static
                     if (route.IsNextNodeProxy)
                     {
                         /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                        client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
-                        client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
+                        client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: 0);
+                        client.ReceiveBytes(out HB32Header header, out byte[] bytes);
+                        if (header.Flag != SocketPacketFlag.ProxyResponse)
+                        {
+                            throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}", 
+                                header.I1, route.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
+                        }
                     }
                     /// 获取 socket 权限
                     client.SendBytes(SocketPacketFlag.AuthenticationRequest, Config.KeyBytes);
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
-                    identity = (SocketIdentity)header.I1;
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header auth_header);
+                    identity = (SocketIdentity)auth_header.I1;
                     client.Close();
                     asyncCallback.Invoke(null, EventArgs.Empty);
                 }

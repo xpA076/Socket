@@ -19,8 +19,9 @@ namespace FileManager.SocketLib.Enums
 
         /// Mode 0xA4 : ReversedProxy
         /// 
-        ReversedProxyBuild = 0xA401,
-        ReverserProxyQuery = 0xA402,
+        ReversedProxyLongConnectionRequest = 0xA401,
+        ReverserProxyLongConnectionQuery = 0xA402,
+        ReversedProxyConnectionRequest = 0xA403,
         ReversedProxyResponse = 0xA410,
         ReversedProxyException = 0xA490,
 

@@ -107,7 +107,7 @@ namespace FileManager.SocketLib
             {
                 client.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
             }
-            /// Responder 回复的数据仍有一个空的ProxyHeader, 应处理后再接收数据
+            /// Receive 的数据仍有一个空的ProxyHeader, 应处理后再接收数据
             ReceiveProxyHeader();
             SocketIO.ReceiveBytes(client, out header, out bytes);
         }

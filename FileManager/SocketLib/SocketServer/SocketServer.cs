@@ -39,13 +39,11 @@ namespace FileManager.SocketLib.SocketServer
         /// 在 Socket.accept() 获取到的 client 在这里处理
         /// 这个函数为 client 的整个生存周期
         /// </summary>
-        /// <param name="acceptSocketObject">client socket</param>
-        protected override void ReceiveData(object acceptSocketObject)
+        /// <param name="responderObject">client socket</param>
+        protected override void ReceiveData(object responderObject)
         {
-            Socket client = (Socket)acceptSocketObject;
-            client.SendTimeout = Config.SocketSendTimeOut;
-            client.ReceiveTimeout = Config.SocketReceiveTimeOut;
-            SocketResponder responder = new SocketResponder(client);
+            SocketResponder responder = responderObject as SocketResponder;
+            responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
             try
             {
                 ResponseIdentity(responder);

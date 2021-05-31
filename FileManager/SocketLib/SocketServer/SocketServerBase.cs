@@ -64,13 +64,11 @@ namespace FileManager.SocketLib.SocketServer
             {
                 while (flag_listen)
                 {
-                    // 等待client连接时, 代码阻塞在此
                     Socket client = server.Accept();
-                    // 可以在这里通过字典记录所有已连接socket
-                    // 参考 https://www.cnblogs.com/kellen451/p/7127670.html
+                    SocketResponder responder = new SocketResponder(client);
                     Thread th_receive = new Thread(ReceiveData);
                     th_receive.IsBackground = true;
-                    th_receive.Start(client);
+                    th_receive.Start(responder);
                     Thread.Sleep(20);
                 }
             }

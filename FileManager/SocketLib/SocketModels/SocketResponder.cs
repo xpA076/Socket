@@ -10,14 +10,27 @@ namespace FileManager.SocketLib
 {
     /// <summary>
     /// 代理通信被动端, 与下级通信
-    /// 一般通过 servre.Accept() 获得的 Socket 对象初始化
+    /// /* 一般通过 servre.Accept() 获得的 Socket 对象初始化 */
     /// </summary>
     public class SocketResponder : SocketEndPoint
     {
+        public SocketResponder()
+        {
+            this.IsRequireProxyHeader = false;
+        }
+
+
         public SocketResponder(Socket socket)
         {
             this.client = socket;
             this.IsRequireProxyHeader = false;
+        }
+
+
+        public SocketSender ConvertToSender(bool isWithProxy)
+        {
+            SocketSender sender = new SocketSender(this.client, isWithProxy);
+            return sender;
         }
 
 

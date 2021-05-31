@@ -14,11 +14,24 @@ namespace FileManager.SocketLib
     /// </summary>
     public class SocketSender : SocketEndPoint
     {
+        public SocketSender(bool isWithProxy)
+        {
+            this.IsRequireProxyHeader = isWithProxy;
+        }
+
         public SocketSender(Socket socket, bool isWithProxy)
         {
             this.client = socket;
             this.IsRequireProxyHeader = isWithProxy;
         }
+
+
+        public SocketResponder ConvertToResponder()
+        {
+            SocketResponder responder = new SocketResponder(this.client);
+            return responder;
+        }
+
 
 
         public override void Close()
