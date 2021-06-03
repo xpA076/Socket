@@ -75,6 +75,21 @@ namespace FileManager.SocketLib
             };
         }
 
+        public HB32Header Copy()
+        {
+            return new HB32Header()
+            {
+                Flag = this.Flag,
+                I1 = this.I1,
+                I2 = this.I2,
+                I3 = this.I3,
+                PacketCount = this.PacketCount,
+                TotalByteLength = this.TotalByteLength,
+                PacketIndex = this.PacketIndex,
+                ValidByteLength = this.ValidByteLength
+            };
+        }
+
 
 
         /*

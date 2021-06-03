@@ -10,6 +10,8 @@ namespace FileManager.SocketLib.Enums
     {
         None = 0x0,
 
+        ExceptionFlag = 0x0080,
+
         /// Mode 0xA3 : Proxy
         /// 
         ProxyRouteRequest = 0xA301,

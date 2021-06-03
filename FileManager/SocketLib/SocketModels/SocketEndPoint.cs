@@ -68,8 +68,14 @@ namespace FileManager.SocketLib
             {
                 SocketIO.SendBytes(client, header, bytes, new byte[2] { 0, 0 });
             }
-
         }
+
+        public void SendBytes(HB32Header header, string str)
+        {
+            SendBytes(header, Encoding.UTF8.GetBytes(str));
+        }
+
+
 
 
         public void SendBytes(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)

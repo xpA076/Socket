@@ -72,6 +72,8 @@ namespace FileManager.SocketLib
                 else if (route_header.Flag == SocketPacketFlag.ReversedProxyLongConnectionRequest)
                 {
                     /// Reversed-server long connection socket
+
+
                 }
                 else { }
             }
@@ -89,7 +91,7 @@ namespace FileManager.SocketLib
         /// <param name="responder"></param>
         /// <param name="route"></param>
         /// <returns></returns>
-        private SocketSender ConnectionRelay(SocketResponder responder, ConnectionRoute route, int proxy_depth)
+        private SocketSender ConnectionRelay(SocketResponder responder, HB32Header header, ConnectionRoute route)
         {
             if (route.IsNextNodeProxy)
             {
@@ -108,11 +110,13 @@ namespace FileManager.SocketLib
                 }
                 if (string.IsNullOrEmpty(err_msg))
                 {
-                    sender.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: proxy_depth + 1);
+                    HB32Header next_header = header.Copy();
+                    next_header.I1++;
+                    sender.SendBytes(next_header, route.GetBytes(node_start_index: 1));
                     sender.ReceiveBytes(out HB32Header respond_header, out byte[] respond_bytes);
-                    if (respond_header.Flag == SocketPacketFlag.ProxyResponse)
+                    if ((respond_header.Flag | SocketPacketFlag.ExceptionFlag) == 0)
                     {
-                        responder.SendHeader(SocketPacketFlag.ProxyResponse);
+                        responder.SendHeader(respond_header);
                     }
                     else
                     {
@@ -122,7 +126,9 @@ namespace FileManager.SocketLib
                 }
                 else
                 {
-                    responder.SendBytes(SocketPacketFlag.ProxyException, err_msg, i1: proxy_depth);
+                    HB32Header err_header = header.Copy();
+                    err_header.Flag = (SocketPacketFlag)(((int)err_header.Flag & 0xFFFF00) | 0x90);
+                    responder.SendBytes(err_header, err_msg);
                 }
                 return sender;
             }
@@ -143,11 +149,15 @@ namespace FileManager.SocketLib
                 /// response
                 if (string.IsNullOrEmpty(err_msg))
                 {
-                    responder.SendHeader(SocketPacketFlag.ProxyResponse);
+                    HB32Header resp_header = header.Copy();
+                    resp_header.Flag = (SocketPacketFlag)(((int)resp_header.Flag & 0xFFFF00) | 0x10);
+                    responder.SendHeader(resp_header);
                 }
                 else
                 {
-                    responder.SendBytes(SocketPacketFlag.ProxyException, err_msg, i1: proxy_depth);
+                    HB32Header err_header = header.Copy();
+                    err_header.Flag = (SocketPacketFlag)(((int)err_header.Flag & 0xFFFF00) | 0x90);
+                    responder.SendBytes(err_header, err_msg);
                 }
                 return sender;
             }
@@ -188,7 +198,7 @@ namespace FileManager.SocketLib
             }
             else
             {
-                return ConnectionRelay(responder, route, route_header.I1);
+                return ConnectionRelay(responder, route_header, route);
             }
         }
 
@@ -198,18 +208,35 @@ namespace FileManager.SocketLib
             ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes);
             if (route.NextNode.Address.Equals(this.HostAddress))
             {
-                // todo: 反向代理
+                if (route.IsNextNodeProxy)
+                {
+                    // todo: 反向代理
+
+                }
+                else
+                {
+
+                }
+
+
                 return null;
             }
             else
             {
-                SocketSender sender = ConnectionRelay(responder, route, route_header.I1);
+                SocketSender sender = ConnectionRelay(responder, route_header, route);
                 SocketResponder r = sender.ConvertToResponder();
                 SocketSender s = responder.ConvertToSender(route_header.I1 > 0);
                 responder = r;
                 return s;
             }
         }
+
+
+        private void LongConnectionRespond(SocketResponder responder, HB32Header route_header, byte[] route_bytes)
+        {
+            /// LongConnection 中继, 或 将Reversed Server 挂载在此
+        }
+
 
 
         /*
