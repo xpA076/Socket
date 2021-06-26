@@ -119,6 +119,7 @@ namespace FileManager.Static
                         client.ReceiveBytes(out HB32Header header, out byte[] bytes);
                         if (header.Flag != SocketPacketFlag.ProxyResponse)
                         {
+                            // todo 捕获异常方式有问题 : header.I1 为 SeverAddress 时会越界, 应该要改CurrentRoute.ProxyRoute 21.06.04
                             throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}", 
                                 header.I1, route.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
                         }

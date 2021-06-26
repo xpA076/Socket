@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -17,7 +18,18 @@ namespace FileManager.SocketLib
     {
         private class ReversedServerInfo
         {
-            public EventWaitHandle WaitHandle;
+            /// <summary>
+            /// 由 client 端正向代理至挂载的代理端触发, 由LongConnection捕获后请求 Reversed Server 建立新连接
+            /// </summary>
+            public readonly EventWaitHandle LongConnectionWaitHandle = new AutoResetEvent(false);
+            /// <summary>
+            /// 由 新建反向连接至挂载代理端完成后触发, 由正向代理捕获后建立完整反向代理隧道
+            /// </summary>
+            public readonly EventWaitHandle NewConnectionWaitHandle = new AutoResetEvent(false);
+            /// <summary>
+            /// 由反向代理路径建立完成后交给正向代理线程的 SocketSender 对象
+            /// </summary>
+            public SocketSender Sender = null;
         }
 
 
@@ -31,8 +43,8 @@ namespace FileManager.SocketLib
 
         }
 
+        //private readonly ConcurrentDictionary<string, ReversedServerInfo> ReversedProxyServers = new ConcurrentDictionary<string, ReversedServerInfo>();
         private readonly Dictionary<string, ReversedServerInfo> ReversedProxyServers = new Dictionary<string, ReversedServerInfo>();
-
 
         /// <summary>
         /// Receive proxy 包头标志
@@ -60,11 +72,14 @@ namespace FileManager.SocketLib
                     /// Forward connection proxy (from client-side)
                     sender = ForwardConnectionProxy(responder, route_header, route_bytes);
                     /// Communication proxy
+                    CommunicationProxy(sender, responder);
                     
                 }
                 else if (route_header.Flag == SocketPacketFlag.ReversedProxyConnectionRequest)
                 {
-                    /// Reversed connection proxy (from server-side, triggered in server by long connection)
+                    /// 从 Reversed Server 端出发的反方向代理隧道, 由长连接中反向代理端提供的信号触发 Reversed Server 连接
+                    /// 若当前节点为反向代理路径终点, 则触发 NewConnectionWaitHandle 事件
+                    ///     而后将当前 responder 作为 sender 通过 EventWaitHandle 信号传递给正向代理线程
                     sender = ReversedConnectionProxy(ref responder, route_header, route_bytes);
                     /// Communication proxy
 
@@ -178,13 +193,14 @@ namespace FileManager.SocketLib
             {
                 /// 为连接到此的反向代理
                 // todo
-                // 可以试试 ReadWriteLock
                 if (ReversedProxyServers.ContainsKey(route.NextNode.Name))
                 {
-                    ReversedServerInfo server = ReversedProxyServers[route.NextNode.Name];
+                    ReversedServerInfo info = ReversedProxyServers[route.NextNode.Name];
                     /// Set EventWaitHandle
-                    
+                    info.LongConnectionWaitHandle.Set();
                     /// Wait for new connection built from server
+                    info.NewConnectionWaitHandle.WaitOne();
+                    return info.Sender;
                 }
                 else
                 {
@@ -215,7 +231,13 @@ namespace FileManager.SocketLib
                 }
                 else
                 {
-
+                    // todo : 这段或许不该放在此方法里面 20.06.04
+                    /// 反向代理路径终点即为当前 SocketProxy, 建立连接后触发 NewConnectionWaitHandle 事件通知正向代理线程
+                    string name = route.NextNode.Name;
+                    ReversedServerInfo info = ReversedProxyServers[route.NextNode.Name];
+                    info.Sender = responder.ConvertToSender(route_header.I1 > 0);
+                    info.NewConnectionWaitHandle.Set();
+                    return null;
                 }
 
 
@@ -231,11 +253,176 @@ namespace FileManager.SocketLib
             }
         }
 
-
-        private void LongConnectionRespond(SocketResponder responder, HB32Header route_header, byte[] route_bytes)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="responder"></param>
+        /// <param name="route_header"></param>
+        /// <param name="route_bytes"></param>
+        private void ReversedLongConnectionProxy(SocketResponder responder, HB32Header route_header, byte[] route_bytes)
         {
             /// LongConnection 中继, 或 将Reversed Server 挂载在此
+            ConnectionRoute route = ConnectionRoute.FromBytes(route_bytes);
+
+            if (route.NextNode.Address.Equals(this.HostAddress))
+            {
+                if (route.IsNextNodeProxy)
+                {
+                    // todo: 反向代理
+
+                }
+                else
+                {
+                    /// 将 Reversed Server 挂载在此
+                    string name = route.NextNode.Name;
+                    if (LongConnectionBuild(responder, route_header, name))
+                    {
+                        /// 挂载成功, 维持长连接, 通过 Eventhandle 触发新建连接
+                        ReversedServerInfo info = ReversedProxyServers[route.NextNode.Name];
+                        EventWaitHandle ew = info.LongConnectionWaitHandle;
+
+                        while (true)
+                        {
+                            responder.ReceiveBytes(out HB32Header query_header, out byte[] _);
+                            if (ew.WaitOne(10000))
+                            {
+                                responder.SendHeader(SocketPacketFlag.ReversedProxyResponse, i1: 1);
+                            }
+                            else
+                            {
+                                responder.SendHeader(SocketPacketFlag.ReversedProxyResponse, i1: 0);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /// 挂载失败, response后 (在LongConnectionBuild()中完成) 结束线程
+                    }
+                }
+            }
+            else
+            {
+
+            }
+
         }
+
+
+        /// <summary>
+        /// 实现 Reversed Server 挂载在当前代理上, 返回是否挂载成功
+        /// </summary>
+        /// <param name="responder"></param>
+        /// <param name="header"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private bool LongConnectionBuild(SocketResponder responder, HB32Header header, string name)
+        {
+            bool allow_flag;
+            lock (this.ReversedProxyServers)
+            {
+                allow_flag = !this.ReversedProxyServers.ContainsKey(name);
+                if (allow_flag)
+                {
+                    ReversedServerInfo info = new ReversedServerInfo();
+                    this.ReversedProxyServers.Add(name, info);
+                }
+            }
+            HB32Header resp_header = header.Copy();
+            if (allow_flag)
+            {
+                resp_header.Flag = SocketPacketFlag.ReversedProxyResponse;
+                responder.SendHeader(resp_header);
+            }
+            else
+            {
+                resp_header.Flag = SocketPacketFlag.ReversedProxyException;
+                responder.SendBytes(resp_header, "Reversed server name already exist");
+            }
+            return allow_flag;
+        }
+
+
+        /// <summary>
+        /// 完成连接建立后通信过程的代理
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="responder"></param>
+        private void CommunicationProxy(SocketSender sender, SocketResponder responder)
+        {
+            int error_count = 0;
+            while (error_count < 5)
+            {
+                try
+                {
+                    ProxyHeader proxy_header = responder.ReceiveProxyHeader();
+                    HB32Header recv_header;
+                    byte[] recv_bytes;
+                    switch (proxy_header)
+                    {
+                        case ProxyHeader.SendHeader:
+                            responder.ReceiveBytesWithoutProxyHeader(out recv_header, out byte[] _);
+                            sender.SendHeader(recv_header);
+                            if (recv_header.Flag == SocketPacketFlag.DisconnectRequest)
+                            {
+                                DisposeClient(sender, responder);
+                                return;
+                            }
+                            break;
+                        case ProxyHeader.SendBytes:
+                            responder.ReceiveBytesWithoutProxyHeader(out recv_header, out recv_bytes);
+                            sender.SendBytes(recv_header, recv_bytes);
+                            break;
+                        case ProxyHeader.ReceiveBytes:
+                            sender.ReceiveBytes(out recv_header, out recv_bytes);
+                            responder.SendBytes(recv_header, recv_bytes);
+                            break;
+                    }
+                    error_count = 0;
+                }
+                catch (SocketException ex)
+                {
+                    error_count++;
+                    switch (ex.ErrorCode)
+                    {
+                        // 远程 client 主机关闭连接
+                        case 10054:
+                            DisposeClient(sender, responder);
+                            Log("Connection closed (client closed). " + ex.Message, LogLevel.Info);
+                            return;
+                        // Socket 超时
+                        case 10060:
+                            Thread.Sleep(200);
+                            Log("Socket timeout. " + ex.Message, LogLevel.Trace);
+                            continue;
+                        default:
+                            Log("Server receive data :" + ex.Message, LogLevel.Warn);
+                            continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    error_count++;
+                    if (ex.Message.Contains("Buffer receive error: cannot receive package"))
+                    {
+                        DisposeClient(sender, responder);
+                        Log(ex.Message, LogLevel.Trace);
+                        return;
+                    }
+                    if (ex.Message.Contains("Invalid socket header"))
+                    {
+                        DisposeClient(sender, responder);
+                        Log("Connection closed : " + ex.Message, LogLevel.Warn);
+                        return;
+                    }
+                    Log("Server exception :" + ex.Message, LogLevel.Warn);
+                    Thread.Sleep(200);
+                    continue;
+                }
+            }
+
+        }
+
+
 
 
 
