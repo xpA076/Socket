@@ -82,9 +82,10 @@
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
-    <Compile Include="Models\HeartBeatBase.cs" />
-    <Compile Include="Models\HeartBeatConnectionMonitor.cs" />
-    <Compile Include="Models\HeartBeatTransferRecord.cs" />
+    <Compile Include="Models\FileTaskLib\FileTaskPacketGenerator.cs" />
+    <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />
+    <Compile Include="Models\HeartBeatLib\HeartBeatConnectionMonitor.cs" />
+    <Compile Include="Models\HeartBeatLib\HeartBeatTransferRecord.cs" />
     <Compile Include="Pages\PageProxy.xaml.cs">
       <DependentUpon>PageProxy.xaml</DependentUpon>
     </Compile>
@@ -190,10 +191,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\FileTask.cs" />
+    <Compile Include="Models\FileTaskLib\FileTask.cs" />
     <Compile Include="ViewModels\ProgressViewModel.cs" />
-    <Compile Include="Models\FileTaskManager.cs" />
-    <Compile Include="Models\FileTaskRecord.cs" />
+    <Compile Include="Models\FileTaskLib\FileTaskManager.cs" />
+    <Compile Include="Models\FileTaskLib\FileTaskRecord.cs" />
     <Compile Include="Pages\PageBrowser.xaml.cs">
       <DependentUpon>PageBrowser.xaml</DependentUpon>
     </Compile>
@@ -250,5 +251,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

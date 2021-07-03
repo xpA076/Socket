@@ -583,7 +583,6 @@ namespace FileManager.Models
                 TransferSubThreads[i].Start(task);
                 Thread.Sleep(50);
             }
-            //Config.ThreadLimit = 1;
             /// 阻塞至子线程工作完毕
             for (int i = 0; i < threads_count; ++i)
             {
@@ -860,6 +859,17 @@ namespace FileManager.Models
             }
         }
 
+
+        /// <summary>
+        /// packet 传输过程异常, 解除当前 pakcet 占用
+        /// (成功建立连接后重新申请packet)
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="packet"></param>
+        private void ReleasePacket(FileTask task, int packet)
+        {
+
+        }
 
 
     }

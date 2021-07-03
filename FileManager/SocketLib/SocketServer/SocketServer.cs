@@ -45,11 +45,13 @@ namespace FileManager.SocketLib.SocketServer
             SocketResponder responder = responderObject as SocketResponder;
             responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
             SocketPacketFlag f = SocketPacketFlag.Null;
+
+            ResponseIdentity(responder);
             try
             {
                 try
                 {
-                    ResponseIdentity(responder);
+                    //ResponseIdentity(responder);
                 }
                 catch(Exception ex)
                 {
