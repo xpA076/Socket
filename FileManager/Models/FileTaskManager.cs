@@ -568,8 +568,9 @@ namespace FileManager.Models
                 TransferingPackets.Clear();
                 FinishedPackets.Clear();
             }
-            TransferSubThreads = new Thread[Config.ThreadLimit];
-            for (int i = 0; i < Config.ThreadLimit; ++i)
+            int threads_count = Config.ThreadLimit;
+            TransferSubThreads = new Thread[threads_count];
+            for (int i = 0; i < threads_count; ++i)
             {
                 if (task.Type == TransferType.Upload)
                 {
@@ -584,7 +585,7 @@ namespace FileManager.Models
             }
             //Config.ThreadLimit = 1;
             /// 阻塞至子线程工作完毕
-            for (int i = 0; i < Config.ThreadLimit; ++i)
+            for (int i = 0; i < threads_count; ++i)
             {
                 TransferSubThreads[i].Join();
             }

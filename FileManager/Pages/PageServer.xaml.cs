@@ -123,6 +123,7 @@ namespace FileManager.Pages
             p.Inlines.Add(new Run() { Text = e.log, Foreground = b1 });
             this.RichTextBoxLog.Document.Blocks.Add(p);
             this.RichTextBoxLog.UpdateLayout();
+            this.RichTextBoxLog.ScrollToEnd();
         }
 
 

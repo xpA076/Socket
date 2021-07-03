@@ -52,7 +52,7 @@ namespace FileManager.SocketLib
         /// <returns></returns>
         public byte[] GetBytes(int node_start_index = 0)
         {
-            if (ProxyRoute.Count <= node_start_index)
+            if (ProxyRoute.Count < node_start_index)
             {
                 throw new ArgumentException("ProxyRoute");
             }

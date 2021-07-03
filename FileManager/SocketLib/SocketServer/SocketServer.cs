@@ -44,15 +44,27 @@ namespace FileManager.SocketLib.SocketServer
         {
             SocketResponder responder = responderObject as SocketResponder;
             responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
+            SocketPacketFlag f = SocketPacketFlag.Null;
             try
             {
-                ResponseIdentity(responder);
+                try
+                {
+                    ResponseIdentity(responder);
+                }
+                catch(Exception ex)
+                {
+                    Log("Response identity error : " + ex.Message, LogLevel.Error);
+                    ClientIdentities.Remove(responder);
+                    return;
+                }
+                
                 int error_count = 0;
                 while (flag_receive & error_count < 5)
                 {
                     try
                     {
                         responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
+                        f = header.Flag;
                         switch (header.Flag)
                         {
                             case SocketPacketFlag.DirectoryRequest:
@@ -143,7 +155,8 @@ namespace FileManager.SocketLib.SocketServer
             }
             catch (Exception ex)
             {
-                Log("Identity authentication exception :" + ex.Message, LogLevel.Error);
+                //Log("Identity authentication exception :" + ex.Message, LogLevel.Error);
+                Log("Unexcepted exception in server [" + f.ToString() + "] : " + ex.Message, LogLevel.Error);
                 ClientIdentities.Remove(responder);
             }
         }
@@ -177,6 +190,7 @@ namespace FileManager.SocketLib.SocketServer
         private void ResponseIdentity(SocketResponder responder)
         {
             responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
+            // Log("Received AuthenticationRequest", LogLevel.Info);
             SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
             CheckIdentity(this, e);
             SocketIdentity identity = e.CheckedIndentity;
@@ -202,8 +216,6 @@ namespace FileManager.SocketLib.SocketServer
                 }
             }
         }
-
-
 
     }
 }

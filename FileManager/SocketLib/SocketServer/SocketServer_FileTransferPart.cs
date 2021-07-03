@@ -124,7 +124,7 @@ namespace FileManager.SocketLib.SocketServer
                 if (!ServerFileSet.ContainsKey(header.I1))
                 {
                     i1 = 1;
-                    throw new Exception("No fsid key in available server filestream");
+                    throw new Exception("No fsid key : [" + header.I1.ToString() + "] in available server filestream");
                 }
 
                 SocketServerFileStreamInfo fs_info = ServerFileSet[header.I1];
@@ -187,7 +187,7 @@ namespace FileManager.SocketLib.SocketServer
                 if (!ServerFileSet.ContainsKey(header.I1))
                 {
                     i1 = 1;
-                    throw new Exception("No fsid key in available server filestream");
+                    throw new Exception("No fsid key : [" + header.I1.ToString() + "] in available server filestream");
                 }
 
                 SocketServerFileStreamInfo fs_info = ServerFileSet[header.I1];

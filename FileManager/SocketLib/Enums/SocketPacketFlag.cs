@@ -9,6 +9,7 @@ namespace FileManager.SocketLib.Enums
     public enum SocketPacketFlag : int
     {
         None = 0x0,
+        Null = 0x1,
 
         ExceptionFlag = 0x0080,
 

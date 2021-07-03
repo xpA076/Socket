@@ -115,7 +115,8 @@ namespace FileManager.Pages
 
         private void UpdateSpeed(object sender, EventArgs e)
         {
-            FileTaskManager ftm = sender as FileTaskManager;
+            // FileTaskManager ftm = sender as FileTaskManager;
+            FileTaskManager ftm = this.FTManager;
             double speed = ftm.GetSpeed();
             int seconds = (int)((ftm.TotalLength - ftm.TotalFinished) / speed);
             ProgressView.Speed = Size2String(speed).PadLeft(18, ' ') + "/s";
@@ -126,7 +127,8 @@ namespace FileManager.Pages
 
         private void UpdateProgress(object sender, EventArgs e)
         {
-            FileTaskManager ftm = sender as FileTaskManager;
+            // FileTaskManager ftm = sender as FileTaskManager;
+            FileTaskManager ftm = this.FTManager;
             long cf = ftm.CurrentFinished;
             long cl = ftm.CurrentLength;
             long tf = ftm.TotalFinished;
