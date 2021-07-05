@@ -138,13 +138,7 @@ namespace FileManager.Models
         /// socket 包计数, 已传输完成的 package 数量
         /// </summary>
         public int FinishedPacket { get; set; } = 0;
-        public int TotalPacket
-        {
-            get
-            {
-                return (int)(Length / HB32Encoding.DataSize) + (Length % HB32Encoding.DataSize > 0 ? 1 : 0);
-            }
-        }
+
 
         public override string ToString()
         {
