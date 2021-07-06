@@ -113,6 +113,7 @@ namespace FileManager.SocketLib.SocketServer
         {
             byte[] responseBytes = new byte[1];
             string err_msg = "";
+            /// 若 server 端字典中不含该fsid (对应server重启), 将i1置1并返回至client端
             int i1 = 0;
             try
             {

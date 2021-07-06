@@ -82,7 +82,7 @@
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
-    <Compile Include="Models\FileTaskLib\FileTaskPacketGenerator.cs" />
+    <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatConnectionMonitor.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatTransferRecord.cs" />
@@ -193,7 +193,7 @@
   <ItemGroup>
     <Compile Include="Models\FileTaskLib\FileTask.cs" />
     <Compile Include="ViewModels\ProgressViewModel.cs" />
-    <Compile Include="Models\FileTaskLib\FileTaskManager.cs" />
+    <Compile Include="Models\FileTaskLib\FileTasksManager.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskRecord.cs" />
     <Compile Include="Pages\PageBrowser.xaml.cs">
       <DependentUpon>PageBrowser.xaml</DependentUpon>

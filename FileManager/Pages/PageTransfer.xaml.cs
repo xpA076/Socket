@@ -33,11 +33,11 @@ namespace FileManager.Pages
         {
             this.parent = parent;
             InitializeComponent();
-            this.ListViewTask.ItemsSource = FTManager.FileTasks;
+            this.ListViewTask.ItemsSource = FTsManager.FileTasks;
             this.GridProgress.DataContext = ProgressView;
-            FTManager.UpdateUI += this.UpdateUI;
-            FTManager.UpdateProgress += this.UpdateProgress;
-            FTManager.UpdateTasklist += (object sender, UpdateUIInvokeEventArgs e) => { this.Dispatcher.Invoke(e.action); };
+            FTsManager.UpdateUI += this.UpdateUI;
+            FTsManager.UpdateProgress += this.UpdateProgress;
+            FTsManager.UpdateTasklist += (object sender, UpdateUIInvokeEventArgs e) => { this.Dispatcher.Invoke(e.action); };
         }
 
         #region 下载和 UI 相关 private 变量
@@ -48,11 +48,11 @@ namespace FileManager.Pages
         private readonly ProgressViewModel ProgressView = new ProgressViewModel();
             
 
-        private FileTaskManager FTManager { get; set; } = new FileTaskManager();
+        private FileTasksManager FTsManager { get; set; } = new FileTasksManager();
 
         #endregion
 
-        public bool IsTransfering { get { return FTManager.IsTransfering; } }
+        public bool IsTransfering { get { return FTsManager.IsTransfering; } }
 
         private void GridCurrentProgress_Click(object sender, MouseButtonEventArgs e)
         {
@@ -67,16 +67,16 @@ namespace FileManager.Pages
 
         public void ButtonPause_Click(object sender, RoutedEventArgs e)
         {
-            FTManager.Pause();
+            FTsManager.Pause();
         }
 
         private void ButtonResume_Click(object sender, RoutedEventArgs e)
         {
-            FTManager.Load();
-            this.ListViewTask.ItemsSource = FTManager.FileTasks;
+            FTsManager.Load();
+            this.ListViewTask.ItemsSource = FTsManager.FileTasks;
             // ************* todo *******************
             // 确定目前是否有 severIP 2020.02.12 ***********
-            if (!IsTransfering) { FTManager.InitDownload(); }
+            if (!IsTransfering) { FTsManager.InitDownload(); }
         }
 
 
@@ -86,8 +86,8 @@ namespace FileManager.Pages
         /// <param name="downloadTask">文件/文件夹任务</param>
         public void AddTask(FileTask task)
         {
-            FTManager.AddTask(task);
-            if (!IsTransfering) { FTManager.InitDownload(); }
+            FTsManager.AddTask(task);
+            if (!IsTransfering) { FTsManager.InitDownload(); }
         }
 
 
@@ -95,9 +95,9 @@ namespace FileManager.Pages
         {
             foreach (FileTask task in fileTasks)
             {
-                FTManager.AddTask(task);
+                FTsManager.AddTask(task);
             }
-            if (!IsTransfering) { FTManager.InitDownload(); }
+            if (!IsTransfering) { FTsManager.InitDownload(); }
         }
 
 
@@ -116,7 +116,7 @@ namespace FileManager.Pages
         private void UpdateSpeed(object sender, EventArgs e)
         {
             // FileTaskManager ftm = sender as FileTaskManager;
-            FileTaskManager ftm = this.FTManager;
+            FileTasksManager ftm = this.FTsManager;
             double speed = ftm.GetSpeed();
             int seconds = (int)((ftm.TotalLength - ftm.TotalFinished) / speed);
             ProgressView.Speed = Size2String(speed).PadLeft(18, ' ') + "/s";
@@ -128,7 +128,7 @@ namespace FileManager.Pages
         private void UpdateProgress(object sender, EventArgs e)
         {
             // FileTaskManager ftm = sender as FileTaskManager;
-            FileTaskManager ftm = this.FTManager;
+            FileTasksManager ftm = this.FTsManager;
             long cf = ftm.CurrentFinished;
             long cl = ftm.CurrentLength;
             long tf = ftm.TotalFinished;

@@ -19,7 +19,7 @@ namespace FileManager.Models
     /// 文件传输管理类 
     /// 负责 执行, 监控, 管理文件传输任务
     /// </summary>
-    public class FileTaskManager
+    public class FileTasksManager
     {
         #region 属性与变量
         public event UpdateUIEventHandler UpdateUI;
@@ -35,7 +35,7 @@ namespace FileManager.Models
         /// </summary>
         private bool IsRequestingFsid { get; set; } = false;
         /// <summary>
-        /// 在大文件传输过程中, 任一子线程触发无法处理异常时(socket 认证, server端文件读写异常)
+        /// 在大文件传输过程中, 任一子线程触发无法处理的异常时(socket 认证 or server端文件读写异常)
         /// 将此 flag 置为 true, 其它线程会因此退出, 在 RunTransferSubThreads() 中将当前 task.Status 标为 Failed
         /// </summary>
         private bool IsCurrentTaskFailed { get; set; } = false;
@@ -479,9 +479,11 @@ namespace FileManager.Models
         /// <param name="task"></param>
         private void TransferSingleTaskBigFile(FileTask task)
         {
+            FileTaskDispatcher dispatcher = new FileTaskDispatcher(task);
+
             /// 请求 server 端打开文件, 并获取 FileStreamId
-            task.FileStreamId = GetFileStreamId(task);
-            if (task.FileStreamId == -1) 
+            dispatcher.RequestFileStreamId();
+            if (dispatcher.FileStreamId == -1) 
             {
                 task.Status = FileTaskStatus.Failed;
                 Record.CurrentTaskIndex++;
@@ -495,7 +497,7 @@ namespace FileManager.Models
 
 
             /// 运行下载子线程
-            FileTaskStatus result = RunTransferSubThreads(task);
+            FileTaskStatus result = RunTransferSubThreads(dispatcher);
 
             /// 结束 Transfer, 关闭 FileStream
             localFileStream.Close();
@@ -532,34 +534,10 @@ namespace FileManager.Models
         }
 
 
-        /// <summary>
-        /// 根据 FileTask 向 Server 端请求 FileStreamId (16bit - 0~65535), 如有异常返回-1
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        private int GetFileStreamId (FileTask task)
-        {
-            SocketPacketFlag mask = (SocketPacketFlag)((task.Type == TransferType.Upload ? 1 : 0) << 8);
-            try
-            {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
-                client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest | mask, task.RemotePath);
-                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
-                client.Close();
-                string response = Encoding.UTF8.GetString(bytes);
-                return int.Parse(response);
-            }
-            catch (Exception ex)
-            {
-                Logger.Log("Cannot get FileStreamID, Exception : " + ex.Message);
-                System.Windows.Forms.MessageBox.Show(ex.Message);
-                return -1;
-            }
-        }
 
 
 
-        private FileTaskStatus RunTransferSubThreads(FileTask task)
+        private FileTaskStatus RunTransferSubThreads(FileTaskDispatcher dispatcher)
         {
             IsCurrentTaskFailed = false;
             /// 清空 packets 缓存记录
@@ -572,7 +550,7 @@ namespace FileManager.Models
             TransferSubThreads = new Thread[threads_count];
             for (int i = 0; i < threads_count; ++i)
             {
-                if (task.Type == TransferType.Upload)
+                if (dispatcher.Task.Type == TransferType.Upload)
                 {
                     TransferSubThreads[i] = new Thread(new ParameterizedThreadStart(UploadThreadUnit)) { IsBackground = true };
                 }
@@ -580,7 +558,7 @@ namespace FileManager.Models
                 {
                     TransferSubThreads[i] = new Thread(new ParameterizedThreadStart(DownloadThreadUnit)) { IsBackground = true };
                 }
-                TransferSubThreads[i].Start(task);
+                TransferSubThreads[i].Start(dispatcher);
                 Thread.Sleep(50);
             }
             /// 阻塞至子线程工作完毕
@@ -606,9 +584,9 @@ namespace FileManager.Models
 
         private void DownloadThreadUnit(object o)
         {
-            FileTask task = (FileTask)o;
-            SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, -1);
-            int packet = GeneratePacketIndex(task);
+            FileTaskDispatcher dispatcher = (FileTaskDispatcher)o;
+            SocketClient client = SocketFactory.GenerateConnectedSocketClient(dispatcher.Task.Route, -1);
+            int packet = dispatcher.GeneratePacket();
             while (packet != -1)
             {
                 if (IsStopDownloading || IsCurrentTaskFailed)
@@ -619,19 +597,19 @@ namespace FileManager.Models
                 {
                     #region 通过 fsid 向 server 请求 bytes
                     /// ↑ 包含在 server 重启后重新获取 fsid 的异常处理
-                    if (IsRequestingFsid)
+                    if (dispatcher.IsRequestingFsid)
                     {
                         /// 此时其它线程正在获取fsid并已获得 obj_lock_request_fsid 锁
                         /// 等待其它线程释放 obj_lock_request_fsid 后, 可通过 fsid 请求packet
-                        lock (obj_lock_request_fsid)
+                        lock (dispatcher.FsidLock)
                         {
-                            client.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
+                            client.SendHeader(SocketPacketFlag.DownloadPacketRequest, dispatcher.FileStreamId, packet);
                         }
                     }
                     else
                     {
                         /// 正常请求packet
-                        client.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, packet);
+                        client.SendHeader(SocketPacketFlag.DownloadPacketRequest, dispatcher.FileStreamId, packet);
                     }
                     client.ReceiveBytes(out HB32Header header, out byte[] bytes);
                     /// 异常处理
@@ -649,11 +627,11 @@ namespace FileManager.Models
                             else
                             {
                                 /// 加锁获取 fsid, 此时其它子线程等待当前线程获取 fsid 后再发包
-                                IsRequestingFsid = true;
-                                lock (obj_lock_request_fsid)
+                                dispatcher.IsRequestingFsid = true;
+                                lock (dispatcher.FsidLock)
                                 {
-                                    task.FileStreamId = GetFileStreamId(task);
-                                    IsRequestingFsid = false;
+                                    dispatcher.RequestFileStreamId();
+                                    dispatcher.IsRequestingFsid = false;
                                 }
                             }
                         }
@@ -670,7 +648,7 @@ namespace FileManager.Models
                         localFileStream.Seek((long)packet * HB32Encoding.DataSize, SeekOrigin.Begin);
                         localFileStream.Write(bytes, 0, header.ValidByteLength);
                     }
-                    FinishPacket(task, packet);
+                    FinishPacket(dispatcher, packet);
                     lock (this.Record)
                     {
                         TicTokBytes += header.ValidByteLength;
@@ -684,7 +662,7 @@ namespace FileManager.Models
                             }
                         }
                     }
-                    packet = GeneratePacketIndex(task);
+                    packet = GeneratePacketIndex(dispatcher);
                 }
                 catch (Exception)
                 {
@@ -693,7 +671,7 @@ namespace FileManager.Models
                     {
                         try
                         {
-                            client = SocketFactory.GenerateConnectedSocketClient(task, 1);
+                            client = SocketFactory.GenerateConnectedSocketClient(dispatcher, 1);
                             break;
                         }
                         catch
@@ -808,68 +786,6 @@ namespace FileManager.Models
 
 
 
-        /// <summary>
-        /// 申请获取任务packet index, 任务完成则返回 -1
-        /// 根据 packet 数目更新 UI
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns> packet index </returns>
-        private int GeneratePacketIndex(FileTask task)
-        {
-            lock (this.PacketLock)
-            {
-                int packet = task.FinishedPacket;
-                while (packet < task.TotalPacket)
-                {
-                    if (TransferingPackets.Contains(packet) || FinishedPackets.Contains(packet))
-                    {
-                        packet++;
-                        continue;
-                    }
-                    else
-                    {
-                        TransferingPackets.Add(packet);
-                        return packet;
-                    }
-                }
-                return -1;
-            }
-        }
-
-
-        /// <summary>
-        /// packet 完成写入后清除记录并修正完成package数目
-        /// </summary>
-        /// <param name="task"></param>
-        /// <param name="packet">完成写入的packet index</param>
-        private void FinishPacket(FileTask task, int packet)
-        {
-            lock (this.PacketLock)
-            {
-                if (TransferingPackets.Contains(packet))
-                {
-                    TransferingPackets.Remove(packet);
-                    FinishedPackets.Add(packet);
-                }
-                while (FinishedPackets.Contains(task.FinishedPacket))
-                {
-                    FinishedPackets.Remove(task.FinishedPacket);
-                    task.FinishedPacket++;
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// packet 传输过程异常, 解除当前 pakcet 占用
-        /// (成功建立连接后重新申请packet)
-        /// </summary>
-        /// <param name="task"></param>
-        /// <param name="packet"></param>
-        private void ReleasePacket(FileTask task, int packet)
-        {
-
-        }
 
 
     }
