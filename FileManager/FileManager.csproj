@@ -81,6 +81,7 @@
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
+    <Compile Include="Exceptions\SocketFlagException.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />

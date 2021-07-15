@@ -12,6 +12,7 @@ using FileManager.Static;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Events;
+using FileManager.Exceptions;
 
 namespace FileManager.Models
 {
@@ -28,19 +29,6 @@ namespace FileManager.Models
 
         public bool IsTransfering { get; private set; } = false;
         public bool IsStopDownloading { get; set; } = false;
-        /// <summary>
-        /// Server 端重启后, 原有 fsid 不可用, 在某一 SubThread 中首先重新调用 GetFileStreamId()
-        /// 将此 flag 置为 true
-        /// 此时其余线程执行 SendHeader() 或 SendBytes() 应加锁, 保证在获取 fsid 后再发包
-        /// </summary>
-        private bool IsRequestingFsid { get; set; } = false;
-        /// <summary>
-        /// 在大文件传输过程中, 任一子线程触发无法处理的异常时(socket 认证 or server端文件读写异常)
-        /// 将此 flag 置为 true, 其它线程会因此退出, 在 RunTransferSubThreads() 中将当前 task.Status 标为 Failed
-        /// </summary>
-        private bool IsCurrentTaskFailed { get; set; } = false;
-
-
 
         private FileTaskRecord Record = new FileTaskRecord();
 
@@ -195,10 +183,6 @@ namespace FileManager.Models
         }
 
         #endregion
-
-
-
-
 
 
         public void InitDownload()
@@ -365,6 +349,7 @@ namespace FileManager.Models
                 })));
         }
 
+
         /// <summary>
         /// 在 Uplaod Directory时, 获取 local_path 下所有子 FileTask 列表
         /// </summary>
@@ -506,14 +491,14 @@ namespace FileManager.Models
             /// 请求server端关闭并释放文件
             try
             {
-                SocketClient sc = SocketFactory.GenerateConnectedSocketClient(task, 1);
+                SocketClient sc = SocketFactory.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
                 if (task.Type == TransferType.Upload)
                 {
-                    sc.SendBytes(SocketPacketFlag.UploadPacketRequest, new byte[1], task.FileStreamId, -1);
+                    sc.SendBytes(SocketPacketFlag.UploadPacketRequest, new byte[1], dispatcher.FileStreamId, -1);
                 }
                 else
                 {
-                    sc.SendHeader(SocketPacketFlag.DownloadPacketRequest, task.FileStreamId, -1);
+                    sc.SendHeader(SocketPacketFlag.DownloadPacketRequest, dispatcher.FileStreamId, -1);
                 }
                 sc.Close();
             }
@@ -539,7 +524,7 @@ namespace FileManager.Models
 
         private FileTaskStatus RunTransferSubThreads(FileTaskDispatcher dispatcher)
         {
-            IsCurrentTaskFailed = false;
+            dispatcher.IsCurrentTaskFailed = false;
             /// 清空 packets 缓存记录
             lock (this.PacketLock)
             {
@@ -567,9 +552,9 @@ namespace FileManager.Models
                 TransferSubThreads[i].Join();
             }
             /// 确定 task 状态
-            if (IsCurrentTaskFailed)
+            if (dispatcher.IsCurrentTaskFailed)
             {
-                IsCurrentTaskFailed = false;
+                dispatcher.IsCurrentTaskFailed = false;
                 return FileTaskStatus.Failed;
             }
             else
@@ -580,26 +565,51 @@ namespace FileManager.Models
 
 
 
-        private readonly object obj_lock_request_fsid = new object();
-
         private void DownloadThreadUnit(object o)
         {
             FileTaskDispatcher dispatcher = (FileTaskDispatcher)o;
-            SocketClient client = SocketFactory.GenerateConnectedSocketClient(dispatcher.Task.Route, -1);
-            int packet = dispatcher.GeneratePacket();
-            while (packet != -1)
+            SocketClient client = null;
+            int packet = -1;
+            while (true)
             {
-                if (IsStopDownloading || IsCurrentTaskFailed)
+                /// 当前循环对应请求的 packet index
+                packet = dispatcher.GeneratePacket();
+                /// while 循环退出条件
+                if (packet == -1)
                 {
+                    /// 已无需要传输的 packet
                     break;
                 }
+                if (IsStopDownloading || dispatcher.IsCurrentTaskFailed)
+                {
+                    /// 点击 Pause 按钮, 或其它线程触发了 dispatcher.IsCurrentTaskFailed
+                    break;
+                }
+                /// 首次循环, 或 Socket 连接异常等情况下建立 Socket 连接
+                if (client == null)
+                {
+                    while (!IsStopDownloading)
+                    {
+                        try
+                        {
+                            client = SocketFactory.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
+                            break;
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+                }
+                HB32Header recv_header;
+                byte[] recv_bytes;
+                /// 通过 fsid 向 server 请求 bytes, 成功后离开 try 块 (包含在 server 重启后重新获取 fsid 的异常处理)
                 try
                 {
-                    #region 通过 fsid 向 server 请求 bytes
-                    /// ↑ 包含在 server 重启后重新获取 fsid 的异常处理
+                    /// 向 server 发送请求
                     if (dispatcher.IsRequestingFsid)
                     {
-                        /// 此时其它线程正在获取fsid并已获得 obj_lock_request_fsid 锁
+                        /// 此时其它线程正在获取fsid并已获得 FsidLock 锁
                         /// 等待其它线程释放 obj_lock_request_fsid 后, 可通过 fsid 请求packet
                         lock (dispatcher.FsidLock)
                         {
@@ -611,72 +621,70 @@ namespace FileManager.Models
                         /// 正常请求packet
                         client.SendHeader(SocketPacketFlag.DownloadPacketRequest, dispatcher.FileStreamId, packet);
                     }
-                    client.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                    /// 异常处理
-                    if (header.Flag == SocketPacketFlag.DownloadDenied)
+                    /// 接收 server 响应
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadPacketResponse, out recv_header, out recv_bytes);
+                }
+                /// DownloadDenied 异常处理
+                catch (SocketFlagException ex)
+                {
+                    /// 释放已申请的 packet
+                    dispatcher.ReleasePacket(packet);
+                    if (ex.Header.I1 > 0)
                     {
-                        if (header.I1 > 0)
+                        /// ↓对应情况: Server 重启后没有对应 fsid, client端原有 fsid 不可用
+                        if (dispatcher.IsRequestingFsid)
                         {
-                            /// ↓对应情况: Server 重启后没有对应 fsid, client端原有 fsid 不可用
-                            if (IsRequestingFsid)
-                            {
-                                /// 此时其它子线程正在获取 fsid
-                                /// 执行 continue 后进入 lock(obj_lock_request_fsid) 等待获取fsid的线程释放锁
-                                continue;
-                            }
-                            else
-                            {
-                                /// 加锁获取 fsid, 此时其它子线程等待当前线程获取 fsid 后再发包
-                                dispatcher.IsRequestingFsid = true;
-                                lock (dispatcher.FsidLock)
-                                {
-                                    dispatcher.RequestFileStreamId();
-                                    dispatcher.IsRequestingFsid = false;
-                                }
-                            }
+                            /// 此时其它子线程正在获取 fsid
+                            /// 执行 continue 后进入 lock(obj_lock_request_fsid) 等待获取fsid的线程释放锁
+                            ;
                         }
                         else
                         {
-                            /// task failed, 置 flag 后退出子线程
-                            IsCurrentTaskFailed = true;
-                            break;
-                        }
-                    }
-                    #endregion
-                    lock (this.localFileStream)
-                    {
-                        localFileStream.Seek((long)packet * HB32Encoding.DataSize, SeekOrigin.Begin);
-                        localFileStream.Write(bytes, 0, header.ValidByteLength);
-                    }
-                    FinishPacket(dispatcher, packet);
-                    lock (this.Record)
-                    {
-                        TicTokBytes += header.ValidByteLength;
-                        Record.CurrentFinished += header.ValidByteLength;
-                        if (this.AllowUpdateUI())
-                        {
-                            UpdateUI(this, EventArgs.Empty);
-                            if (Record.NeedSaveRecord())
+                            /// 加锁获取 fsid, 此时其它子线程等待当前线程获取 fsid 后再发包
+                            dispatcher.IsRequestingFsid = true;
+                            lock (dispatcher.FsidLock)
                             {
-                                Record.SaveXml();
+                                dispatcher.RequestFileStreamId();
+                                dispatcher.IsRequestingFsid = false;
                             }
                         }
+                        continue;
                     }
-                    packet = GeneratePacketIndex(dispatcher);
+                    else
+                    {
+                        /// task failed, 置 flag 后退出子线程
+                        dispatcher.IsCurrentTaskFailed = true;
+                        break;
+                    }
                 }
                 catch (Exception)
                 {
-                    /// 生成已连接 SocketClient
-                    while (!IsStopDownloading)
+                    /// 释放已申请的 packet
+                    dispatcher.ReleasePacket(packet);
+                    /// 将 SocketClient 置为 null, 在新循环开始时重建 SocketClient
+                    client = null;
+                    continue;
+                }
+                /// 请求数据成功, 写入本地文件
+                lock (this.localFileStream)
+                {
+                    localFileStream.Seek((long)packet * HB32Encoding.DataSize, SeekOrigin.Begin);
+                    localFileStream.Write(recv_bytes, 0, recv_header.ValidByteLength);
+                }
+                /// 后处理: HashSet完成当前块, 更新 Record
+                dispatcher.FinishPacket(packet);
+                lock (this.Record)
+                {
+                    TicTokBytes += recv_header.ValidByteLength;
+                    Record.CurrentFinished += recv_header.ValidByteLength;
+                    // todo 更新UI的判定放在dispatcher里 21.07.12
+                    if (this.AllowUpdateUI())
                     {
-                        try
+                        UpdateUI(this, EventArgs.Empty);
+                        if (Record.NeedSaveRecord())
                         {
-                            client = SocketFactory.GenerateConnectedSocketClient(dispatcher, 1);
-                            break;
-                        }
-                        catch
-                        {
-                            continue;
+                            //dispatcher.Task.FinishedPacket = dispatcher.FinishedPacket;
+                            Record.SaveXml();
                         }
                     }
                 }
@@ -691,6 +699,8 @@ namespace FileManager.Models
         /// <param name="o"></param>
         private void UploadThreadUnit(object o)
         {
+            return;
+            /*
             FileTask task = (FileTask)o;
             SocketClient client = SocketFactory.GenerateConnectedSocketClient(task);
             int packet = GeneratePacketIndex(task);
@@ -782,6 +792,7 @@ namespace FileManager.Models
                 }
             }
             client.Close();
+            */
         }
 
 

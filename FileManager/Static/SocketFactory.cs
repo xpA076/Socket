@@ -70,7 +70,7 @@ namespace FileManager.Static
         /// 返回经过认证后的 SocketClient
         /// </summary>
         /// <param name="route"></param>
-        /// <param name="maxTry"></param>
+        /// <param name="maxTry">maxTry < 0 时表示无限次重复直到成功</param>
         /// <param name="retryInterval"></param>
         /// <returns></returns>
         public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route, int maxTry, int retryInterval = 3000)

@@ -16,6 +16,12 @@ namespace FileManager.Models
     /// </summary>
     public class FileTaskDispatcher
     {
+        /// <summary>
+        /// 在大文件传输过程中, 任一子线程触发无法处理的异常时(socket 认证 or server端文件读写异常)
+        /// 将此 flag 置为 true, 其它线程会因此退出, 在 RunTransferSubThreads() 中将当前 task.Status 标为 Failed
+        /// </summary>
+        public bool IsCurrentTaskFailed { get; set; } = false;
+
         #region packet generator
         private readonly object PacketLock = new object();
         private readonly HashSet<int> TransferingPackets = new HashSet<int>();
@@ -32,6 +38,7 @@ namespace FileManager.Models
 
         public FileTaskDispatcher(FileTask task)
         {
+            IsCurrentTaskFailed = false;
             Task = task;
             FinishedPacket = task.FinishedPacket;
             TotalPacket = (int)(task.Length / HB32Encoding.DataSize) + (task.Length % HB32Encoding.DataSize > 0 ? 1 : 0);
@@ -39,6 +46,7 @@ namespace FileManager.Models
 
         public void Reset(FileTask task)
         {
+            IsCurrentTaskFailed = false;
             Task = task;
             FinishedPacket = task.FinishedPacket;
             TotalPacket = (int)(task.Length / HB32Encoding.DataSize) + (task.Length % HB32Encoding.DataSize > 0 ? 1 : 0);
@@ -47,6 +55,7 @@ namespace FileManager.Models
                 TransferingPackets.Clear();
                 FinishedPackets.Clear();
             }
+            IsRequestingFsid = false;
         }
 
 
@@ -119,6 +128,11 @@ namespace FileManager.Models
 
         public readonly object FsidLock = new object();
 
+        /// <summary>
+        /// Server 端重启后, 原有 fsid 不可用, 在某一 SubThread 中首先重新调用 GetFileStreamId()
+        /// 将此 flag 置为 true
+        /// 此时其余线程执行 SendHeader() 或 SendBytes() 应加锁, 保证在获取 fsid 后再发包
+        /// </summary>
         public bool IsRequestingFsid { get; set; } = false;
 
 

@@ -1,4 +1,5 @@
-﻿using FileManager.SocketLib.Enums;
+﻿using FileManager.Exceptions;
+using FileManager.SocketLib.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,13 +133,7 @@ namespace FileManager.SocketLib
             ReceiveBytes(out header, out bytes);
             if (header.Flag != flag)
             {
-                string err_msg = "";
-                try
-                {
-                    err_msg = Encoding.UTF8.GetString(bytes);
-                }
-                catch (Exception) {; }
-                throw new ArgumentException(string.Format("[Received not valid header: {0}, required : {1}] -- {2}", header.Flag.ToString(), flag.ToString(), err_msg));
+                throw new SocketFlagException(flag, header, bytes);
             }
         }
 
