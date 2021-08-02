@@ -30,7 +30,17 @@ namespace FileManager.Models
         /// <summary>
         /// 已完成 packet 数量
         /// </summary>
-        public int FinishedPacket { get; private set; }
+        public int FinishedPacket 
+        {
+            get
+            {
+                return this.Task.FinishedPacket;
+            }
+            private set
+            {
+                this.Task.FinishedPacket = value;
+            }
+        }
 
         private int TotalPacket { get; set; }
 
