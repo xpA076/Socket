@@ -111,8 +111,8 @@ namespace FileManager.SocketLib
         ///   server : IPx or IPx-name_x
         ///   proxy  : [empty] or IP1-name_1;IP2;IP3-name_3;......
         /// 解析规则:
-        ///   IPn-name_n 解析为两个 RouteNode, 按顺序分别为 IPn 和 IPn-name_n
-        ///   IPn 解析为一个 RouteNode, 其 Name 为 ""
+        ///   IP_n-name_n 解析为两个 RouteNode, 按顺序分别为 IPn 和 IPn-name_n
+        ///   IP_n 解析为一个 RouteNode, 其 Name 为 ""
         ///   server 若为挂在反向代理的server, 则代理列表最后一级为反向代理服务器IP
         /// 解析规则保证 ProxyRoute[0].Name == "" (若存在), 即一定不是反向代理
         /// </summary>

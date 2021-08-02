@@ -689,8 +689,10 @@ namespace FileManager.Models
                     }
                 }
             }
-            try { client.Close(); } catch (Exception) {; }
-            
+            if (client != null)
+            {
+                client.Close();
+            }
         }
 
 

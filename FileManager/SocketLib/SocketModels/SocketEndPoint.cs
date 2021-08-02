@@ -11,6 +11,10 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib
 {
+    /// <summary>
+    /// Socket 连接中的 client / server 端, 有简单封装的 Connect / SendBytes / ReceiveBytes 方法
+    /// </summary>
+
     public class SocketEndPoint
     {
         protected Socket client = null;
@@ -168,7 +172,7 @@ namespace FileManager.SocketLib
 
         private class ConnectTimeoutHandler
         {
-            public readonly ManualResetEvent ConnectTimeoutObject = new ManualResetEvent(false);
+            private readonly ManualResetEvent ConnectTimeoutObject = new ManualResetEvent(false);
 
             public bool IsSuccess { get; set; } = false;
 

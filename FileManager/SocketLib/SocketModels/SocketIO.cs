@@ -13,6 +13,9 @@ using FileManager.Events;
 
 namespace FileManager.SocketLib
 {
+    /// <summary>
+    /// Socket 层收发 bytes 方法均在此处
+    /// </summary>
     public static class SocketIO
     {
         /// <summary>

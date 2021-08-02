@@ -44,22 +44,34 @@ namespace FileManager.SocketLib.SocketServer
         {
             SocketResponder responder = responderObject as SocketResponder;
             responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
-            SocketPacketFlag f = SocketPacketFlag.Null;
-
-            ResponseIdentity(responder);
+            /// 确认当前连接权限
             try
             {
-                try
+                //ResponseIdentity(responder);
+                /// 接收 KeyBytes, 调用 CheckIdentity();
+                /// 向 Dictionary 添加 SocketResponder 权限;
+                /// 并向 Client 端返回 SocketIdentity
+                responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
+                SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
+                CheckIdentity(this, e);
+                SocketIdentity identity = e.CheckedIndentity;
+                lock (ClientIdentitiesLock)
                 {
-                    //ResponseIdentity(responder);
+                    ClientIdentities.Add(responder, identity);
                 }
-                catch(Exception ex)
-                {
-                    Log("Response identity error : " + ex.Message, LogLevel.Error);
-                    ClientIdentities.Remove(responder);
-                    return;
-                }
-                
+                responder.SendHeader(SocketPacketFlag.AuthenticationResponse, i1: (int)identity);
+
+            }
+            catch (Exception ex)
+            {
+                Log("Response identity error : " + ex.Message, LogLevel.Error);
+                ClientIdentities.Remove(responder);
+                return;
+            }
+            /// Server 数据响应主循环
+            SocketPacketFlag f = SocketPacketFlag.Null;
+            try
+            {
                 int error_count = 0;
                 while (flag_receive & error_count < 5)
                 {
@@ -80,7 +92,7 @@ namespace FileManager.SocketLib.SocketServer
                                 ResponseCreateDirectory(responder, bytes);
                                 break;
 
-                            #region download
+                            #region Download
                             case SocketPacketFlag.DownloadRequest:
                                 ResponseDownloadSmallFile(responder, bytes);
                                 break;
@@ -92,7 +104,7 @@ namespace FileManager.SocketLib.SocketServer
                                 break;
                             #endregion
 
-                            #region upload
+                            #region Upload
                             case SocketPacketFlag.UploadRequest:
                                 ResponseUploadSmallFile(responder, bytes);
                                 break;
@@ -191,16 +203,6 @@ namespace FileManager.SocketLib.SocketServer
         /// <param name="responder"></param>
         private void ResponseIdentity(SocketResponder responder)
         {
-            responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
-            // Log("Received AuthenticationRequest", LogLevel.Info);
-            SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
-            CheckIdentity(this, e);
-            SocketIdentity identity = e.CheckedIndentity;
-            lock (ClientIdentitiesLock)
-            {
-                ClientIdentities.Add(responder, identity);
-            }
-            responder.SendHeader(SocketPacketFlag.AuthenticationResponse, i1: (int)identity);
         }
 
 
