@@ -9,7 +9,10 @@ namespace FileManager.SocketLib
 {
     public class ConnectionRoute
     {
-        public RouteNode ServerAddress { get; set; } = new RouteNode();
+        //public RouteNode ServerAddress { get; set; } = new RouteNode();
+
+        public RouteNode ServerAddress { get { return ProxyRoute.Last(); } }
+
 
         /// 代理规则 保证 ProxyRoute[0] 必为不含 Name 的路由节点
         public List<RouteNode> ProxyRoute { get; set; } = new List<RouteNode>();
@@ -18,14 +21,7 @@ namespace FileManager.SocketLib
         {
             get
             {
-                if (ProxyRoute.Count == 0)
-                {
-                    return ServerAddress;
-                }
-                else
-                {
-                    return ProxyRoute[0];
-                }
+                return ProxyRoute[0];
             }
         }
 
@@ -37,30 +33,25 @@ namespace FileManager.SocketLib
         {
             get
             {
-                return ProxyRoute.Count > 0;
+                return ProxyRoute.Count > 1;
             }
         }
 
         /// <summary>
         /// 从 ProxyRoute列表 指定位置开始获取其后的路由路径 bytes
-        /// 若指定位置为ProxyRoute总长度时, 获取的bytes只含ServerAddress + 长度为零的List, 没有exception
-        /// 2 bytes : 01 + [proxy count]
-        /// xx bytes : ServerAddress
-        /// xx * proxy bytes : ProxyRoute
+        /// 2 bytes : 0x01 + [proxy list count]
+        /// xx * proxy bytes : ProxyRouteNode
         /// </summary>
         /// <param name="node_start_index"></param>
         /// <returns></returns>
         public byte[] GetBytes(int node_start_index = 0)
         {
-            if (ProxyRoute.Count < node_start_index)
+            if (ProxyRoute.Count <= node_start_index)
             {
-                throw new ArgumentException("ProxyRoute");
+                throw new ArgumentException("ProxyRoute index error");
             }
             List<byte[]> node_bytes = new List<byte[]>();
             int len = 2;
-            byte[] bs1 = ServerAddress.GetBytes();
-            node_bytes.Add(bs1);
-            len += bs1.Length;
             for (int i = node_start_index; i < ProxyRoute.Count; ++i)
             {
                 byte[] bs = ProxyRoute[i].GetBytes();
@@ -86,22 +77,29 @@ namespace FileManager.SocketLib
         }
 
 
+        /// <summary>
+        /// 从 bytes 的 index 位置起还原 ConnectionRoute
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public static ConnectionRoute FromBytes(byte[] bytes, ref int index)
         {
-            int pt = index;
-            if (bytes[pt] == 1)
+            if (bytes[index] == 1)
             {
-                byte count = bytes[pt + 1];
+                byte count = bytes[index + 1];
                 ConnectionRoute c = new ConnectionRoute();
-                pt += 2;
-                c.ServerAddress = RouteNode.FromBytes(bytes, ref pt);
+                index += 2;
                 for (int i = 0; i < count; ++i)
                 {
-                    c.ProxyRoute.Add(RouteNode.FromBytes(bytes, ref pt));
+                    c.ProxyRoute.Add(RouteNode.FromBytes(bytes, ref index));
                 }
                 return c;
             }
-            return null;
+            else
+            {
+                return null;
+            }
         }
 
 
@@ -122,41 +120,37 @@ namespace FileManager.SocketLib
         public static ConnectionRoute FromString(string server_string, string proxy_string, int default_server_port = 12138, int default_proxy_port = 12139)
         {
             ConnectionRoute cr = new ConnectionRoute();
-            if (server_string.Contains("-"))
-            {
-                string[] strs = server_string.Split('-');
-                if (!strs[0].Contains(':')) { strs[0] += ":" + default_server_port.ToString(); }
-                cr.ServerAddress = new RouteNode(strs[0], strs[1]);
-                cr.ProxyRoute.Add(new RouteNode(strs[0]));
-            }
-            else
-            {
-                if (!server_string.Contains(':')) { server_string += ":" + default_server_port.ToString(); }
-                cr.ServerAddress = new RouteNode(TCPAddress.FromString(server_string));
-            }
             if (!string.IsNullOrEmpty(proxy_string))
             {
                 string[] proxies = proxy_string.Split(';');
-                int idx = 0;
                 foreach(string proxy0 in proxies)
                 {
                     if (proxy0.Contains("-"))
                     {
                         string[] proxy0_split = proxy0.Split('-');
                         if (!proxy0_split[0].Contains(':')) { proxy0_split[0] += ":" + default_proxy_port.ToString(); }
-                        cr.ProxyRoute.Insert(idx, new RouteNode(proxy0_split[0]));
-                        idx++;
-                        cr.ProxyRoute.Insert(idx, new RouteNode(proxy0_split[0], proxy0_split[1]));
-                        idx++;
+                        cr.ProxyRoute.Add(new RouteNode(proxy0_split[0]));
+                        cr.ProxyRoute.Add(new RouteNode(proxy0_split[0], proxy0_split[1]));
                     }
                     else
                     {
                         string proxy_str = proxy0;
                         if (!proxy_str.Contains(':')) { proxy_str += ":" + default_proxy_port.ToString(); }
-                        cr.ProxyRoute.Insert(idx, new RouteNode(proxy0));
-                        idx++;
+                        cr.ProxyRoute.Add(new RouteNode(proxy_str));
                     }
                 }
+            }
+            if (server_string.Contains("-"))
+            {
+                string[] strs = server_string.Split('-');
+                if (!strs[0].Contains(':')) { strs[0] += ":" + default_server_port.ToString(); }
+                cr.ProxyRoute.Add(new RouteNode(strs[0]));
+                cr.ProxyRoute.Add(new RouteNode(strs[0], strs[1]));
+            }
+            else
+            {
+                if (!server_string.Contains(':')) { server_string += ":" + default_server_port.ToString(); }
+                cr.ProxyRoute.Add(new RouteNode(server_string));
             }
             return cr;
         }
@@ -166,7 +160,6 @@ namespace FileManager.SocketLib
         {
             ConnectionRoute route = new ConnectionRoute
             {
-                ServerAddress = this.ServerAddress.Copy(),
                 ProxyRoute = new List<RouteNode>()
             };
             foreach (RouteNode node in this.ProxyRoute)
@@ -175,7 +168,6 @@ namespace FileManager.SocketLib
             }
             return route;
         }
-
 
 
     }

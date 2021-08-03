@@ -35,14 +35,16 @@ namespace FileManager.SocketLib.Models
             Name = name;
         }
 
-
+        /// <summary>
+        /// 初始化 RouteNode
+        /// </summary>
+        /// <param name="address_string">形如xxx.xxx.xxx.xxx:12345</param>
+        /// <param name="name">反向代理服务名称字符串</param>
         public RouteNode(string address_string, string name)
         {
             Address = TCPAddress.FromString(address_string);
             Name = name;
         }
-
-
 
 
         public RouteNode Copy()
