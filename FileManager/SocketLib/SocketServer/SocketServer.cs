@@ -88,6 +88,10 @@ namespace FileManager.SocketLib.SocketServer
                                 ResponseDirectorySize(responder, bytes);
                                 break;
 
+                            case SocketPacketFlag.DirectoryCheck:
+                                ResponseDirectoryCheck(responder, bytes);
+                                break;
+
                             case SocketPacketFlag.CreateDirectoryRequest:
                                 ResponseCreateDirectory(responder, bytes);
                                 break;

@@ -15,12 +15,14 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
 
+using FileManager.Events;
 using FileManager.Models;
 using FileManager.ViewModels;
 using FileManager.Static;
 using FileManager.Windows;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
+using FileManager.Exceptions;
 
 namespace FileManager.Pages
 {
@@ -85,6 +87,62 @@ namespace FileManager.Pages
 
 
         #region Button actions
+
+        private void ButtonSetPath_Click(object sender, RoutedEventArgs e)
+        {
+            PathSetWindow pathSetWindow = new PathSetWindow();
+            pathSetWindow.CheckPathCallback += SetRemotePath_Click;
+
+            if (pathSetWindow.ShowDialog() != true)
+            {
+                return;
+            }
+            ManuallySetRemotePath(pathSetWindow.Path);
+            ButtonRefresh_Click(null, null);
+            // ******** todo *******
+            //System.Windows.Forms.MessageBox.Show("Clicked");
+        }
+
+        /// <summary>
+        /// 对于手动设置(从PathSetWindow中设置)的RemotePath写入RemoteDirArray
+        /// (以后用作路径翻译的时候可能用到, 就单写一个函数)
+        /// </summary>
+        /// <param name="path"></param>
+        private void ManuallySetRemotePath(string path)
+        {
+            string[] ss = path.Split('\\');
+            RemoteDirArray.Clear();
+            for (int i = 0; i < ss.Length; ++i)
+            {
+                if (!string.IsNullOrEmpty(ss[i]))
+                {
+                    RemoteDirArray.Add(ss[i]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 子窗体 PathSetWindow 中 Set按钮回调函数
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SetRemotePath_Click(object sender, CheckPathEventArgs e)
+        {
+            try
+            {
+                string s = e.Path;
+                var resp = SocketFactory.Request(new HB32Header { Flag = SocketPacketFlag.DirectoryCheck }, Encoding.UTF8.GetBytes(e.Path));
+                if (resp.Header.Flag != SocketPacketFlag.DirectoryResponse)
+                {
+                    throw new SocketFlagException();
+                }
+                e.IsPathValid = true;
+            }
+            catch (Exception)
+            {
+                e.IsPathValid = false;
+            }
+        }
 
         public async void ButtonRefresh_Click(object sender, RoutedEventArgs e)
         {
@@ -282,5 +340,7 @@ namespace FileManager.Pages
             gView.Columns[2].Width = 70;
             gView.Columns[3].Width = workingWidth - 410;
         }
+
+
     }
 }

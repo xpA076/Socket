@@ -42,6 +42,7 @@ namespace FileManager.SocketLib.Enums
         DirectoryException = 0x0190,
         DirectorySizeRequest = 0x0102,
         DirectorySizeResponse = 0x0120,
+        DirectoryCheck = 0x0103,
 
 
         /// Mode 0x02 : Download

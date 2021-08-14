@@ -78,6 +78,7 @@
     </ApplicationDefinition>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ConnectionStatusToForeColorConverter.cs" />
+    <Compile Include="Events\CheckPathEventArgs.cs" />
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="SocketLib\Enums\TransferType.cs" />
     <Compile Include="SocketLib\HB32Encoding.cs" />
     <Compile Include="SocketLib\HB32Header.cs" />
+    <Compile Include="SocketLib\HB32Response.cs" />
     <Compile Include="SocketLib\Models\ConnectionRoute.cs" />
     <Compile Include="SocketLib\Models\RouteNode.cs" />
     <Compile Include="SocketLib\Models\SocketFileInfo.cs" />
@@ -132,6 +134,9 @@
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Windows\ConfirmWindow.xaml.cs">
       <DependentUpon>ConfirmWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\PathSetWindow.xaml.cs">
+      <DependentUpon>PathSetWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\UploadSelectWindow.xaml.cs">
       <DependentUpon>UploadSelectWindow.xaml</DependentUpon>
@@ -183,6 +188,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Windows\ConfirmWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\PathSetWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -252,6 +261,8 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="TODO.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

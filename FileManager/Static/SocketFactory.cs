@@ -139,14 +139,6 @@ namespace FileManager.Static
 
 
 
-
-
-
-
-
-
-
-
             /*
              * 
              * 原来这种方案同样是异步执行, 总会提前返回 SocketIdentity.None
@@ -172,13 +164,16 @@ namespace FileManager.Static
             */
         }
 
-        /*
-        private static async Task AsyncConnectWithTimeout(SocketClient client)
+        public static HB32Response Request(HB32Header header, byte[] bytes)
         {
-            client.ConnectWithTimeout(Config.BuildConnectionTimeout);
+            SocketClient client = GenerateConnectedSocketClient();
+            client.SendBytes(header, bytes);
+            client.ReceiveBytes(out HB32Header h, out byte[] bs);
+            return new HB32Response(h, bs);
 
         }
-        */
+
+
 
     }
 }

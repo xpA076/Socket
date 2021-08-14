@@ -29,6 +29,12 @@ namespace FileManager.Exceptions
             }
         }
 
+        public SocketFlagException()
+        {
+
+        }
+
+
         public SocketFlagException(HB32Header header, byte[] bytes)
         {
             Header = header;

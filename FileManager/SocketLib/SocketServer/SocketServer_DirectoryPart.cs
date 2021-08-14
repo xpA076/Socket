@@ -16,6 +16,21 @@ namespace FileManager.SocketLib.SocketServer
     {
         private Dictionary<int, SocketServerFileStreamInfo> ServerFileSet = new Dictionary<int, SocketServerFileStreamInfo>();
 
+        private void ResponseDirectoryCheck(SocketResponder responder, byte[] bytes)
+        {
+            string path = Encoding.UTF8.GetString(bytes);
+            if (Directory.Exists(path))
+            {
+                responder.SendHeader(SocketPacketFlag.DirectoryResponse);
+            }
+            else
+            {
+                responder.SendHeader(SocketPacketFlag.DirectoryException);
+            }
+        }
+
+
+
         /// <summary>
         /// 响应对方的 Directory 列表查询, 文件夹不存在或权限异常返回message字符串处理
         /// 参数 bytes 为接收byte流的内容信息

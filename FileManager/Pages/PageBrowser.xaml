@@ -94,14 +94,29 @@
                     <ColumnDefinition Width="30" />
                 </Grid.ColumnDefinitions>
                 <Grid Grid.Column="0">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Row="0" Grid.Column="0">
                         <TextBlock Text="Remote directory:" FontSize="14" Foreground="#eee" 
-                                Margin="30 20 50 0" HorizontalAlignment="Left"/>
+                                Margin="30 10 50 0" HorizontalAlignment="Left"/>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0">
                         <TextBlock x:Name="TextRemoteDirectory" Text="..." FontSize="16" Foreground="#ccc"
                                 Margin="40 10 0 0" HorizontalAlignment="Left"
                                 MinWidth="350"
                                 TextWrapping="Wrap" FontFamily="Calibri"/>
-                    </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="1">
+                        <Button x:Name="ButtonSetPath" Content="Set path" Style="{StaticResource PageButton}" 
+                                Margin="20 5 20 5" FontSize="15" Height="25" Width="80"
+                                Click="ButtonSetPath_Click"/>
+                    </Grid>
                 </Grid>
                 <Grid Grid.Column="1">
                     <Button x:Name="ButtonRefresh" Content="&#xe6c7;" FontFamily="/Resources/#iconfont"
