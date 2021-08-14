@@ -132,8 +132,8 @@
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
     <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
-    <Compile Include="Windows\ConfirmWindow.xaml.cs">
-      <DependentUpon>ConfirmWindow.xaml</DependentUpon>
+    <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">
+      <DependentUpon>DownloadConfirmWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\PathSetWindow.xaml.cs">
       <DependentUpon>PathSetWindow.xaml</DependentUpon>
@@ -187,7 +187,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Windows\ConfirmWindow.xaml">
+    <Page Include="Windows\DownloadConfirmWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

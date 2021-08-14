@@ -142,10 +142,9 @@ namespace FileManager.Models
         {
             try
             {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task.Route);
-                client.SendBytes(SocketPacketFlag.DirectorySizeRequest, task.RemotePath);
-                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectorySizeResponse, out byte[] bytes);
-                return long.Parse(Encoding.UTF8.GetString(bytes));
+                var resp = SocketFactory.Request(SocketPacketFlag.DirectorySizeRequest, Encoding.UTF8.GetBytes(task.RemotePath));
+                SocketEndPoint.CheckFlag(SocketPacketFlag.DirectorySizeResponse, resp);
+                return long.Parse(Encoding.UTF8.GetString(resp.Bytes));
             }
             catch (Exception)
             {

@@ -99,8 +99,6 @@ namespace FileManager.Pages
             }
             ManuallySetRemotePath(pathSetWindow.Path);
             ButtonRefresh_Click(null, null);
-            // ******** todo *******
-            //System.Windows.Forms.MessageBox.Show("Clicked");
         }
 
         /// <summary>
@@ -185,8 +183,6 @@ namespace FileManager.Pages
         {
             if (this.ListViewFile.SelectedIndex < 0) { return; }
             List<FileTask> fileTasks = new List<FileTask>();
-            //var a = this.ListViewFile.SelectedItems;
-            //var selected = fileClasses[this.ListViewFile.SelectedIndex];
             foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
             {
                 FileTask task = new FileTask
@@ -209,7 +205,7 @@ namespace FileManager.Pages
 
         public void DownloadConfirm(List<FileTask> fileTasks)
         {
-            ConfirmWindow downloadConfirmWindow = new ConfirmWindow();
+            DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
             downloadConfirmWindow.ListViewTask.ItemsSource = fileTasks; // to edit
             if (downloadConfirmWindow.ShowDialog() != true) { return; }
 

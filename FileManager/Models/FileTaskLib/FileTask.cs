@@ -131,7 +131,7 @@ namespace FileManager.Models
         /// <summary>
         /// 向 sever 发送请求后取得 server 提供的 filestream id
         /// </summary>
-        public int FileStreamId { get; set; } = -1;
+        //public int FileStreamId { get; set; } = -1;
 
 
         /// <summary>

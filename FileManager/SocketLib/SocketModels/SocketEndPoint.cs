@@ -158,6 +158,13 @@ namespace FileManager.SocketLib
             ReceiveBytesWithHeaderFlag(flag, out _, out bytes);
         }
 
+        public static void CheckFlag(SocketPacketFlag required_flag, HB32Response response)
+        {
+            if (response.Header.Flag != required_flag)
+            {
+                throw new SocketFlagException(required_flag, response);
+            }
+        }
 
         #endregion
 
