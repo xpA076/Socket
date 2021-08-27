@@ -98,7 +98,6 @@ namespace FileManager.SocketLib.SocketServer
                         list.Add(new SocketFileInfo
                         {
                             Name = directoryInfo.Name,
-                            Length = 0,
                             IsDirectory = true,
                         });
                     }
@@ -109,8 +108,10 @@ namespace FileManager.SocketLib.SocketServer
                     list.Add(new SocketFileInfo
                     {
                         Name = fileInfo.Name,
-                        Length = fileInfo.Length,
                         IsDirectory = false,
+                        Length = fileInfo.Length,
+                        CreationTimeUtc = fileInfo.CreationTimeUtc,
+                        LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
                     });
                 }
                 list.Sort(SocketFileInfo.Compare);

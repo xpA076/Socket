@@ -8,9 +8,12 @@ namespace FileManager.SocketLib
 {
     public class SocketFileInfo
     {
-        public string Name { get; set; }
-        public long Length { get; set; } = 0;
+        public string Name { get; set; } = "";
         public bool IsDirectory { get; set; } = false;
+        public long Length { get; set; } = 0;
+        public DateTime CreationTimeUtc { get; set; } = new DateTime(0);
+        public DateTime LastWriteTimeUtc { get; set; } = new DateTime(0);
+
 
         [System.Web.Script.Serialization.ScriptIgnore]
         public string Size
@@ -54,6 +57,11 @@ namespace FileManager.SocketLib
 
         #region Bytes convertion
 
+        /// <summary>
+        /// [4-byte List长度] + (List元素bytes)*n
+        /// </summary>
+        /// <param name="socketFileInfos"></param>
+        /// <returns></returns>
         public static byte[] ListToBytes(List<SocketFileInfo> socketFileInfos)
         {
             List<byte[]> byteList = new List<byte[]>();
@@ -66,9 +74,9 @@ namespace FileManager.SocketLib
             }
 
             byte[] bytes = new byte[bytesCount + 4];
-            int idx = 0;
-            bytes = BytesConverter.WriteInt(bytes, byteList.Count, ref idx);
-            foreach(byte[] _bytes in byteList)
+            Array.Copy(BitConverter.GetBytes(byteList.Count), bytes, 4);
+            int idx = 4;
+            foreach (byte[] _bytes in byteList)
             {
                 Array.Copy(_bytes, 0, bytes, idx, _bytes.Length);
                 idx += _bytes.Length;
@@ -78,8 +86,8 @@ namespace FileManager.SocketLib
 
         public static List<SocketFileInfo> BytesToList(byte[] bytes)
         {
-            int idx = 0;
-            int len = BytesConverter.ParseInt(bytes, ref idx);
+            int len = BitConverter.ToInt32(bytes, 0);
+            int idx = 4;
             List<SocketFileInfo> socketFileInfos = new List<SocketFileInfo>();
             for (int i = 0; i < len; ++i)
             {
@@ -90,20 +98,23 @@ namespace FileManager.SocketLib
 
         public static byte[] ToBytes(SocketFileInfo info)
         {
-            byte[] bytes = new byte[info.Name.Length + 4 + 8 + 1];
-            int idx = 0;
-            bytes = BytesConverter.WriteString(bytes, info.Name, ref idx);
-            bytes = BytesConverter.WriteLong(bytes, info.Length, ref idx);
-            bytes = BytesConverter.WriteBool(bytes, info.IsDirectory, ref idx);
-            return bytes;
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(info.Name);
+            bb.Append(info.IsDirectory);
+            bb.Append(info.Length);
+            bb.Append(info.CreationTimeUtc);
+            bb.Append(info.LastWriteTimeUtc);
+            return bb.GetBytes();
         }
 
         public static SocketFileInfo FromBytes(byte[] bytes, ref int idx)
         {
             SocketFileInfo info = new SocketFileInfo();
-            info.Name = BytesConverter.ParseString(bytes, ref idx);
-            info.Length = BytesConverter.ParseLong(bytes, ref idx);
-            info.IsDirectory = BytesConverter.ParseBool(bytes, ref idx);
+            info.Name = BytesParser.GetString(bytes, ref idx);
+            info.IsDirectory = BytesParser.GetBool(bytes, ref idx);
+            info.Length = BytesParser.GetLong(bytes, ref idx);
+            info.CreationTimeUtc = BytesParser.GetDateTime(bytes, ref idx);
+            info.LastWriteTimeUtc = BytesParser.GetDateTime(bytes, ref idx);
             return info;
         }
 

@@ -30,10 +30,14 @@ namespace FileManager.Models
         public ConnectionRoute Route { get; set; }
 
         public bool IsDirectory { get; set; } = false;
+
+
         public TransferType Type { get; set; }
         public string RemotePath { get; set; }
         public string LocalPath { get; set; }
         public long Length { get; set; } = -1;
+
+
 
 
 
