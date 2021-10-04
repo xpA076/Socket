@@ -15,6 +15,9 @@ namespace FileManager.Static
 {
     public static class Config
     {
+        public static bool UseLegacyFileInfo { get; set; } = false;
+
+
         #region UI
         /// <summary>
         /// 窗口关闭操作

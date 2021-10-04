@@ -36,12 +36,17 @@ namespace FileManager.Windows
             // todo 选择默认路径模式
             if (true)
             {
+                // 以后不是 if (true)
                 this.DownloadPath.Text = LastPath;
             }
 
             if (this.DownloadPath.Text == DefaultPathDisplay)
             {
                 this.ButtonDownload.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                SelectedPath = LastPath;
             }
         }
 
