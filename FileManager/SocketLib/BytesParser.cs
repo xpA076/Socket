@@ -15,6 +15,13 @@ namespace FileManager.SocketLib
             return b;
         }
 
+        public static int GetInt(byte[] value, ref int startIndex)
+        {
+            int l = BitConverter.ToInt32(value, startIndex);
+            startIndex += 4;
+            return l;
+        }
+
 
         public static long GetLong(byte[] value, ref int startIndex)
         {

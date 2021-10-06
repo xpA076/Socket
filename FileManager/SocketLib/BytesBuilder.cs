@@ -8,7 +8,7 @@ namespace FileManager.SocketLib
 {
     public class BytesBuilder
     {
-        private byte[] _bytes = new byte[32];
+        private byte[] _bytes;
 
         private int _length = 0;
 
@@ -21,6 +21,19 @@ namespace FileManager.SocketLib
         }
 
         private int _capacity = 32;
+
+
+        public BytesBuilder()
+        {
+            _bytes = new byte[_capacity];
+        }
+
+
+        public BytesBuilder(int capacity)
+        {
+            _capacity = capacity;
+            _bytes = new byte[_capacity];
+        }
 
 
         public byte[] GetBytes()

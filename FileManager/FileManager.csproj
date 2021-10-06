@@ -89,6 +89,7 @@
     <Compile Include="Models\FileTaskLib\TransferDispatcher.cs" />
     <Compile Include="Models\FileTaskLib\TransferFileInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferInfo.cs" />
+    <Compile Include="Models\FileTaskLib\TransferRootInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferTaskIterator.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatConnectionMonitor.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="SocketLib\HB32Header.cs" />
     <Compile Include="SocketLib\HB32Response.cs" />
     <Compile Include="SocketLib\Models\ConnectionRoute.cs" />
+    <Compile Include="SocketLib\Models\FilterRule.cs" />
     <Compile Include="SocketLib\Models\RouteNode.cs" />
     <Compile Include="SocketLib\Models\SocketFileInfo.cs" />
     <Compile Include="SocketLib\Models\TCPAddress.cs" />
