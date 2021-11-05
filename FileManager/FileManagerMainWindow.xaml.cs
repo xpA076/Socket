@@ -30,7 +30,7 @@ namespace FileManager
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class FileManagerMainWindow : Window
     {
         private const string host = "http://server.hhcsdtc.com:9999";
         private const string exeName = "SocketFileManager";
@@ -112,7 +112,7 @@ namespace FileManager
             }
         }
 
-        public MainWindow()
+        public FileManagerMainWindow()
         {
 
             // Load configurations

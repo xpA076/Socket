@@ -55,6 +55,18 @@ namespace FileManager.SocketLib
             }
         }
 
+        public SocketFileInfo Copy()
+        {
+            return new SocketFileInfo
+            {
+                Name = this.Name,
+                IsDirectory = this.IsDirectory,
+                Length = this.Length,
+                CreationTimeUtc = this.CreationTimeUtc,
+                LastWriteTimeUtc = this.LastWriteTimeUtc
+            };
+        }
+
         #region Bytes convertion
 
         /// <summary>

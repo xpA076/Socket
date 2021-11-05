@@ -31,7 +31,7 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageConnect : Page
     {
-        private MainWindow parent = null;
+        private FileManagerMainWindow parent = null;
 
 
         private bool IsConnecting { get; set; } = false;
@@ -56,7 +56,7 @@ namespace FileManager.Pages
         }
 
 
-        public PageConnect(MainWindow parent) : this()
+        public PageConnect(FileManagerMainWindow parent) : this()
         {
             this.parent = parent;
         }

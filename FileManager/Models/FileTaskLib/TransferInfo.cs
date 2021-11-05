@@ -18,7 +18,7 @@ namespace FileManager.Models
         /// 区别在于, Root的父节点为空, Directory的父节点不为空
         /// 不得在Root节点中调用 .Root 属性
         /// </summary>
-        public TransferDirectoryInfo Parent = null;
+        public TransferDirectoryInfo Parent { get; set; } = null;
 
         /// <summary>
         /// 文件来源路径
@@ -26,6 +26,8 @@ namespace FileManager.Models
         /// 对上传任务, 为本地路径
         /// </summary>
         public string Name { get; set; } = "";
+
+        public long Length { get; set; } = 0;
 
         #endregion
 
@@ -37,7 +39,7 @@ namespace FileManager.Models
             {
                 System.Diagnostics.Debug.Assert(this.Parent == null);
                 TransferDirectoryInfo pt = this.Parent;
-                while (!pt.IsRoot())
+                while (!pt.IsRoot)
                 {
                     pt = pt.Parent;
                 }
@@ -55,7 +57,7 @@ namespace FileManager.Models
             {
                 string path = this.Name;
                 TransferDirectoryInfo pt = this.Parent;
-                while (!pt.IsRoot())
+                while (!pt.IsRoot)
                 {
                     path = pt.Name + "\\" + path;
                     pt = pt.Parent;

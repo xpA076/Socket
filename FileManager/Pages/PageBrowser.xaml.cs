@@ -31,7 +31,7 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageBrowser : Page
     {
-        private MainWindow parent;
+        private FileManagerMainWindow MainWindow { get; set; }
         private OpenFileDialog fileDialog = new OpenFileDialog();
         //private UploadSelectWindow uploadSelectWindow = new UploadSelectWindow();
         private List<SocketFileInfo> fileClasses;
@@ -39,6 +39,13 @@ namespace FileManager.Pages
         private List<string> RemoteDirArray = new List<string>();
 
 
+        private ConnectionRoute CurrentRoute
+        {
+            get
+            {
+                return SocketFactory.CurrentRoute.Copy();
+            }
+        }
 
         private string RemoteDirectory
         {
@@ -58,18 +65,10 @@ namespace FileManager.Pages
         private readonly BrowserIPViewModel browserIPView = new BrowserIPViewModel();
 
 
-        public PageBrowser(MainWindow parent)
+        public PageBrowser(FileManagerMainWindow parent)
         {
-            this.parent = parent;
+            this.MainWindow = parent;
             InitializeComponent();
-            // buttons
-            /*
-            this.ButtonBack.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonBack_Click);
-            this.ButtonOpen.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonOpen_Click);
-            this.ButtonDownload.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonDownload_Click);
-            this.ButtonUpload.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonUpload_Click);
-            this.ButtonRefresh.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonRefresh_Click);
-            */
             // dialog
             this.TextBlockConnectedIP.DataContext = browserIPView;
             fileDialog.Multiselect = true;
@@ -144,7 +143,7 @@ namespace FileManager.Pages
 
         public async void ButtonRefresh_Click(object sender, RoutedEventArgs e)
         {
-            if (!this.parent.IsConnected) return;
+            if (!this.MainWindow.IsConnected) return;
             this.ButtonRefresh.Visibility = Visibility.Hidden;
             _ = await ListFiles();
             this.ButtonRefresh.Visibility = Visibility.Visible;
@@ -182,28 +181,64 @@ namespace FileManager.Pages
         private void ButtonDownload_Click(object sender, RoutedEventArgs e)
         {
             if (this.ListViewFile.SelectedIndex < 0) { return; }
-            List<FileTask> fileTasks = new List<FileTask>();
-            foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
+            if (Config.UseLegacyFileInfo)
             {
-                FileTask task = new FileTask
+                List<FileTask> fileTasks = new List<FileTask>();
+                foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
                 {
-                    Route = SocketFactory.CurrentRoute.Copy(),
-                    IsDirectory = selected.IsDirectory,
-                    Type = TransferType.Download,
-                    RemotePath = RemoteDirectory + selected.Name,
-                    Length = selected.Length,
-                };
-                if (task.IsDirectory)
-                {
-                    task.Length = FileTasksManager.GetDownloadDirectoryTaskLength(task);
+                    FileTask task = new FileTask
+                    {
+                        Route = SocketFactory.CurrentRoute.Copy(),
+                        IsDirectory = selected.IsDirectory,
+                        Type = TransferType.Download,
+                        RemotePath = RemoteDirectory + selected.Name,
+                        Length = selected.Length,
+                    };
+                    if (task.IsDirectory)
+                    {
+                        task.Length = FileTasksManager.GetDownloadDirectoryTaskLength(task);
+                    }
+                    fileTasks.Add(task);
                 }
-                fileTasks.Add(task);
+                DownloadConfirmLegacy(fileTasks);
             }
-
-            DownloadConfirm(fileTasks);
+            else
+            {
+                TransferRootInfo rootInfo = new TransferRootInfo();
+                rootInfo.Route = CurrentRoute.Copy();
+                rootInfo.Rule = new FilterRule();
+                rootInfo.Type = TransferType.Download;
+                rootInfo.RemoteDirectory = RemoteDirectory;
+                List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
+                foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
+                {
+                    selectedInfos.Add(selected.Copy());
+                }
+                rootInfo.BuildChildrenFrom(selectedInfos);
+                DownloadConfirm(rootInfo);
+            }
         }
 
-        public void DownloadConfirm(List<FileTask> fileTasks)
+        private void DownloadConfirm(TransferRootInfo rootInfo)
+        {
+            DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
+            TransferRootInfoQuerier querier = new TransferRootInfoQuerier(rootInfo);
+            downloadConfirmWindow.ListViewTask.ItemsSource = querier.LinkDownloadConfirmViewModels();
+            querier.StartQuery();
+            if (downloadConfirmWindow.ShowDialog() == true) 
+            {
+                querier.UnlinkDownloadConfirmViewModels();
+                rootInfo.LocalDirectory = downloadConfirmWindow.SelectedPath;
+                MainWindow.SubPageTransfer.AddTransferTask(rootInfo);
+                MainWindow.RedirectPage("Transfer");
+            }
+            else
+            {
+                querier.StopQuery();
+            }
+        }
+
+        private void DownloadConfirmLegacy(List<FileTask> fileTasks)
         {
             DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
             downloadConfirmWindow.ListViewTask.ItemsSource = fileTasks; // to edit
@@ -214,8 +249,8 @@ namespace FileManager.Pages
             {
                 ft.LocalPath = System.IO.Path.Combine(localPath, ft.Name);
             }
-            this.parent.SubPageTransfer.AddTasks(fileTasks);
-            this.parent.RedirectPage("Transfer");
+            this.MainWindow.SubPageTransfer.AddTasks(fileTasks);
+            this.MainWindow.RedirectPage("Transfer");
         }
 
 
@@ -232,7 +267,7 @@ namespace FileManager.Pages
                 {
                     int idx = localPath.LastIndexOf("\\");
                     string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                    this.parent.SubPageTransfer.AddTask(new FileTask
+                    this.MainWindow.SubPageTransfer.AddTask(new FileTask
                     {
                         Route = SocketFactory.CurrentRoute.Copy(),
                         IsDirectory = false,
@@ -248,7 +283,7 @@ namespace FileManager.Pages
                 string localPath = uploadSelectWindow.UploadPathList[0];
                 int idx = localPath.LastIndexOf("\\");
                 string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                this.parent.SubPageTransfer.AddTask(new FileTask
+                this.MainWindow.SubPageTransfer.AddTask(new FileTask
                 {
                     Route = SocketFactory.CurrentRoute.Copy(),
                     IsDirectory = true,
@@ -258,7 +293,7 @@ namespace FileManager.Pages
                     Length = 0,
                 });
             }
-            this.parent.RedirectPage("Transfer");
+            this.MainWindow.RedirectPage("Transfer");
         }
 
         public void ButtonCreate_Click(object sender, RoutedEventArgs e)
@@ -306,8 +341,8 @@ namespace FileManager.Pages
                     SocketClient client = SocketFactory.GenerateConnectedSocketClient();
                     client.SendBytes(SocketPacketFlag.DirectoryRequest, RemoteDirectory);
                     client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
-                    this.fileClasses = SocketFileInfo.BytesToList(recv_bytes);
                     client.Close();
+                    this.fileClasses = SocketFileInfo.BytesToList(recv_bytes);
                     this.Dispatcher.Invoke(() => {
                         this.ListViewFile.ItemsSource = this.fileClasses;
                         this.TextRemoteDirectory.Text = RemoteDirectory;

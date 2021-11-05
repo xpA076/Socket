@@ -82,6 +82,16 @@ namespace FileManager.SocketLib
             _length += bytes.Length;
         }
 
+        /// <summary>
+        /// 向 byte 流写入前额外先写入 4byte-int 的 bytes 长度
+        /// </summary>
+        /// <param name="bytes"></param>
+        public void AppendWithLength(byte[] bytes)
+        {
+            Append(bytes.Length);
+            Append(bytes);
+        }
+
 
         private void Expand(int min_required_capacity)
         {

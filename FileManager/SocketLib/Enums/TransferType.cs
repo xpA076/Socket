@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.Enums
 {
-    public enum TransferType
+    public enum TransferType: int
     {
         Download,
         Upload

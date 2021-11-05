@@ -22,8 +22,6 @@ namespace FileManager.Models
     public class TransferFileInfo : TransferInfo
     {
 
-        public long Length { get; set; }
-
         public DateTime CreationTimeUtc { get; set; } = new DateTime(0);
 
         public DateTime LastWriteTimeUtc { get; set; } = new DateTime(0);
@@ -46,6 +44,7 @@ namespace FileManager.Models
                 }
                 return _bytes_length;
             }
+            //set { _bytes_length = value; }
         }
 
 
@@ -53,7 +52,12 @@ namespace FileManager.Models
 
         private const int bytes_init_capacity = 64;
 
-        public void SaveToFile(FileStream fs)
+        /// <summary>
+        /// 利用 FileStream 写入文件
+        /// </summary>
+        /// <param name="fs"></param>
+        /// <returns>当前节点字节总长度(4 byte 长度头标识中为后续长度)</returns>
+        public int SaveToFile(FileStream fs)
         {
             BytesBuilder bb = new BytesBuilder(bytes_init_capacity);
             bb.Append(Name);
@@ -65,6 +69,8 @@ namespace FileManager.Models
             byte[] bs = bb.GetBytes();
             fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
             fs.Write(bs, 0, bs.Length);
+            _bytes_length = 4 + bs.Length;
+            return _bytes_length;
         }
 
 

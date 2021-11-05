@@ -20,6 +20,16 @@ namespace FileManager.SocketLib
         public int PacketIndex { get; set; } = 0;
         public int ValidByteLength { get; set; } = 0;
 
+        public HB32Header()
+        {
+
+        }
+
+        public HB32Header(SocketPacketFlag flag)
+        {
+            Flag = flag;
+        }
+
 
         public byte[] GetBytes(byte[] proxy_header)
         {

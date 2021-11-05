@@ -164,6 +164,13 @@ namespace FileManager.Static
             */
         }
 
+
+        public static HB32Response Request(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        {
+            return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, Encoding.UTF8.GetBytes(str));
+        }
+
+
         public static HB32Response Request(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, bytes);
@@ -175,9 +182,18 @@ namespace FileManager.Static
             SocketClient client = GenerateConnectedSocketClient();
             client.SendBytes(header, bytes);
             client.ReceiveBytes(out HB32Header h, out byte[] bs);
+            client.Close();
             return new HB32Response(h, bs);
         }
 
+        public static HB32Response RequestWithHeaderFlag(SocketPacketFlag requiredFlag, HB32Header header, byte[] bytes)
+        {
+            SocketClient client = GenerateConnectedSocketClient();
+            client.SendBytes(header, bytes);
+            client.ReceiveBytesWithHeaderFlag(requiredFlag, out HB32Header h, out byte[] bs);
+            client.Close();
+            return new HB32Response(h, bs);
+        }
 
 
     }

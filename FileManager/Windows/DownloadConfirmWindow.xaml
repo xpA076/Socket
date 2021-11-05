@@ -145,6 +145,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
+                                    <!--
                                     <GridViewColumn Width="200">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
@@ -153,6 +154,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
+                                    -->
                                     <GridView.ColumnHeaderContainerStyle>
                                         <Style TargetType="{x:Type GridViewColumnHeader}">
                                             <Setter Property="Visibility" Value="Collapsed" />

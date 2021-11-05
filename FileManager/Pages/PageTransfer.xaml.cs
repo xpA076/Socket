@@ -27,9 +27,9 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageTransfer : Page
     {
-        private MainWindow parent;
+        private FileManagerMainWindow parent;
 
-        public PageTransfer(MainWindow parent)
+        public PageTransfer(FileManagerMainWindow parent)
         {
             this.parent = parent;
             InitializeComponent();
@@ -78,6 +78,12 @@ namespace FileManager.Pages
             // 确定目前是否有 severIP 2020.02.12 ***********
             if (!IsTransfering) { FTsManager.InitDownload(); }
         }
+
+        public void AddTransferTask(TransferRootInfo rootInfo)
+        {
+            // do something
+        }
+
 
 
         /// <summary>

@@ -46,5 +46,13 @@ namespace FileManager.SocketLib
             return dt;
         }
 
+        public static byte[] GetBytes(byte[] value, ref int startIndex)
+        {
+            int len = BitConverter.ToInt32(value, startIndex);
+            byte[] bs = value.Skip(startIndex + 4).Take(len).ToArray();
+            startIndex += 4 + len;
+            return bs;
+        }
+
     }
 }

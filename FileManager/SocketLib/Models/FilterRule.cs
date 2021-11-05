@@ -11,5 +11,14 @@ namespace FileManager.SocketLib
     /// </summary>
     public class FilterRule
     {
+        public byte[] GetBytes()
+        {
+            return new byte[4];
+        }
+
+        public static FilterRule FromBytes(byte[] bytes)
+        {
+            return new FilterRule();
+        }
     }
 }

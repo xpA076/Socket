@@ -90,6 +90,7 @@
     <Compile Include="Models\FileTaskLib\TransferFileInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferRootInfo.cs" />
+    <Compile Include="Models\FileTaskLib\TransferRootInfoQuerier.cs" />
     <Compile Include="Models\FileTaskLib\TransferTaskIterator.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatConnectionMonitor.cs" />
@@ -139,6 +140,7 @@
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
     <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
+    <Compile Include="ViewModels\DownloadConfirmViewModel.cs" />
     <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">
@@ -154,7 +156,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainWindow.xaml">
+    <Page Include="FileManagerMainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -164,8 +166,8 @@
     </Compile>
     <Compile Include="Static\Config.cs" />
     <Compile Include="Static\Logger.cs" />
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="FileManagerMainWindow.xaml.cs">
+      <DependentUpon>FileManagerMainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Pages\PageBrowser.xaml">
