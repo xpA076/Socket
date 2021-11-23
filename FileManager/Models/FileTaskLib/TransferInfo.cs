@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,7 +38,7 @@ namespace FileManager.Models
         {
             get
             {
-                System.Diagnostics.Debug.Assert(this.Parent == null);
+                System.Diagnostics.Debug.Assert(this.Parent != null);
                 TransferDirectoryInfo pt = this.Parent;
                 while (!pt.IsRoot)
                 {
@@ -71,7 +72,7 @@ namespace FileManager.Models
         {
             get
             {
-                return Root.RemoteDirectory + "\\" + RelativePath;
+                return Path.Combine(Root.RemoteDirectory, RelativePath);
             }
         }
 
@@ -79,7 +80,7 @@ namespace FileManager.Models
         {
             get
             {
-                return Root.LocalDirectory + "\\" + RelativePath;
+                return Path.Combine(Root.LocalDirectory, RelativePath);
             }
         }
 

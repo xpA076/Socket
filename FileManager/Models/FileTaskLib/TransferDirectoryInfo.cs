@@ -93,6 +93,7 @@ namespace FileManager.Models
                     directoryInfo.Length = 0;
                     directoryInfo.QueryCompleteCount = 0;
                     directoryInfo.TransferCompleteCount = 0;
+                    directoryInfo.Parent = this;
                     this.DirectoryChildren.Add(directoryInfo);
                 }
                 else
@@ -102,6 +103,7 @@ namespace FileManager.Models
                     fileInfo.Length = socketFileInfo.Length;
                     fileInfo.CreationTimeUtc = socketFileInfo.CreationTimeUtc;
                     fileInfo.LastWriteTimeUtc = socketFileInfo.LastWriteTimeUtc;
+                    fileInfo.Parent = this;
                     this.FileChildren.Add(fileInfo);
                 }
             }

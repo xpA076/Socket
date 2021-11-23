@@ -40,8 +40,13 @@ namespace FileManager.Models
             }
         }
 
+        /// <summary>
+        /// DFS 方式遍历并建立目录树
+        /// Debugged at 2021.11.19
+        /// </summary>
         private void DownloadQuery()
         {
+            
             while (!rootInfo.IsQueryComplete)
             {
                 if (StopQueryFlag)
@@ -56,6 +61,7 @@ namespace FileManager.Models
                         Encoding.UTF8.GetBytes(currentInfo.RemotePath));
                     List<SocketFileInfo> respInfos = SocketFileInfo.BytesToList(resp.Bytes);
                     currentInfo.BuildChildrenFrom(respInfos);
+                    //Thread.Sleep(50);
                     /// 判断当前节点是否为叶子节点 (不再包含子目录, 构造完成并计算 Length)
                     if (respInfos.Count == 0 || !respInfos[0].IsDirectory)
                     {
@@ -68,7 +74,28 @@ namespace FileManager.Models
                             if (pt.IsQueryComplete)
                             {
                                 pt.CalculateLength();
-                                pt = pt.Parent;
+                                if (pt.IsRoot)
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    /// 更新 ViewModel
+                                    if (pt.Parent.IsRoot)
+                                    {
+                                        if (this.downloadConfirmViewModels != null)
+                                        {
+                                            DownloadConfirmViewModel viewModel = GetDownloadConfirmViewModel(pt);
+                                            viewModel.SetLength(pt.Length);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ;
+                                    }
+                                    /// 继续返回上级
+                                    pt = pt.Parent;
+                                }
                             }
                             else
                             {
@@ -91,6 +118,7 @@ namespace FileManager.Models
                     continue;
                 }
                 /// 更新 ViewModel
+                /*
                 if (currentInfo.Parent.IsRoot)
                 {
                     if (this.downloadConfirmViewModels != null)
@@ -99,6 +127,7 @@ namespace FileManager.Models
                         viewModel.SetLength(currentInfo.Length);
                     }
                 }
+                */
             }
         }
 

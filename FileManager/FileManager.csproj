@@ -91,7 +91,6 @@
     <Compile Include="Models\FileTaskLib\TransferInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferRootInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferRootInfoQuerier.cs" />
-    <Compile Include="Models\FileTaskLib\TransferTaskIterator.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatConnectionMonitor.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatTransferRecord.cs" />
