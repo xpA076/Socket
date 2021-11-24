@@ -15,7 +15,7 @@ namespace FileManager.Static
 {
     public static class Config
     {
-        public static bool UseLegacyFileInfo { get; set; } = false;
+        public static bool UseLegacyFileInfo { get; set; } = true;
 
 
         #region UI
@@ -214,6 +214,12 @@ namespace FileManager.Static
                 SmallFileThreshold = long.Parse(settings.Element("SmallFileLimit").Value);
                 SocketSendTimeout = int.Parse(settings.Element("SocketSendTimeout").Value);
                 SocketReceiveTimeout = int.Parse(settings.Element("SocketReceiveTimeout").Value);
+
+                try
+                {
+                    UseLegacyFileInfo = bool.Parse(settings.Element("UseLegacyFileInfo").Value);
+                }
+                catch (Exception) {; }
             }
             catch (Exception)
             {
@@ -253,6 +259,8 @@ namespace FileManager.Static
             settings.SetElementValue("SmallFileLimit", SmallFileThreshold.ToString());
             settings.SetElementValue("SocketSendTimeout", SocketSendTimeout.ToString());
             settings.SetElementValue("SocketReceiveTimeout", SocketReceiveTimeout.ToString());
+
+            settings.SetElementValue("UseLegacyFileInfo", UseLegacyFileInfo.ToString());
 
             root.Add(settings);
             root.Save(ConfigPath);

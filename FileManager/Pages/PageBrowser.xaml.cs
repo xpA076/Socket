@@ -250,7 +250,7 @@ namespace FileManager.Pages
                 ft.LocalPath = System.IO.Path.Combine(localPath, ft.Name);
             }
             this.MainWindow.SubPageTransfer.AddTasks(fileTasks);
-            this.MainWindow.RedirectPage("Transfer");
+            this.MainWindow.RedirectPage("TransferLegacy");
         }
 
 
@@ -338,11 +338,8 @@ namespace FileManager.Pages
                 try
                 {
                     Logger.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
-                    SocketClient client = SocketFactory.GenerateConnectedSocketClient();
-                    client.SendBytes(SocketPacketFlag.DirectoryRequest, RemoteDirectory);
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
-                    client.Close();
-                    this.fileClasses = SocketFileInfo.BytesToList(recv_bytes);
+                    HB32Response resp = SocketFactory.Request(SocketPacketFlag.DirectoryRequest, Encoding.UTF8.GetBytes(RemoteDirectory));
+                    this.fileClasses = SocketFileInfo.BytesToList(resp.Bytes);
                     this.Dispatcher.Invoke(() => {
                         this.ListViewFile.ItemsSource = this.fileClasses;
                         this.TextRemoteDirectory.Text = RemoteDirectory;

@@ -31,9 +31,11 @@ namespace FileManager.SocketLib.SocketServer
 
         }
 
-        private readonly Dictionary<SocketResponder, SocketIdentity> ClientIdentities = new Dictionary<SocketResponder, SocketIdentity>();
-        private readonly object ClientIdentitiesLock = new object();
+        private readonly Dictionary<SocketResponder, SocketSession> ClientSessions = new Dictionary<SocketResponder, SocketSession>();
 
+        private readonly Dictionary<string, SocketSession> Sessions = new Dictionary<string, SocketSession>();
+
+        private readonly ReaderWriterLockSlim SessionLock = new ReaderWriterLockSlim();
 
         /// <summary>
         /// 在 Socket.accept() 获取到的 client 在这里处理
@@ -47,25 +49,37 @@ namespace FileManager.SocketLib.SocketServer
             /// 确认当前连接权限
             try
             {
-                //ResponseIdentity(responder);
                 /// 接收 KeyBytes, 调用 CheckIdentity();
                 /// 向 Dictionary 添加 SocketResponder 权限;
                 /// 并向 Client 端返回 SocketIdentity
                 responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
-                CheckIdentity(this, e);
-                SocketIdentity identity = e.CheckedIndentity;
-                lock (ClientIdentitiesLock)
+                SocketSession session;
+                string sessid;
+                if (bytes[0] == 0)
                 {
-                    ClientIdentities.Add(responder, identity);
+                    SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
+                    CheckIdentity(this, e);
+                    sessid = CreateNewSession();
+                    session = GetSession(sessid);
+                    session.Identity = e.CheckedIndentity;
                 }
-                responder.SendHeader(SocketPacketFlag.AuthenticationResponse, i1: (int)identity);
+                else
+                {
+                    sessid = ParseSessionId(bytes);
+                    session = GetSession(sessid);
+                }
+
+                lock (ClientSessions)
+                {
+                    ClientSessions.Add(responder, session);
+                }
+                responder.SendBytes(SocketPacketFlag.AuthenticationResponse, sessid, i1: (int)session.Identity);
 
             }
             catch (Exception ex)
             {
                 Log("Response identity error : " + ex.Message, LogLevel.Error);
-                ClientIdentities.Remove(responder);
+                ClientSessions.Remove(responder);
                 return;
             }
             /// Server 数据响应主循环
@@ -175,9 +189,78 @@ namespace FileManager.SocketLib.SocketServer
             {
                 //Log("Identity authentication exception :" + ex.Message, LogLevel.Error);
                 Log("Unexcepted exception in server [" + f.ToString() + "] : " + ex.Message, LogLevel.Error);
-                ClientIdentities.Remove(responder);
+            }
+            ClientSessions.Remove(responder);
+        }
+
+        #region Session
+
+        
+        private string ParseSessionId(byte[] bytes)
+        {
+            if (bytes[0] == 0)
+            {
+                return null;
+            }
+            else
+            {
+                int len = (int)bytes[0];
+                return Encoding.UTF8.GetString(bytes.Skip(1).Take(len).ToArray());
             }
         }
+
+
+        private SocketSession GetSession(string sessid)
+        {
+            try
+            {
+                SessionLock.EnterReadLock();
+                return Sessions[sessid];
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                SessionLock.ExitReadLock();
+            }
+        }
+
+
+        /// <summary>
+        /// 创建新session
+        /// </summary>
+        /// <returns> SessionId 字符串 </returns>
+        private string CreateNewSession()
+        {
+            try
+            {
+                SocketSession session = new SocketSession();
+                SessionLock.EnterWriteLock();
+                Random rd = new Random();
+                for (int sid = rd.Next(1, 2 << 30 - 1); ; sid = rd.Next(1, 2 << 30 - 1))
+                {
+                    string sessid = sid.ToString();
+                    if (Sessions.ContainsKey(sessid))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        Sessions.Add(sessid, session);
+                        return sessid;
+                    }
+                }
+            }
+            finally
+            {
+                SessionLock.ExitWriteLock();
+            }
+        }
+
+
+        #endregion
 
 
 
@@ -193,30 +276,19 @@ namespace FileManager.SocketLib.SocketServer
             catch (Exception) { }
             finally
             {
-                ClientIdentities.Remove(responder);
+                ClientSessions.Remove(responder);
             }
         }
 
 
-        /// <summary>
-        /// 应在 ReceiveData() 最开始调用
-        /// 接收 KeyBytes, 调用 CheckIdentity();
-        /// 向 Dictionary 添加 SocketResponder 权限;
-        /// 并向 Client 端返回 SocketIdentity
-        /// </summary>
-        /// <param name="responder"></param>
-        private void ResponseIdentity(SocketResponder responder)
-        {
-        }
-
 
         private SocketIdentity GetIdentity(SocketResponder responder)
         {
-            lock (ClientIdentitiesLock)
+            lock (ClientSessions)
             {
                 try
                 {
-                    return ClientIdentities[responder];
+                    return ClientSessions[responder].Identity;
                 }
                 catch (Exception)
                 {

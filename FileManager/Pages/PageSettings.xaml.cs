@@ -73,11 +73,28 @@ namespace FileManager.Pages
                 Config.ClickCloseToMinimize = false;
             }
             Config.SaveConfig();
-            SettingsView.ClickCloseToMinimize = true;
+            // 这里设为 true 和 false没区别, 只要调用了SettingsView 的 Setter
+            SettingsView.ClickCloseToMinimize = true; 
             SettingsView.ClickCloseToClose = true;
             this.NullTextBox.Focus(); 
         }
 
+
+        public void UseLegacyButtonSelect_Checked(object sender, RoutedEventArgs e)
+        {
+            if (this.UseLegacyButtonSelectTrue.IsChecked == true)
+            {
+                Config.UseLegacyFileInfo = true;
+            }
+            else
+            {
+                Config.UseLegacyFileInfo = false;
+            }
+            Config.SaveConfig();
+            SettingsView.UseLegacyFileInfo = true;
+            SettingsView.UseNewFileInfo = true;
+            this.NullTextBox.Focus();
+        }
 
 
         public void TextBox_KeyDown(object sender, KeyEventArgs e)

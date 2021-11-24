@@ -159,6 +159,29 @@ namespace FileManager.ViewModels
             }
         }
 
+        public bool UseLegacyFileInfo
+        {
+            get
+            {
+                return Config.UseLegacyFileInfo;
+            }
+            set
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("UseLegacyFileInfo"));
+            }
+        }
+
+        public bool UseNewFileInfo
+        {
+            get
+            {
+                return !Config.UseLegacyFileInfo;
+            }
+            set
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("UseNewFileInfo"));
+            }
+        }
 
         public static readonly string[] suffixes = new string[] { "T", "G", "M", "K", "" };
 

@@ -16,6 +16,9 @@ namespace FileManager.Static
 {
     public static class SocketFactory
     {
+        private static byte[] SessionBytes = new byte[256];
+
+
         public static ConnectionRoute CurrentRoute { get; set; } = null;
 
 
@@ -36,32 +39,6 @@ namespace FileManager.Static
         {
             return GenerateConnectedSocketClient(task.Route, maxTry, retryInterval);
         }
-
-
-
-
-
-        public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route)
-        {
-            SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
-            //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-            client.ConnectWithTimeout(Config.BuildConnectionTimeout);
-            client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-            if (route.IsNextNodeProxy)
-            {
-                /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
-                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
-            }
-            /// 获取 socket 权限
-            client.SendBytes(SocketPacketFlag.AuthenticationRequest, Config.KeyBytes);
-            client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse);
-            return client;
-        }
-
-
-
-
 
 
         /// <summary>
@@ -95,6 +72,32 @@ namespace FileManager.Static
                 }
             }
         }
+
+
+        public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route)
+        {
+            SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
+            //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+            client.ConnectWithTimeout(Config.BuildConnectionTimeout);
+            client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+            if (route.IsNextNodeProxy)
+            {
+                /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
+                client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
+                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
+            }
+            /// 获取 socket 权限
+            byte[] bytes = new byte[512];
+            Array.Copy(SessionBytes, bytes, 256);
+            Array.Copy(Config.KeyBytes, 0, bytes, 256, 256);
+            client.SendBytes(SocketPacketFlag.AuthenticationRequest, bytes);
+            client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out byte[] session_bytes);
+            SessionBytes[0] = (byte)session_bytes.Length;
+            Array.Copy(session_bytes, 0, SessionBytes, 1, session_bytes.Length);
+            return client;
+        }
+
+
 
         public static void AsyncConnectForIdentity(SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
         {

@@ -14,3 +14,8 @@
  6. SocketFactory 中维护 SocketClient池
  7. Server 端翻译路径请求
 
+ 8. Server端建立并维护 SocketSession返回SessionId至Client (超时处理)
+    SocketFactory 中维护SessionId
+    
+    连接建立的第一个包 (0 for length) 1-255 bytes 描述sessionId
+    256-511 bytes 描述 keys

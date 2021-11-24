@@ -103,6 +103,9 @@
     <Compile Include="Pages\PageSettings.xaml.cs">
       <DependentUpon>PageSettings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Pages\PageTransferLegacy.xaml.cs">
+      <DependentUpon>PageTransferLegacy.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SocketLib\BytesBuilder.cs" />
     <Compile Include="SocketLib\BytesConverter.cs" />
     <Compile Include="SocketLib\BytesParser.cs" />
@@ -134,6 +137,7 @@
     <Compile Include="SocketLib\Models\SocketServerFileStreamInfo.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_DirectoryPart.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_FileTransferPart.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketSession.cs" />
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
@@ -194,6 +198,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\PageTransfer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\PageTransferLegacy.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -195,6 +195,7 @@ namespace FileManager
                 { "Connect", new PageConnect(this) },
                 { "Browser", new PageBrowser(this) },
                 { "Transfer", new PageTransfer(this) },
+                { "TransferLegacy", new PageTransferLegacy(this) },
                 { "Code", new PageCode() },
                 { "Settings", new PageSettings() },
                 { "Server", new PageServer() },
@@ -270,7 +271,14 @@ namespace FileManager
         }
         private void SidebarTransfer_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            RedirectPage("Transfer");
+            if (Config.UseLegacyFileInfo)
+            {
+                RedirectPage("TransferLegacy");
+            }
+            else
+            {
+                RedirectPage("Transfer");
+            }
         }
         private void SidebarCode_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
@@ -309,6 +317,9 @@ namespace FileManager
                     block = this.SidebarBrowser;
                     break;
                 case "Transfer":
+                    block = this.SidebarTransfer;
+                    break;
+                case "TransferLegacy":
                     block = this.SidebarTransfer;
                     break;
                 case "Code":
