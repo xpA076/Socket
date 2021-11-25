@@ -216,7 +216,9 @@ namespace FileManager
         {
             if (((PageTransfer)this.pages["Transfer"]).IsTransfering)
             {
-                System.Windows.Forms.MessageBox.Show("please stop downloading first");
+                //System.Windows.Forms.MessageBox.Show("please stop downloading first");
+                this.notifyIcon.Dispose();
+                this.Close();
             }
             else
             {

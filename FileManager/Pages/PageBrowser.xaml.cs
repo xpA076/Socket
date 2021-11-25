@@ -249,7 +249,7 @@ namespace FileManager.Pages
             {
                 ft.LocalPath = System.IO.Path.Combine(localPath, ft.Name);
             }
-            this.MainWindow.SubPageTransfer.AddTasks(fileTasks);
+            this.MainWindow.SubPageTransferLegacy.AddTasks(fileTasks);
             this.MainWindow.RedirectPage("TransferLegacy");
         }
 
@@ -267,7 +267,7 @@ namespace FileManager.Pages
                 {
                     int idx = localPath.LastIndexOf("\\");
                     string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                    this.MainWindow.SubPageTransfer.AddTask(new FileTask
+                    this.MainWindow.SubPageTransferLegacy.AddTask(new FileTask
                     {
                         Route = SocketFactory.CurrentRoute.Copy(),
                         IsDirectory = false,
@@ -283,7 +283,7 @@ namespace FileManager.Pages
                 string localPath = uploadSelectWindow.UploadPathList[0];
                 int idx = localPath.LastIndexOf("\\");
                 string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                this.MainWindow.SubPageTransfer.AddTask(new FileTask
+                this.MainWindow.SubPageTransferLegacy.AddTask(new FileTask
                 {
                     Route = SocketFactory.CurrentRoute.Copy(),
                     IsDirectory = true,

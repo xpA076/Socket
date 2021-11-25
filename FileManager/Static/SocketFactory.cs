@@ -77,6 +77,7 @@ namespace FileManager.Static
         public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route)
         {
             SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
+            /// 建立通信隧道
             //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
             client.ConnectWithTimeout(Config.BuildConnectionTimeout);
             client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
