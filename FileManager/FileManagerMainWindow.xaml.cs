@@ -86,6 +86,13 @@ namespace FileManager
                 return (PageTransfer)this.pages["Transfer"];
             }
         }
+        public PageTransferLegacy SubPageTransferLegacy
+        {
+            get
+            {
+                return (PageTransferLegacy)this.pages["TransferLegacy"];
+            }
+        }
 
 
         public PageCode SubPageCode

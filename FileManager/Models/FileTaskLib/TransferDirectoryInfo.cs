@@ -10,6 +10,7 @@ namespace FileManager.Models
 {
     public class TransferDirectoryInfo : TransferInfo
     {
+        #region Parameters to be saved
         /// <summary>
         /// 初始为 false, 在构造过当前节点列表(列表中子节点未构建)后为 true
         /// </summary>
@@ -22,6 +23,35 @@ namespace FileManager.Models
         public List<TransferDirectoryInfo> DirectoryChildren { get; set; } = new List<TransferDirectoryInfo>();
 
         public List<TransferFileInfo> FileChildren { get; set; } = new List<TransferFileInfo>();
+        #endregion
+
+        #region Parameters
+
+        private int _priority;
+
+        public int Priority { 
+            get
+            {
+                return _priority;
+            } 
+        }
+
+
+        #endregion
+
+
+
+        public void SetPriority(int priority)
+        {
+
+
+        }
+
+        public void UpdatePriority()
+        {
+
+        }
+
 
 
         private int _bytes_length = 0;

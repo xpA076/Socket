@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models
 {
-    public enum TransferFileInfoStatus : int
+    public enum TransferStatus : int
     {
         Waiting, 
         Success,
@@ -21,6 +21,7 @@ namespace FileManager.Models
 
     public class TransferFileInfo : TransferInfo
     {
+        public int Priority { get; set; } = 0;
 
         public DateTime CreationTimeUtc { get; set; } = new DateTime(0);
 
@@ -29,7 +30,7 @@ namespace FileManager.Models
 
         public long FinishedPacket { get; set; } = 0;
 
-        public TransferFileInfoStatus Status { get; set; }
+        public TransferStatus Status { get; set; }
 
         private int _bytes_length = 0;
 
@@ -60,6 +61,7 @@ namespace FileManager.Models
         public int SaveToFile(FileStream fs)
         {
             BytesBuilder bb = new BytesBuilder(bytes_init_capacity);
+            bb.Append(Priority);
             bb.Append(Name);
             bb.Append(Length);
             bb.Append(CreationTimeUtc);
@@ -83,12 +85,13 @@ namespace FileManager.Models
             fs.Read(bs, 0, len);
             TransferFileInfo info = new TransferFileInfo();
             int idx = 0;
+            info.Priority = BytesParser.GetInt(bs, ref idx);
             info.Name = BytesParser.GetString(bs, ref idx);
             info.Length = BytesParser.GetLong(bs, ref idx);
             info.CreationTimeUtc = BytesParser.GetDateTime(bs, ref idx);
             info.LastWriteTimeUtc = BytesParser.GetDateTime(bs, ref idx);
             info.FinishedPacket = BytesParser.GetLong(bs, ref idx);
-            info.Status = (TransferFileInfoStatus)BytesParser.GetInt(bs, ref idx);
+            info.Status = (TransferStatus)BytesParser.GetInt(bs, ref idx);
             return info;
         }
 
