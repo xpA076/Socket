@@ -14,14 +14,14 @@ namespace FileManager.Models
 {
     public class TransferRootInfoQuerier
     {
-        private TransferRootInfo rootInfo = null;
+        private TransferRootInfo RootInfo = null;
 
-        private List<DownloadConfirmViewModel> downloadConfirmViewModels = null;
+        private List<DownloadConfirmViewModel> DownloadConfirmViewModels = null;
 
 
         public TransferRootInfoQuerier(TransferRootInfo rootInfo)
         {
-            this.rootInfo = rootInfo;
+            this.RootInfo = rootInfo;
         }
 
 
@@ -34,11 +34,96 @@ namespace FileManager.Models
 
         public void StartQuery()
         {
-            if (rootInfo.Type == TransferType.Download)
+            if (RootInfo.Type == TransferType.Download)
             {
                 Task.Run(() => { DownloadQuery(); });
             }
         }
+
+        private readonly Stack<int> QueryIndexStack = new Stack<int>();
+        private TransferDirectoryInfo CurrentInfo = null;
+
+        private void SetFirstQueryInfo()
+        {
+            CurrentInfo = RootInfo;
+            QueryIndexStack.Clear();
+            while (CurrentInfo.IsChildrenListBuilt)
+            {
+                MoveToFirstUnqueriedChild();
+            }
+        }
+
+        private void MoveToFirstUnqueriedChild()
+        {
+            int idx;
+            for (idx = 0; idx < CurrentInfo.DirectoryChildren.Count; ++idx)
+            {
+                if (!CurrentInfo.QueryCompleteFlags[idx])
+                {
+                    break;
+                }
+            }
+            QueryIndexStack.Push(idx);
+            CurrentInfo = CurrentInfo.DirectoryChildren[idx];
+        }
+
+        /// <summary>
+        /// 在向 Server 请求构建当前节点后调用, CurrentInfo 会停在DFS回溯后
+        ///   首个具有未完成子节点的位置
+        /// </summary>
+        /// <returns>是否构建完成整个目录树</returns>
+        private bool TryCompleteParent()
+        {
+            /// 当前节点非叶子节点则无需计算Length, 直接返回
+            if (CurrentInfo.DirectoryChildren.Count > 0)
+            {
+                return false;
+            }
+            while (true)
+            {
+                /// 当前节点处理
+                CurrentInfo.CalculateLength();
+                if (CurrentInfo.IsRoot)
+                {
+                    return true;
+                }
+                if (CurrentInfo.Parent.IsRoot)
+                {
+                    TryUpdateViewModels(CurrentInfo);
+                }
+                /// 回溯至上级
+                int child_idx = QueryIndexStack.Pop(); 
+                CurrentInfo = CurrentInfo.Parent;
+                CurrentInfo.QueryCompleteFlags[child_idx] = true;
+                /// 循环退出条件
+                if (CurrentInfo.IsQueryComplete)
+                {
+                    continue;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        /*
+        private TransferDirectoryInfo __GetFirstQueryInfo()
+        {
+            if (RootInfo.IsQueryComplete)
+            {
+                return null;
+            }
+            TransferDirectoryInfo dirInfo = RootInfo;
+            while (dirInfo.IsChildrenListBuilt)
+            {
+                dirInfo = dirInfo.FirstUnqueriedChild;
+                //dirInfo = dirInfo.DirectoryChildren[dirInfo.QueryCompleteCount];
+            }
+            return dirInfo;
+        }
+        */
+
 
         /// <summary>
         /// DFS 方式遍历并建立目录树
@@ -47,21 +132,36 @@ namespace FileManager.Models
         private void DownloadQuery()
         {
             
-            while (!rootInfo.IsQueryComplete)
+            while (true)
             {
                 if (StopQueryFlag)
                 {
                     break;
                 }
-                TransferDirectoryInfo currentInfo = GetFirstQueryInfo();
+                //TransferDirectoryInfo currentInfo = __GetFirstQueryInfo();
+                if (CurrentInfo == null)
+                {
+                    SetFirstQueryInfo();
+                }
+                else
+                {
+                    MoveToFirstUnqueriedChild();
+                }
                 try
                 {
+                    /// Query 并建立当前子节点
                     HB32Response resp = SocketFactory.RequestWithHeaderFlag(SocketPacketFlag.DirectoryResponse,
                         new HB32Header(SocketPacketFlag.DirectoryRequest), 
-                        Encoding.UTF8.GetBytes(currentInfo.RemotePath));
+                        Encoding.UTF8.GetBytes(CurrentInfo.RemotePath));
                     List<SocketFileInfo> respInfos = SocketFileInfo.BytesToList(resp.Bytes);
-                    currentInfo.BuildChildrenFrom(respInfos);
-                    //Thread.Sleep(50);
+                    CurrentInfo.BuildChildrenFrom(respInfos);
+                    Thread.Sleep(200);
+                    if (TryCompleteParent())
+                    {
+                        break;
+                    }
+
+                    /*
                     /// 判断当前节点是否为叶子节点 (不再包含子目录, 构造完成并计算 Length)
                     if (respInfos.Count == 0 || !respInfos[0].IsDirectory)
                     {
@@ -83,11 +183,7 @@ namespace FileManager.Models
                                     /// 更新 ViewModel
                                     if (pt.Parent.IsRoot)
                                     {
-                                        if (this.downloadConfirmViewModels != null)
-                                        {
-                                            DownloadConfirmViewModel viewModel = GetDownloadConfirmViewModel(pt);
-                                            viewModel.SetLength(pt.Length);
-                                        }
+                                        TryUpdateViewModels(pt);
                                     }
                                     else
                                     {
@@ -103,6 +199,10 @@ namespace FileManager.Models
                             }
                         }
                     }
+                    */
+
+
+
                 }
                 catch (SocketFlagException ex)
                 {
@@ -138,57 +238,47 @@ namespace FileManager.Models
 
 
 
-        private TransferDirectoryInfo GetFirstQueryInfo()
+        #region ViewModels in DownloadConfirmWindow
+        /// <summary>
+        /// 尝试更新 DownloadConfirmWindow 中的 ViewModel (文件长度信息)
+        /// 若无关联的 ViewModel 会直接跳过
+        /// </summary>
+        /// <param name="info"></param>
+        private void TryUpdateViewModels(TransferDirectoryInfo info)
         {
-            if (rootInfo.IsQueryComplete)
+            if (this.DownloadConfirmViewModels != null)
             {
-                return null;
+                foreach (DownloadConfirmViewModel viewModel in this.DownloadConfirmViewModels)
+                {
+                    if (viewModel.Name == info.Name)
+                    {
+                        viewModel.SetLength(info.Length);
+                    }
+                }
             }
-            TransferDirectoryInfo dirInfo = rootInfo;
-            while (dirInfo.IsChildrenListBuilt)
-            {
-                dirInfo = dirInfo.DirectoryChildren[dirInfo.QueryCompleteCount];
-            }
-            return dirInfo;
         }
 
-
-        private TransferDirectoryInfo GetNextQueryInfo(TransferDirectoryInfo currentInfo)
-        {
-            /// DFS 回溯
-            return null;
-        }
 
         public List<DownloadConfirmViewModel> LinkDownloadConfirmViewModels()
         {
-            this.downloadConfirmViewModels = new List<DownloadConfirmViewModel>();
-            foreach (TransferDirectoryInfo directoryInfo in this.rootInfo.DirectoryChildren)
+            this.DownloadConfirmViewModels = new List<DownloadConfirmViewModel>();
+            foreach (TransferDirectoryInfo directoryInfo in this.RootInfo.DirectoryChildren)
             {
-                downloadConfirmViewModels.Add(new DownloadConfirmViewModel(directoryInfo));
+                DownloadConfirmViewModels.Add(new DownloadConfirmViewModel(directoryInfo));
             }
-            foreach (TransferFileInfo fileInfo in this.rootInfo.FileChildren)
+            foreach (TransferFileInfo fileInfo in this.RootInfo.FileChildren)
             {
-                downloadConfirmViewModels.Add(new DownloadConfirmViewModel(fileInfo));
+                DownloadConfirmViewModels.Add(new DownloadConfirmViewModel(fileInfo));
             }
-            return this.downloadConfirmViewModels;
+            return this.DownloadConfirmViewModels;
         }
 
-        private DownloadConfirmViewModel GetDownloadConfirmViewModel(TransferDirectoryInfo dirInfo)
-        {
-            foreach (DownloadConfirmViewModel viewModel in this.downloadConfirmViewModels)
-            {
-                if (viewModel.Name == dirInfo.Name)
-                {
-                    return viewModel;
-                }
-            }
-            return null;
-        }
 
         public void UnlinkDownloadConfirmViewModels()
         {
-            this.downloadConfirmViewModels = null;
+            this.DownloadConfirmViewModels = null;
         }
+        #endregion
 
     }
 }

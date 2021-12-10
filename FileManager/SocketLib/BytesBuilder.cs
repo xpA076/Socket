@@ -67,6 +67,16 @@ namespace FileManager.SocketLib
             Append(BitConverter.GetBytes(value.Ticks));
         }
 
+        public void Append(List<bool> value)
+        {
+            byte[] bytes = new byte[value.Count];
+            for (int i = 0; i < value.Count; ++i)
+            {
+                bytes[i] = (byte)(value[i] ? 1 : 0);
+            }
+            AppendWithLength(bytes);
+        }
+
 
         public void Append(byte[] bytes)
         {

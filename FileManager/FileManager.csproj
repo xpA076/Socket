@@ -144,6 +144,7 @@
     <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
     <Compile Include="ViewModels\DownloadConfirmViewModel.cs" />
+    <Compile Include="ViewModels\PageTransferViewModel.cs" />
     <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">

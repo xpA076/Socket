@@ -54,5 +54,18 @@ namespace FileManager.SocketLib
             return bs;
         }
 
+        public static List<bool> GetListBool(byte[] value, ref int startIndex)
+        {
+            int len = BitConverter.ToInt32(value, startIndex);
+            byte[] bs = value.Skip(startIndex + 4).Take(len).ToArray();
+            bool[] flags = new bool[len];
+            for (int i = 0; i < len; ++i)
+            {
+                flags[i] = !(bs[i] == 0);
+            }
+            startIndex += 4 + len;
+            return flags.ToList<bool>();
+        }
+
     }
 }

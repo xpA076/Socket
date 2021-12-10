@@ -21,8 +21,6 @@ namespace FileManager.Models
         /// </summary>
         public TransferDirectoryInfo Parent { get; set; } = null;
 
-        public int Priority { get; set; } = 0;
-
         /// <summary>
         /// 文件来源路径
         /// 对下载任务, 为Server端路径

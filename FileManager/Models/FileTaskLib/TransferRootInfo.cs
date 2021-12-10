@@ -64,8 +64,8 @@ namespace FileManager.Models
                 bb.Append(Name);
                 bb.Append(Length);
                 bb.Append(IsChildrenListBuilt);
-                bb.Append(QueryCompleteCount);
-                bb.Append(TransferCompleteCount);
+                bb.Append(QueryCompleteFlags);
+                bb.Append(TransferCompleteFlags);
                 byte[] bs = bb.GetBytes();
                 fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
                 fs.Write(bs, 0, bs.Length);
@@ -123,8 +123,8 @@ namespace FileManager.Models
             root.Name = BytesParser.GetString(bs, ref idx);
             root.Length = BytesParser.GetLong(bs, ref idx);
             root.IsChildrenListBuilt = BytesParser.GetBool(bs, ref idx);
-            root.QueryCompleteCount = BytesParser.GetInt(bs, ref idx);
-            root.TransferCompleteCount = BytesParser.GetInt(bs, ref idx);
+            root.QueryCompleteFlags = BytesParser.GetListBool(bs, ref idx);
+            root.TransferCompleteFlags = BytesParser.GetListBool(bs, ref idx);
             /// 构造子节点
             fs.Read(b_len, 0, 4);
             len = BitConverter.ToInt32(b_len, 0);

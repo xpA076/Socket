@@ -16,9 +16,14 @@ namespace FileManager.Models
         /// </summary>
         public bool IsChildrenListBuilt { get; set; } = false;
 
-        public int QueryCompleteCount { get; set; } = 0;
 
-        public int TransferCompleteCount { get; set; } = 0;
+        public List<bool> QueryCompleteFlags { get; set; } = new List<bool>();
+
+
+        /// <summary>
+        /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren 相同
+        /// </summary>
+        public List<bool> TransferCompleteFlags { get; set; } = new List<bool>();
 
         public List<TransferDirectoryInfo> DirectoryChildren { get; set; } = new List<TransferDirectoryInfo>();
 
@@ -27,35 +32,10 @@ namespace FileManager.Models
 
         #region Parameters
 
-        private int _priority;
-
-        public int Priority { 
-            get
-            {
-                return _priority;
-            } 
-        }
-
-
-        #endregion
-
-
-
-        public void SetPriority(int priority)
-        {
-
-
-        }
-
-        public void UpdatePriority()
-        {
-
-        }
-
-
-
+        /// <summary>
+        /// 这个或许可用于记录存档 bias, 快速更新
+        /// </summary>
         private int _bytes_length = 0;
-
         public virtual int BytesLength
         {
             get
@@ -90,9 +70,69 @@ namespace FileManager.Models
         {
             get
             {
-                return IsChildrenListBuilt && (QueryCompleteCount == DirectoryChildren.Count);
+                if (IsChildrenListBuilt)
+                {
+                    /*
+                    foreach (bool flag in QueryCompleteFlags)
+                    {
+                        if (!flag)
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                    */
+
+                    /// 如果是 DFS 按顺序遍历, 这里可以简化成下面这种形式
+                    return (DirectoryChildren.Count == 0) || QueryCompleteFlags.Last();
+                    /*
+                    if (DirectoryChildren.Count == 0) 
+                    { 
+                        return true; 
+                    }
+                    else 
+                    { 
+                        return QueryCompleteFlags.Last();
+                    }
+                    */
+                }
+                else
+                {
+                    return false;
+                }
+                //return IsChildrenListBuilt && (QueryCompleteCount == DirectoryChildren.Count);
             }
         }
+
+
+        /*
+        /// <summary>
+        /// 根据 QueryCompleteFlags 查询第一个未 query 的子节点
+        /// 在 Querier 中调用
+        /// </summary>
+        public TransferDirectoryInfo FirstUnqueriedChild
+        {
+            get
+            {
+                System.Diagnostics.Debug.Assert(this.IsChildrenListBuilt);
+                for (int i = 0; i < DirectoryChildren.Count; i++)
+                {
+                    if (!QueryCompleteFlags[i])
+                    {
+                        return DirectoryChildren[i];
+                    }
+                }
+                throw new Exception("TransferDirectoryInfo : Cannot find FirstUnqueriedChild.");
+            }
+        }
+
+        */
+        #endregion
+
+
+
+
+
 
         /// <summary>
         /// 当前节点构造完成后调用 (当前节点为叶子节点或所有子节点已经过DFS构造完成后)
@@ -114,6 +154,8 @@ namespace FileManager.Models
 
         public void BuildChildrenFrom(List<SocketFileInfo> socketFileInfos)
         {
+            this.DirectoryChildren.Clear();
+            this.FileChildren.Clear();
             foreach (var socketFileInfo in socketFileInfos)
             {
                 if (socketFileInfo.IsDirectory)
@@ -121,10 +163,11 @@ namespace FileManager.Models
                     TransferDirectoryInfo directoryInfo = new TransferDirectoryInfo();
                     directoryInfo.Name = socketFileInfo.Name;
                     directoryInfo.Length = 0;
-                    directoryInfo.QueryCompleteCount = 0;
-                    directoryInfo.TransferCompleteCount = 0;
+                    //directoryInfo.QueryCompleteCount = 0;
+                    //directoryInfo.TransferCompleteCount = 0;
                     directoryInfo.Parent = this;
                     this.DirectoryChildren.Add(directoryInfo);
+                    this.QueryCompleteFlags.Add(false);
                 }
                 else
                 {
@@ -153,8 +196,8 @@ namespace FileManager.Models
             bb.Append(Name);
             bb.Append(Length);
             bb.Append(IsChildrenListBuilt);
-            bb.Append(QueryCompleteCount);
-            bb.Append(TransferCompleteCount);
+            bb.Append(QueryCompleteFlags);
+            bb.Append(TransferCompleteFlags);
             byte[] bs = bb.GetBytes();
             fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
             fs.Write(bs, 0, bs.Length);
@@ -188,8 +231,8 @@ namespace FileManager.Models
             info_dir.Name = BytesParser.GetString(bs, ref idx);
             info_dir.Length = BytesParser.GetLong(bs, ref idx);
             info_dir.IsChildrenListBuilt = BytesParser.GetBool(bs, ref idx);
-            info_dir.QueryCompleteCount = BytesParser.GetInt(bs, ref idx);
-            info_dir.TransferCompleteCount = BytesParser.GetInt(bs, ref idx);
+            info_dir.QueryCompleteFlags = BytesParser.GetListBool(bs, ref idx);
+            info_dir.TransferCompleteFlags = BytesParser.GetListBool(bs, ref idx);
             /// 构建子节点
             fs.Read(b_len, 0, 4);
             len = BitConverter.ToInt32(b_len, 0);
