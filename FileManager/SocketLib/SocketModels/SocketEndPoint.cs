@@ -62,17 +62,24 @@ namespace FileManager.SocketLib
             });
         }
 
-
-        public void SendBytes(HB32Header header, byte[] bytes)
+        public void SendBytes(HB32Header header, byte[] bytes, int packetLength)
         {
             if (IsRequireProxyHeader)
             {
-                SocketIO.SendBytes(client, header, bytes, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendBytes });
+                SocketIO.SendBytes(client, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendBytes },
+                    header, bytes, packetLength);
             }
             else
             {
-                SocketIO.SendBytes(client, header, bytes, new byte[2] { 0, 0 });
+                SocketIO.SendBytes(client, new byte[2] { 0, 0 },
+                    header, bytes, packetLength);
             }
+
+        }
+
+        public void SendBytes(HB32Header header, byte[] bytes)
+        {
+            SendBytes(header, bytes, HB32Encoding.DataSize);
         }
 
         public void SendBytes(HB32Header header, string str)

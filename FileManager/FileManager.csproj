@@ -89,6 +89,7 @@
     <Compile Include="Models\FileTaskLib\TransferDispatcher.cs" />
     <Compile Include="Models\FileTaskLib\TransferFileInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferInfo.cs" />
+    <Compile Include="Models\FileTaskLib\TransferManager.cs" />
     <Compile Include="Models\FileTaskLib\TransferRootInfo.cs" />
     <Compile Include="Models\FileTaskLib\TransferRootInfoQuerier.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />

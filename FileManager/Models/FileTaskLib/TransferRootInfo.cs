@@ -16,7 +16,11 @@ namespace FileManager.Models
         {
             this.Parent = null;
             this.Name = "";
+            this.Querier = new TransferRootInfoQuerier(this);
+
         }
+
+        #region Parameters to save
 
         public override int BytesLength
         {
@@ -42,6 +46,16 @@ namespace FileManager.Models
         /// 本地目录, 结尾不含 "\\"
         /// </summary>
         public string LocalDirectory { get; set; }
+
+        #endregion
+
+        #region Parameters
+        public TransferRootInfoQuerier Querier = null;
+
+
+        #endregion
+
+
 
 
         /// <summary>

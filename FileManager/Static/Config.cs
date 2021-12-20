@@ -58,6 +58,11 @@ namespace FileManager.Static
         /// </summary>
         public static long SmallFileThreshold { get; set; } = 4 * 1024 * 1024;
 
+        /// <summary>
+        /// 文件传输过程每个Packet大小
+        /// </summary>
+        public static long TransferBlockSize { get; set; } = 4096;
+
         public static int ThreadLimit { get; set; } = 16;
 
         /// <summary>

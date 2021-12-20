@@ -93,9 +93,11 @@ namespace FileManager.SocketLib.Enums
         StatusQuery = 0x0602,
 
 
-        /// Mode 0x10 : 
+        /// Mode 0x10 : Transfer
         /// 
-        /// </summary>
+        TransferRequest = 0x1001,
+        TransferResponse = 0x1010,
+        TransferException = 0x1090,
 
 
         RemoteRunRequest,

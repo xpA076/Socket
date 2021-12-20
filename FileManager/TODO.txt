@@ -20,7 +20,7 @@
     
  9. TransferInfo 里面的priority不好用, 用一个EmergentList代替
     保存时, 先整体保存, 不考虑bytes bias的优化
- TODO : 把 TransferDirectoryInfo 里面的 FinishedCount 改为BitSet
+ TODO :
 
     连接建立的第一个包 (0 for length) 1-255 bytes 描述sessionId
     256-511 bytes 描述 keys

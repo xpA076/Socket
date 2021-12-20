@@ -222,19 +222,18 @@ namespace FileManager.Pages
         private void DownloadConfirm(TransferRootInfo rootInfo)
         {
             DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
-            TransferRootInfoQuerier querier = new TransferRootInfoQuerier(rootInfo);
-            downloadConfirmWindow.ListViewTask.ItemsSource = querier.LinkDownloadConfirmViewModels();
-            querier.StartQuery();
+            downloadConfirmWindow.ListViewTask.ItemsSource = rootInfo.Querier.LinkDownloadConfirmViewModels();
+            rootInfo.Querier.StartQuery();
             if (downloadConfirmWindow.ShowDialog() == true) 
             {
-                querier.UnlinkDownloadConfirmViewModels();
+                rootInfo.Querier.UnlinkDownloadConfirmViewModels();
                 rootInfo.LocalDirectory = downloadConfirmWindow.SelectedPath;
                 MainWindow.SubPageTransfer.AddTransferTask(rootInfo);
                 MainWindow.RedirectPage("Transfer");
             }
             else
             {
-                querier.StopQuery();
+                rootInfo.Querier.StopQuery();
             }
         }
 

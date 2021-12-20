@@ -8,5 +8,9 @@ namespace FileManager.Models
 {
     public class TransferDispatcher
     {
+        private List<TransferManager> TransferManagers = new List<TransferManager>();
+
+
+
     }
 }

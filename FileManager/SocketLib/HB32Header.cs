@@ -8,21 +8,63 @@ using FileManager.SocketLib.Enums;
 
 namespace FileManager.SocketLib
 {
-
+    /// <summary>
+    /// 在数据前用 32Bytes 封装标识数据流 packet 目标, 长度, 位置. 格式
+    /// Header 里不应包含数据
+    /// </summary>
     public class HB32Header
     {
-        public SocketPacketFlag Flag { get; set; } = 0;
-        public int I1 { get; set; } = 0;
-        public int I2 { get; set; } = 0;
-        public int I3 { get; set; } = 0;
-        public int PacketCount { get; set; } = 1;
-        public int TotalByteLength { get; set; } = 0;
-        public int PacketIndex { get; set; } = 0;
-        public int ValidByteLength { get; set; } = 0;
+        public SocketPacketFlag Flag
+        {
+            get { return (SocketPacketFlag)GetInt(0); }
+            set { WriteInt(0, (int)value); }
+        }
+        public int I1
+        {
+            get { return GetInt(4); }
+            set { WriteInt(4, value); }
+        }
+        public int I2
+        {
+            get { return GetInt(8); }
+            set { WriteInt(8, value); }
+        }
+        public int I3
+        {
+            get { return GetInt(12); }
+            set { WriteInt(12, value); }
+        }
+        public int Default4
+        {
+            get { return GetInt(16); }
+            set { WriteInt(16, value); }
+        }
+        public int TotalByteLength
+        {
+            get { return GetInt(20); }
+            set { WriteInt(20, value); }
+        }
+        public int RemainByteLength
+        {
+            get { return GetInt(24); }
+            set { WriteInt(24, value); }
+        }
+        public int ValidByteLength
+        {
+            get { return GetInt(28); }
+            set { WriteInt(28, value); }
+        }
+
+        private byte[] _bytes = new byte[32];
 
         public HB32Header()
         {
 
+        }
+
+        public HB32Header(byte[] bytes)
+        {
+            Array.Copy(bytes, _bytes, 32);
         }
 
         public HB32Header(SocketPacketFlag flag)
@@ -39,9 +81,9 @@ namespace FileManager.SocketLib
                 I1,
                 I2,
                 I3,
-                PacketCount,
+                Default4,
                 TotalByteLength,
-                PacketIndex,
+                RemainByteLength,
                 ValidByteLength
             }, proxy_header.Length);
         }
@@ -49,17 +91,7 @@ namespace FileManager.SocketLib
 
         public byte[] GetBytes()
         {
-            return BytesConverter.WriteIntArray(new int[] 
-            { 
-                (int)Flag,
-                I1,
-                I2, 
-                I3,
-                PacketCount,
-                TotalByteLength,
-                PacketIndex,
-                ValidByteLength
-            });
+            return _bytes;
         }
 
 
@@ -71,36 +103,27 @@ namespace FileManager.SocketLib
 
         public static HB32Header ReadFromBytes(byte[] bytes, int idx = 0)
         {
-            int[] array = BytesConverter.ParseIntArray(bytes, idx, idx + 32);
-            return new HB32Header()
-            {
-                Flag = (SocketPacketFlag)array[0],
-                I1 = array[1],
-                I2 = array[2],
-                I3 = array[3],
-                PacketCount = array[4],
-                TotalByteLength = array[5],
-                PacketIndex = array[6],
-                ValidByteLength = array[7],
-            };
+            return new HB32Header(bytes.Skip(idx).Take(32).ToArray());
         }
 
         public HB32Header Copy()
         {
-            return new HB32Header()
-            {
-                Flag = this.Flag,
-                I1 = this.I1,
-                I2 = this.I2,
-                I3 = this.I3,
-                PacketCount = this.PacketCount,
-                TotalByteLength = this.TotalByteLength,
-                PacketIndex = this.PacketIndex,
-                ValidByteLength = this.ValidByteLength
-            };
+            return new HB32Header(_bytes);
         }
 
+        private void WriteInt(int offset, int val)
+        {
+            byte[] bs = BitConverter.GetBytes(val);
+            _bytes[offset] = bs[0];
+            _bytes[offset + 1] = bs[1];
+            _bytes[offset + 2] = bs[2];
+            _bytes[offset + 3] = bs[3];
+        }
 
+        private int GetInt(int offset)
+        {
+            return BitConverter.ToInt32(_bytes, offset);
+        }
 
         /*
         public void WriteToBytes(byte[] bytes)
@@ -109,7 +132,7 @@ namespace FileManager.SocketLib
             EncodeInt((int)I1, bytes, 4);
             EncodeInt(I2, bytes, 8);
             EncodeInt(I3, bytes, 12);
-            EncodeInt(PacketCount, bytes, 16);
+            EncodeInt(PacketCount, bytes, 16); 
             EncodeInt(TotalByteLength, bytes, 20);
             EncodeInt(PacketIndex, bytes, 24);
             EncodeInt(ValidByteLength, bytes, 28);
