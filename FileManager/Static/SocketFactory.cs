@@ -14,12 +14,29 @@ using FileManager.SocketLib.Models;
 
 namespace FileManager.Static
 {
-    public static class SocketFactory
+    public sealed class SocketFactory
     {
+        private SocketFactory()
+        {
+
+        }
+
+        private static readonly Lazy<SocketFactory> _instance = new Lazy<SocketFactory>(() => new SocketFactory());
+
+        public static SocketFactory Instance
+        {
+            get
+            {
+                return _instance.Value;
+            }
+        }
+
+
+
         private static byte[] SessionBytes = new byte[256];
 
 
-        public static ConnectionRoute CurrentRoute { get; set; } = null;
+        public ConnectionRoute CurrentRoute { get; set; } = null;
 
 
 
@@ -30,12 +47,12 @@ namespace FileManager.Static
         /// <param name="maxTry"></param>
         /// <param name="retryInterval"></param>
         /// <returns></returns>
-        public static SocketClient GenerateConnectedSocketClient(int maxTry = 1, int retryInterval = 3000)
+        public SocketClient GenerateConnectedSocketClient(int maxTry = 1, int retryInterval = 3000)
         {
             return GenerateConnectedSocketClient(CurrentRoute, maxTry, retryInterval);
         }
 
-        public static SocketClient GenerateConnectedSocketClient(FileTask task, int maxTry = 1, int retryInterval = 3000)
+        public SocketClient GenerateConnectedSocketClient(FileTask task, int maxTry = 1, int retryInterval = 3000)
         {
             return GenerateConnectedSocketClient(task.Route, maxTry, retryInterval);
         }
@@ -50,7 +67,7 @@ namespace FileManager.Static
         /// <param name="maxTry">maxTry < 0 时表示无限次重复直到成功</param>
         /// <param name="retryInterval"></param>
         /// <returns></returns>
-        public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route, int maxTry, int retryInterval = 3000)
+        public SocketClient GenerateConnectedSocketClient(ConnectionRoute route, int maxTry, int retryInterval = 3000)
         {
             int tryCount = 0;
             string err_msg = "";
@@ -74,7 +91,7 @@ namespace FileManager.Static
         }
 
 
-        public static SocketClient GenerateConnectedSocketClient(ConnectionRoute route)
+        public SocketClient GenerateConnectedSocketClient(ConnectionRoute route)
         {
             SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
             /// 建立通信隧道
@@ -100,36 +117,36 @@ namespace FileManager.Static
 
 
 
-        public static void AsyncConnectForIdentity(SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
+        public void AsyncConnectForIdentity(SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
         {
             AsyncConnectForIdentity(CurrentRoute, asyncCallback, exceptionCallback);
         }
 
-        public static void AsyncConnectForIdentity(ConnectionRoute route, SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
+        public void AsyncConnectForIdentity(ConnectionRoute route, SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
                 try
                 {
                     SocketIdentity identity = SocketIdentity.None;
                     SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
-                    //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                    client.ConnectWithTimeout(Config.BuildConnectionTimeout);
+                //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                client.ConnectWithTimeout(Config.BuildConnectionTimeout);
                     client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
                     if (route.IsNextNodeProxy)
                     {
-                        /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                        client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: 0);
+                    /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
+                    client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: 0);
                         client.ReceiveBytes(out HB32Header header, out byte[] bytes);
                         if (header.Flag != SocketPacketFlag.ProxyResponse)
                         {
-                            // todo 捕获异常方式有问题 : header.I1 为 SeverAddress 时会越界, 应该要改CurrentRoute.ProxyRoute 21.06.04
-                            throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}", 
+                        // todo 捕获异常方式有问题 : header.I1 为 SeverAddress 时会越界, 应该要改CurrentRoute.ProxyRoute 21.06.04
+                        throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
                                 header.I1, route.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
                         }
                     }
-                    /// 获取 socket 权限
-                    client.SendBytes(SocketPacketFlag.AuthenticationRequest, Config.KeyBytes);
+                /// 获取 socket 权限
+                client.SendBytes(SocketPacketFlag.AuthenticationRequest, Config.KeyBytes);
                     client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header auth_header);
                     identity = (SocketIdentity)auth_header.I1;
                     client.Close();
@@ -140,48 +157,22 @@ namespace FileManager.Static
                     exceptionCallback.Invoke(null, new SocketAsyncExceptionEventArgs(ex));
                 }
             });
-
-
-
-            /*
-             * 
-             * 原来这种方案同样是异步执行, 总会提前返回 SocketIdentity.None
-            SocketIdentity identity = SocketIdentity.None;
-            SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
-            client.SocketAsyncCallback += (object sender, EventArgs e) =>
-            {
-                if (route.IsNextNodeProxy)
-                {
-                    /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                    client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
-                }
-                /// 获取 socket 权限
-                client.SendBytes(SocketPacketFlag.AuthenticationRequest, Config.KeyBytes);
-                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header header);
-                identity = (SocketIdentity)header.I1;
-                client.Close();
-            };
-            client.SocketAsyncCallback += asyncCallback;
-            client.SocketAsyncException += exceptionCallback;
-            client.AsyncConnect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-            */
         }
 
 
-        public static HB32Response Request(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        public HB32Response Request(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, Encoding.UTF8.GetBytes(str));
         }
 
 
-        public static HB32Response Request(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public HB32Response Request(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, bytes);
         }
 
 
-        public static HB32Response Request(HB32Header header, byte[] bytes)
+        public HB32Response Request(HB32Header header, byte[] bytes)
         {
             SocketClient client = GenerateConnectedSocketClient();
             client.SendBytes(header, bytes);
@@ -190,7 +181,7 @@ namespace FileManager.Static
             return new HB32Response(h, bs);
         }
 
-        public static HB32Response RequestWithHeaderFlag(SocketPacketFlag requiredFlag, HB32Header header, byte[] bytes)
+        public HB32Response RequestWithHeaderFlag(SocketPacketFlag requiredFlag, HB32Header header, byte[] bytes)
         {
             SocketClient client = GenerateConnectedSocketClient();
             client.SendBytes(header, bytes);

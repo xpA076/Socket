@@ -158,7 +158,7 @@ namespace FileManager.Models
             SocketPacketFlag mask = (SocketPacketFlag)((Task.Type == TransferType.Upload ? 1 : 0) << 8);
             try
             {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(Task, 1);
+                SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(Task, 1);
                 client.SendBytes(SocketPacketFlag.DownloadFileStreamIdRequest | mask, Task.RemotePath);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DownloadAllowed ^ mask, out byte[] bytes);
                 client.Close();

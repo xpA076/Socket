@@ -142,7 +142,7 @@ namespace FileManager.Models
         {
             try
             {
-                var resp = SocketFactory.Request(SocketPacketFlag.DirectorySizeRequest, Encoding.UTF8.GetBytes(task.RemotePath));
+                var resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectorySizeRequest, Encoding.UTF8.GetBytes(task.RemotePath));
                 SocketEndPoint.CheckFlag(SocketPacketFlag.DirectorySizeResponse, resp);
                 return long.Parse(Encoding.UTF8.GetString(resp.Bytes));
             }
@@ -278,7 +278,7 @@ namespace FileManager.Models
             List<SocketFileInfo> files;
             try
             {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
+                SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(task, 1);
                 client.SendBytes(SocketPacketFlag.DirectoryRequest, task.RemotePath);
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.DirectoryResponse, out byte[] recv_bytes);
                 files = SocketFileInfo.BytesToList(recv_bytes);
@@ -317,7 +317,7 @@ namespace FileManager.Models
             /// 请求 server 端创建目录
             try
             {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
+                SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(task, 1);
                 int pt = 0;
                 byte[] headerBytes = BytesConverter.WriteString(new byte[4], task.RemotePath, ref pt);
                 client.SendBytes(SocketPacketFlag.CreateDirectoryRequest, headerBytes);
@@ -426,7 +426,7 @@ namespace FileManager.Models
         {
             try
             {
-                SocketClient client = SocketFactory.GenerateConnectedSocketClient(task, 1);
+                SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(task, 1);
                 if (taskType == TransferType.Upload)
                 {
                     int pt = 0;
@@ -490,7 +490,7 @@ namespace FileManager.Models
             /// 请求server端关闭并释放文件
             try
             {
-                SocketClient sc = SocketFactory.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
+                SocketClient sc = SocketFactory.Instance.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
                 if (task.Type == TransferType.Upload)
                 {
                     sc.SendBytes(SocketPacketFlag.UploadPacketRequest, new byte[1], dispatcher.FileStreamId, -1);
@@ -591,7 +591,7 @@ namespace FileManager.Models
                     {
                         try
                         {
-                            client = SocketFactory.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
+                            client = SocketFactory.Instance.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
                             break;
                         }
                         catch

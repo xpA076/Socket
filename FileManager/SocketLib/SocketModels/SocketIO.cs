@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
-
 using FileManager.SocketLib.Enums;
 using FileManager.Events;
 
@@ -55,7 +54,7 @@ namespace FileManager.SocketLib
         /// |          Sender                                 |         Receiver               |
         /// | ProxyHeader | HB32Header | ContentBytes ->      |                                |
         /// |                                    ( 若单个packet发送不完 )                      |
-        /// | {                                               |      <-  2 bytes               |
+        /// | {                                               |      <-  2 bytes (无内容)      |
         /// |               HB32Header | ContentBytes ->      |                    } * N       |
         /// |----------------------------------------------------------------------------------|
 

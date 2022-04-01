@@ -132,7 +132,7 @@ namespace FileManager.Models.TransferLib
                 try
                 {
                     /// Query 并建立当前子节点
-                    HB32Response resp = SocketFactory.RequestWithHeaderFlag(SocketPacketFlag.DirectoryResponse,
+                    HB32Response resp = SocketFactory.Instance.RequestWithHeaderFlag(SocketPacketFlag.DirectoryResponse,
                         new HB32Header(SocketPacketFlag.DirectoryRequest), 
                         Encoding.UTF8.GetBytes(CurrentInfo.RemotePath));
                     List<SocketFileInfo> respInfos = SocketFileInfo.BytesToList(resp.Bytes);

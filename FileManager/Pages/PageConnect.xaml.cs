@@ -152,11 +152,11 @@ namespace FileManager.Pages
             if (IsConnecting) { return; }
             try
             {
-                SocketFactory.CurrentRoute = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, Config.DefaultServerPort, Config.DefaultProxyPort);
+                SocketFactory.Instance.CurrentRoute = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, Config.DefaultServerPort, Config.DefaultProxyPort);
             }
             catch (Exception)
             {
-                SocketFactory.CurrentRoute = null;
+                SocketFactory.Instance.CurrentRoute = null;
                 MessageBox.Show("Invalid address syntax");
                 Logger.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
                 return;
@@ -167,13 +167,13 @@ namespace FileManager.Pages
                 Logger.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
                 //SocketIdentity identity = SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
-                SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
+                SocketFactory.Instance.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
             }
             catch (Exception ex)
             {
                 /// AsyncConnect 的异常在上面的 SocketAsyncExceptionCallback 中处理
                 /// 这里的代码应该不会执行
-                SocketFactory.CurrentRoute = null;
+                SocketFactory.Instance.CurrentRoute = null;
                 Logger.Log("[Not expected exception] Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
                 MessageBox.Show(ex.Message);
                 IsConnecting = false;
@@ -205,7 +205,7 @@ namespace FileManager.Pages
 
         private void AsyncConnect_OnException(object sender, SocketAsyncExceptionEventArgs e)
         {
-            SocketFactory.CurrentRoute = null;
+            SocketFactory.Instance.CurrentRoute = null;
             this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
             {
                 this.ButtonConnect.Content = "Connect";

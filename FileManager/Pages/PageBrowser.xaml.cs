@@ -44,7 +44,7 @@ namespace FileManager.Pages
         {
             get
             {
-                return SocketFactory.CurrentRoute.Copy();
+                return SocketFactory.Instance.CurrentRoute.Copy();
             }
         }
 
@@ -129,7 +129,7 @@ namespace FileManager.Pages
             try
             {
                 string s = e.Path;
-                var resp = SocketFactory.Request(new HB32Header { Flag = SocketPacketFlag.DirectoryCheck }, Encoding.UTF8.GetBytes(e.Path));
+                var resp = SocketFactory.Instance.Request(new HB32Header { Flag = SocketPacketFlag.DirectoryCheck }, Encoding.UTF8.GetBytes(e.Path));
                 if (resp.Header.Flag != SocketPacketFlag.DirectoryResponse)
                 {
                     throw new SocketFlagException();
@@ -189,7 +189,7 @@ namespace FileManager.Pages
                 {
                     FileTask task = new FileTask
                     {
-                        Route = SocketFactory.CurrentRoute.Copy(),
+                        Route = SocketFactory.Instance.CurrentRoute.Copy(),
                         IsDirectory = selected.IsDirectory,
                         Type = TransferType.Download,
                         RemotePath = RemoteDirectory + selected.Name,
@@ -269,7 +269,7 @@ namespace FileManager.Pages
                     string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
                     this.MainWindow.SubPageTransferLegacy.AddTask(new FileTask
                     {
-                        Route = SocketFactory.CurrentRoute.Copy(),
+                        Route = SocketFactory.Instance.CurrentRoute.Copy(),
                         IsDirectory = false,
                         Type = TransferType.Upload,
                         RemotePath = remoteDir + name,
@@ -285,7 +285,7 @@ namespace FileManager.Pages
                 string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
                 this.MainWindow.SubPageTransferLegacy.AddTask(new FileTask
                 {
-                    Route = SocketFactory.CurrentRoute.Copy(),
+                    Route = SocketFactory.Instance.CurrentRoute.Copy(),
                     IsDirectory = true,
                     Type = TransferType.Upload,
                     RemotePath = remoteDir + name,
@@ -338,7 +338,7 @@ namespace FileManager.Pages
                 try
                 {
                     Logger.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
-                    HB32Response resp = SocketFactory.Request(SocketPacketFlag.DirectoryRequest, Encoding.UTF8.GetBytes(RemoteDirectory));
+                    HB32Response resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, Encoding.UTF8.GetBytes(RemoteDirectory));
                     this.fileClasses = SocketFileInfo.BytesToList(resp.Bytes);
                     this.Dispatcher.Invoke(() => {
                         this.ListViewFile.ItemsSource = this.fileClasses;

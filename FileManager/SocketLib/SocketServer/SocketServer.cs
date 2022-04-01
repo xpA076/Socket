@@ -31,9 +31,9 @@ namespace FileManager.SocketLib.SocketServer
 
         }
 
-        private readonly Dictionary<SocketResponder, SocketSession> ClientSessions = new Dictionary<SocketResponder, SocketSession>();
+        private readonly Dictionary<SocketResponder, SocketSessionInfo> ClientSessions = new Dictionary<SocketResponder, SocketSessionInfo>();
 
-        private readonly Dictionary<string, SocketSession> Sessions = new Dictionary<string, SocketSession>();
+        private readonly Dictionary<string, SocketSessionInfo> Sessions = new Dictionary<string, SocketSessionInfo>();
 
         private readonly ReaderWriterLockSlim SessionLock = new ReaderWriterLockSlim();
 
@@ -53,7 +53,7 @@ namespace FileManager.SocketLib.SocketServer
                 /// 向 Dictionary 添加 SocketResponder 权限;
                 /// 并向 Client 端返回 SocketIdentity
                 responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                SocketSession session;
+                SocketSessionInfo session;
                 string sessid;
                 if (bytes[0] == 0)
                 {
@@ -210,7 +210,7 @@ namespace FileManager.SocketLib.SocketServer
         }
 
 
-        private SocketSession GetSession(string sessid)
+        private SocketSessionInfo GetSession(string sessid)
         {
             try
             {
@@ -236,7 +236,7 @@ namespace FileManager.SocketLib.SocketServer
         {
             try
             {
-                SocketSession session = new SocketSession();
+                SocketSessionInfo session = new SocketSessionInfo();
                 SessionLock.EnterWriteLock();
                 Random rd = new Random();
                 for (int sid = rd.Next(1, 2 << 30 - 1); ; sid = rd.Next(1, 2 << 30 - 1))

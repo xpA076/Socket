@@ -12,7 +12,7 @@ namespace FileManager.SocketLib.SocketServer
     /// <summary>
     /// SocketSession, 调用方负责线程安全
     /// </summary>
-    public class SocketSession
+    public class SocketSessionInfo
     {
         public SocketIdentity Identity = SocketIdentity.None;
 

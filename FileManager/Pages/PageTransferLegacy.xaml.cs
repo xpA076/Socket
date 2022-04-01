@@ -19,6 +19,7 @@ using FileManager.Models;
 using FileManager.ViewModels;
 using FileManager.SocketLib;
 using FileManager.Events;
+using FileManager.Models.TransferLib;
 
 namespace FileManager.Pages
 {
@@ -79,7 +80,7 @@ namespace FileManager.Pages
             if (!IsTransfering) { FTsManager.InitDownload(); }
         }
 
-        public void AddTransferTask(TransferRootInfo rootInfo)
+        public void AddTransferTask(TransferInfoRoot rootInfo)
         {
             // do something
         }
