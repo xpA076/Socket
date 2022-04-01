@@ -10,16 +10,16 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FileManager.Models
+namespace FileManager.Models.TransferLib
 {
-    public class TransferRootInfoQuerier
+    public class TransferInfoRootQuerier
     {
-        private TransferRootInfo RootInfo = null;
+        private TransferInfoRoot RootInfo = null;
 
         private List<DownloadConfirmViewModel> DownloadConfirmViewModels = null;
 
 
-        public TransferRootInfoQuerier(TransferRootInfo rootInfo)
+        public TransferInfoRootQuerier(TransferInfoRoot rootInfo)
         {
             this.RootInfo = rootInfo;
         }
@@ -41,7 +41,7 @@ namespace FileManager.Models
         }
 
         private readonly Stack<int> QueryIndexStack = new Stack<int>();
-        private TransferDirectoryInfo CurrentInfo = null;
+        private TransferInfoDirectory CurrentInfo = null;
 
         private void SetFirstQueryInfo()
         {
@@ -106,24 +106,6 @@ namespace FileManager.Models
                 }
             }
         }
-
-        /*
-        private TransferDirectoryInfo __GetFirstQueryInfo()
-        {
-            if (RootInfo.IsQueryComplete)
-            {
-                return null;
-            }
-            TransferDirectoryInfo dirInfo = RootInfo;
-            while (dirInfo.IsChildrenListBuilt)
-            {
-                dirInfo = dirInfo.FirstUnqueriedChild;
-                //dirInfo = dirInfo.DirectoryChildren[dirInfo.QueryCompleteCount];
-            }
-            return dirInfo;
-        }
-        */
-
 
         /// <summary>
         /// DFS 方式遍历并建立目录树
@@ -244,7 +226,7 @@ namespace FileManager.Models
         /// 若无关联的 ViewModel 会直接跳过
         /// </summary>
         /// <param name="info"></param>
-        private void TryUpdateViewModels(TransferDirectoryInfo info)
+        private void TryUpdateViewModels(TransferInfoDirectory info)
         {
             if (this.DownloadConfirmViewModels != null)
             {
@@ -262,11 +244,11 @@ namespace FileManager.Models
         public List<DownloadConfirmViewModel> LinkDownloadConfirmViewModels()
         {
             this.DownloadConfirmViewModels = new List<DownloadConfirmViewModel>();
-            foreach (TransferDirectoryInfo directoryInfo in this.RootInfo.DirectoryChildren)
+            foreach (TransferInfoDirectory directoryInfo in this.RootInfo.DirectoryChildren)
             {
                 DownloadConfirmViewModels.Add(new DownloadConfirmViewModel(directoryInfo));
             }
-            foreach (TransferFileInfo fileInfo in this.RootInfo.FileChildren)
+            foreach (TransferInfoFile fileInfo in this.RootInfo.FileChildren)
             {
                 DownloadConfirmViewModels.Add(new DownloadConfirmViewModel(fileInfo));
             }

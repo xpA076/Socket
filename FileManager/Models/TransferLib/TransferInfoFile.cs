@@ -6,20 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models
+namespace FileManager.Models.TransferLib
 {
-    public enum TransferStatus : int
-    {
-        Waiting, 
-        Success,
-        //Denied,
-        Failed,
-        Transfering,
-
-    }
-
-
-    public class TransferFileInfo : TransferInfo
+    /// <summary>
+    /// 传输任务的文件信息
+    /// </summary>
+    public class TransferInfoFile : TransferInfo
     {
         public int Priority { get; set; } = 0;
 
@@ -76,14 +68,14 @@ namespace FileManager.Models
         }
 
 
-        public static TransferFileInfo ReadFromFile(FileStream fs)
+        public static TransferInfoFile ReadFromFile(FileStream fs)
         {
             byte[] b_len = new byte[4];
             fs.Read(b_len, 0, 4);
             int len = BitConverter.ToInt32(b_len, 0);
             byte[] bs = new byte[len];
             fs.Read(bs, 0, len);
-            TransferFileInfo info = new TransferFileInfo();
+            TransferInfoFile info = new TransferInfoFile();
             int idx = 0;
             info.Priority = BytesParser.GetInt(bs, ref idx);
             info.Name = BytesParser.GetString(bs, ref idx);

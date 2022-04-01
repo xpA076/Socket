@@ -17,6 +17,7 @@ using System.IO;
 
 using FileManager.Events;
 using FileManager.Models;
+using FileManager.Models.TransferLib;
 using FileManager.ViewModels;
 using FileManager.Static;
 using FileManager.Windows;
@@ -204,7 +205,7 @@ namespace FileManager.Pages
             }
             else
             {
-                TransferRootInfo rootInfo = new TransferRootInfo();
+                TransferInfoRoot rootInfo = new TransferInfoRoot();
                 rootInfo.Route = CurrentRoute.Copy();
                 rootInfo.Rule = new FilterRule();
                 rootInfo.Type = TransferType.Download;
@@ -219,7 +220,7 @@ namespace FileManager.Pages
             }
         }
 
-        private void DownloadConfirm(TransferRootInfo rootInfo)
+        private void DownloadConfirm(TransferInfoRoot rootInfo)
         {
             DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
             downloadConfirmWindow.ListViewTask.ItemsSource = rootInfo.Querier.LinkDownloadConfirmViewModels();

@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using FileManager.Models.TransferLib;
+
 namespace FileManager.ViewModels
 {
     public class DownloadConfirmViewModel : INotifyPropertyChanged
@@ -93,7 +95,7 @@ namespace FileManager.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Size"));
         }
 
-        public DownloadConfirmViewModel(TransferDirectoryInfo directoryInfo)
+        public DownloadConfirmViewModel(TransferInfoDirectory directoryInfo)
         {
             this.isDirectory = true;
             this.name = directoryInfo.Name;
@@ -101,7 +103,7 @@ namespace FileManager.ViewModels
             this.length = -1;
         }
 
-        public DownloadConfirmViewModel(TransferFileInfo fileInfo)
+        public DownloadConfirmViewModel(TransferInfoFile fileInfo)
         {
             this.isDirectory = false;
             this.name = fileInfo.Name;

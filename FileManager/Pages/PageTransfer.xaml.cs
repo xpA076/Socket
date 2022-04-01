@@ -16,6 +16,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using FileManager.Models;
+using FileManager.Models.TransferLib;
 using FileManager.ViewModels;
 using FileManager.SocketLib;
 using FileManager.Events;
@@ -43,11 +44,7 @@ namespace FileManager.Pages
         #region 下载和 UI 相关 private 变量
         private bool showCurrentPercent = true;
         private bool showTotalPercent = true;
-
-
         private readonly ProgressViewModel ProgressView = new ProgressViewModel();
-            
-
         private FileTasksManager FTsManager { get; set; } = new FileTasksManager();
 
         #endregion
@@ -79,7 +76,7 @@ namespace FileManager.Pages
             if (!IsTransfering) { FTsManager.InitDownload(); }
         }
 
-        public void AddTransferTask(TransferRootInfo rootInfo)
+        public void AddTransferTask(TransferInfoRoot rootInfo)
         {
             // do something
         }

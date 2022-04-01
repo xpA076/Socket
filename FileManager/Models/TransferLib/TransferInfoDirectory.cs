@@ -6,9 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models
+namespace FileManager.Models.TransferLib
 {
-    public class TransferDirectoryInfo : TransferInfo
+
+    /// <summary>
+    /// 传输任务的文件夹信息, 同时作为 TransferInfoRoot的父类
+    /// </summary>
+    public class TransferInfoDirectory : TransferInfo
     {
         #region Parameters to be saved
         /// <summary>
@@ -25,9 +29,9 @@ namespace FileManager.Models
         /// </summary>
         public List<bool> TransferCompleteFlags { get; set; } = new List<bool>();
 
-        public List<TransferDirectoryInfo> DirectoryChildren { get; set; } = new List<TransferDirectoryInfo>();
+        public List<TransferInfoDirectory> DirectoryChildren { get; set; } = new List<TransferInfoDirectory>();
 
-        public List<TransferFileInfo> FileChildren { get; set; } = new List<TransferFileInfo>();
+        public List<TransferInfoFile> FileChildren { get; set; } = new List<TransferInfoFile>();
         #endregion
 
         #region Parameters
@@ -61,6 +65,7 @@ namespace FileManager.Models
         public bool IsRoot
         {
             get
+
             {
                 return this.Parent == null;
             }
@@ -129,22 +134,17 @@ namespace FileManager.Models
         */
         #endregion
 
-
-
-
-
-
         /// <summary>
         /// 当前节点构造完成后调用 (当前节点为叶子节点或所有子节点已经过DFS构造完成后)
         /// </summary>
         public void CalculateLength()
         {
             this.Length = 0;
-            foreach (TransferDirectoryInfo info in DirectoryChildren)
+            foreach (TransferInfoDirectory info in DirectoryChildren)
             {
                 Length += info.Length;
             }
-            foreach (TransferFileInfo info in FileChildren)
+            foreach (TransferInfoFile info in FileChildren)
             {
                 Length += info.Length;
             }
@@ -160,7 +160,7 @@ namespace FileManager.Models
             {
                 if (socketFileInfo.IsDirectory)
                 {
-                    TransferDirectoryInfo directoryInfo = new TransferDirectoryInfo();
+                    TransferInfoDirectory directoryInfo = new TransferInfoDirectory();
                     directoryInfo.Name = socketFileInfo.Name;
                     directoryInfo.Length = 0;
                     //directoryInfo.QueryCompleteCount = 0;
@@ -171,7 +171,7 @@ namespace FileManager.Models
                 }
                 else
                 {
-                    TransferFileInfo fileInfo = new TransferFileInfo();
+                    TransferInfoFile fileInfo = new TransferInfoFile();
                     fileInfo.Name = socketFileInfo.Name;
                     fileInfo.Length = socketFileInfo.Length;
                     fileInfo.CreationTimeUtc = socketFileInfo.CreationTimeUtc;
@@ -218,7 +218,7 @@ namespace FileManager.Models
         }
 
 
-        public static TransferDirectoryInfo ReadFromFile(FileStream fs)
+        public static TransferInfoDirectory ReadFromFile(FileStream fs)
         {
             /// 构建当前节点
             byte[] b_len = new byte[4];
@@ -226,7 +226,7 @@ namespace FileManager.Models
             int len = BitConverter.ToInt32(b_len, 0);
             byte[] bs = new byte[len];
             fs.Read(bs, 0, len);
-            TransferDirectoryInfo info_dir = new TransferDirectoryInfo();
+            TransferInfoDirectory info_dir = new TransferInfoDirectory();
             int idx = 0;
             info_dir.Name = BytesParser.GetString(bs, ref idx);
             info_dir.Length = BytesParser.GetLong(bs, ref idx);
@@ -238,7 +238,7 @@ namespace FileManager.Models
             len = BitConverter.ToInt32(b_len, 0);
             for (int i = 0; i < len; ++i)
             {
-                TransferDirectoryInfo info = TransferDirectoryInfo.ReadFromFile(fs);
+                TransferInfoDirectory info = TransferInfoDirectory.ReadFromFile(fs);
                 info.Parent = info_dir;
                 info_dir.DirectoryChildren.Add(info);
             }
@@ -246,7 +246,7 @@ namespace FileManager.Models
             len = BitConverter.ToInt32(b_len, 0);
             for (int i = 0; i < len; ++i)
             {
-                TransferFileInfo info = TransferFileInfo.ReadFromFile(fs);
+                TransferInfoFile info = TransferInfoFile.ReadFromFile(fs);
                 info.Parent = info_dir;
                 info_dir.FileChildren.Add(info);
             }

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models
+namespace FileManager.Models.TransferLib
 {
     /// <summary>
     /// 原计划作为 TransferFileInfo 和 TransferDirectoryInfo 的父类
@@ -19,7 +19,7 @@ namespace FileManager.Models
         /// 区别在于, Root的父节点为空, Directory的父节点不为空
         /// 不得在Root节点中调用 .Root 属性
         /// </summary>
-        public TransferDirectoryInfo Parent { get; set; } = null;
+        public TransferInfoDirectory Parent { get; set; } = null;
 
         /// <summary>
         /// 文件来源路径
@@ -34,17 +34,17 @@ namespace FileManager.Models
 
 
 
-        private TransferRootInfo Root
+        private TransferInfoRoot Root
         {
             get
             {
                 System.Diagnostics.Debug.Assert(this.Parent != null);
-                TransferDirectoryInfo pt = this.Parent;
+                TransferInfoDirectory pt = this.Parent;
                 while (!pt.IsRoot)
                 {
                     pt = pt.Parent;
                 }
-                return pt as TransferRootInfo;
+                return pt as TransferInfoRoot;
             }
         }
 
@@ -57,7 +57,7 @@ namespace FileManager.Models
             get
             {
                 string path = this.Name;
-                TransferDirectoryInfo pt = this.Parent;
+                TransferInfoDirectory pt = this.Parent;
                 while (!pt.IsRoot)
                 {
                     path = pt.Name + "\\" + path;

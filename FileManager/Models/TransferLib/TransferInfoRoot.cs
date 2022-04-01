@@ -8,15 +8,20 @@ using System.Threading.Tasks;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 
-namespace FileManager.Models
+namespace FileManager.Models.TransferLib
 {
-    public class TransferRootInfo : TransferDirectoryInfo
+    /// <summary>
+    /// 添加任务的根节点信息, 为 InfoDirectory 的子类
+    /// 除 Directory 中包含的包括文件目录树外
+    /// 还记录 Server端路由, 过滤规则, 任务路径等信息
+    /// </summary>
+    public class TransferInfoRoot : TransferInfoDirectory
     {
-        public TransferRootInfo()
+        public TransferInfoRoot()
         {
             this.Parent = null;
             this.Name = "";
-            this.Querier = new TransferRootInfoQuerier(this);
+            this.Querier = new TransferInfoRootQuerier(this);
 
         }
 
@@ -50,7 +55,7 @@ namespace FileManager.Models
         #endregion
 
         #region Parameters
-        public TransferRootInfoQuerier Querier = null;
+        public TransferInfoRootQuerier Querier = null;
 
 
         #endregion
@@ -97,7 +102,7 @@ namespace FileManager.Models
             }
         }
 
-        public TransferRootInfo Load(string path)
+        public TransferInfoRoot Load(string path)
         {
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
@@ -114,9 +119,9 @@ namespace FileManager.Models
             }
         }
 
-        private TransferRootInfo _load_211009(FileStream fs)
+        private TransferInfoRoot _load_211009(FileStream fs)
         {
-            TransferRootInfo root = new TransferRootInfo();
+            TransferInfoRoot root = new TransferInfoRoot();
             /// RootInfo
             byte[] b_len = new byte[4];
             fs.Read(b_len, 0, 4);
@@ -144,7 +149,7 @@ namespace FileManager.Models
             len = BitConverter.ToInt32(b_len, 0);
             for (int i = 0; i < len; ++i)
             {
-                TransferDirectoryInfo info = TransferDirectoryInfo.ReadFromFile(fs);
+                TransferInfoDirectory info = TransferInfoDirectory.ReadFromFile(fs);
                 info.Parent = root;
                 root.DirectoryChildren.Add(info);
             }
@@ -152,7 +157,7 @@ namespace FileManager.Models
             len = BitConverter.ToInt32(b_len, 0);
             for (int i = 0; i < len; ++i)
             {
-                TransferFileInfo info = TransferFileInfo.ReadFromFile(fs);
+                TransferInfoFile info = TransferInfoFile.ReadFromFile(fs);
                 info.Parent = root;
                 root.FileChildren.Add(info);
             }
