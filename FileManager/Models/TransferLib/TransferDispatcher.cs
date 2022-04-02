@@ -32,15 +32,17 @@ namespace FileManager.Models.TransferLib
 
 
 
-        private readonly Stack<int> TaskIndexPointer = new Stack<int>();
+        private readonly Stack<int> DirectoryIndexStack = new Stack<int>();
         private TransferInfoDirectory CurentDirectoryInfo = null;
+        private int FileIndex = 0;
+        private bool IsFirstMovePointer = true;
 
         #endregion
 
         public TransferDispatcher(TransferInfoRoot rootInfo)
         {
             RootInfo = rootInfo;
-            //CurentDirectoryInfo = rootInfo;
+            CurentDirectoryInfo = rootInfo;
             TaskDispatcher = new TransferTaskDispatcher(rootInfo);
         }
 
@@ -64,31 +66,16 @@ namespace FileManager.Models.TransferLib
 
         private void DownloadMain()
         {
+            /// todo 在这里确认当前任务已经 Query 完成
+            /// 先不搞异步那些, 对同一个路径的数据通信, 没必要通过异步提升效率
+            /// /todo
+
+            /// --------
+            /// 以文件为单位进行主循环
             while (true)
             {
+                /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
                 if (!MovePointerToFirstFile()) { break; }
-                if (CurentDirectoryInfo == null)
-                {
-                    /// 获取第一个文件
-                    CurentDirectoryInfo = RootInfo;
-                    while (true)
-                    {
-                        if (!Directory.Exists(CurentDirectoryInfo.LocalPath))
-                        {
-                            Directory.CreateDirectory(CurentDirectoryInfo.LocalPath);
-                        }
-
-
-                    }
-
-
-                }
-                else
-                {
-
-                }
-
-
 
 
             }
@@ -98,6 +85,56 @@ namespace FileManager.Models.TransferLib
 
         private bool MovePointerToFirstFile()
         {
+            if (IsFirstMovePointer)
+            {
+                /// 获取第一个文件
+                //CurentDirectoryInfo = RootInfo;
+
+
+            }
+            else
+            {
+                /// 获取下一个文件
+                while (true)
+                {
+                    /// 创建当前目录
+                    if (!Directory.Exists(CurentDirectoryInfo.LocalPath))
+                    {
+                        Directory.CreateDirectory(CurentDirectoryInfo.LocalPath);
+                    }
+                    /// 按顺序尝试进入当前 Directory 的未完成子目录, 若成功则在子目录重复该循环
+                    int c_dirs = CurentDirectoryInfo.DirectoryChildren.Count;
+                    for (int i = 0; i < c_dirs; ++i)
+                    {
+                        if (!CurentDirectoryInfo.TransferCompleteFlags[i])
+                        {
+                            DirectoryIndexStack.Push(i);
+                            CurentDirectoryInfo = CurentDirectoryInfo.DirectoryChildren[i];
+                            continue;
+                        }
+                    }
+                    /// 未成功进入子目录, 则尝试获取子节点中的未完成文件
+                    for (int i = 0; i < CurentDirectoryInfo.FileChildren.Count; ++i)
+                    {
+                        if (!CurentDirectoryInfo.TransferCompleteFlags[i + c_dirs])
+                        {
+                            FileIndex = i;
+                            return true;
+                        }
+                    }
+                    /// 未获取到本级中的未完成文件, 回溯至上级
+
+
+
+
+                }
+
+
+
+
+            }
+
+
 
 
 

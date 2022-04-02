@@ -25,7 +25,7 @@ namespace FileManager.Models.TransferLib
 
 
         /// <summary>
-        /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren 相同
+        /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren + FileChildren 相同
         /// </summary>
         public List<bool> TransferCompleteFlags { get; set; } = new List<bool>();
 
@@ -77,35 +77,13 @@ namespace FileManager.Models.TransferLib
             {
                 if (IsChildrenListBuilt)
                 {
-                    /*
-                    foreach (bool flag in QueryCompleteFlags)
-                    {
-                        if (!flag)
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                    */
-
                     /// 如果是 DFS 按顺序遍历, 这里可以简化成下面这种形式
                     return (DirectoryChildren.Count == 0) || QueryCompleteFlags.Last();
-                    /*
-                    if (DirectoryChildren.Count == 0) 
-                    { 
-                        return true; 
-                    }
-                    else 
-                    { 
-                        return QueryCompleteFlags.Last();
-                    }
-                    */
                 }
                 else
                 {
                     return false;
                 }
-                //return IsChildrenListBuilt && (QueryCompleteCount == DirectoryChildren.Count);
             }
         }
 
@@ -163,8 +141,6 @@ namespace FileManager.Models.TransferLib
                     TransferInfoDirectory directoryInfo = new TransferInfoDirectory();
                     directoryInfo.Name = socketFileInfo.Name;
                     directoryInfo.Length = 0;
-                    //directoryInfo.QueryCompleteCount = 0;
-                    //directoryInfo.TransferCompleteCount = 0;
                     directoryInfo.Parent = this;
                     this.DirectoryChildren.Add(directoryInfo);
                     this.QueryCompleteFlags.Add(false);
@@ -178,6 +154,7 @@ namespace FileManager.Models.TransferLib
                     fileInfo.LastWriteTimeUtc = socketFileInfo.LastWriteTimeUtc;
                     fileInfo.Parent = this;
                     this.FileChildren.Add(fileInfo);
+                    this.QueryCompleteFlags.Add(false);
                 }
             }
             IsChildrenListBuilt = true;

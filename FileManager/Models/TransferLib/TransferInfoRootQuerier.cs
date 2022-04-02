@@ -41,13 +41,13 @@ namespace FileManager.Models.TransferLib
         }
 
         private readonly Stack<int> QueryIndexStack = new Stack<int>();
-        private TransferInfoDirectory CurrentInfo = null;
+        private TransferInfoDirectory CurrentDirectoryInfo = null;
 
         private void SetFirstQueryInfo()
         {
-            CurrentInfo = RootInfo;
+            CurrentDirectoryInfo = RootInfo;
             QueryIndexStack.Clear();
-            while (CurrentInfo.IsChildrenListBuilt)
+            while (CurrentDirectoryInfo.IsChildrenListBuilt)
             {
                 MoveToFirstUnqueriedChild();
             }
@@ -56,47 +56,48 @@ namespace FileManager.Models.TransferLib
         private void MoveToFirstUnqueriedChild()
         {
             int idx;
-            for (idx = 0; idx < CurrentInfo.DirectoryChildren.Count; ++idx)
+            for (idx = 0; idx < CurrentDirectoryInfo.DirectoryChildren.Count; ++idx)
             {
-                if (!CurrentInfo.QueryCompleteFlags[idx])
+                if (!CurrentDirectoryInfo.QueryCompleteFlags[idx])
                 {
                     break;
                 }
             }
             QueryIndexStack.Push(idx);
-            CurrentInfo = CurrentInfo.DirectoryChildren[idx];
+            CurrentDirectoryInfo = CurrentDirectoryInfo.DirectoryChildren[idx];
         }
 
         /// <summary>
         /// 在向 Server 请求构建当前节点后调用, CurrentInfo 会停在DFS回溯后
-        ///   首个具有未完成子节点的位置
+        ///  -> 首个具有未完成子节点的位置
         /// </summary>
         /// <returns>是否构建完成整个目录树</returns>
         private bool TryCompleteParent()
         {
-            /// 当前节点非叶子节点则无需计算Length, 直接返回
-            if (CurrentInfo.DirectoryChildren.Count > 0)
+            /// 当前节点非叶子节点, 下一个循环会进入当前节点的子节点
+            ///  -> 无需计算Length, 直接返回
+            if (CurrentDirectoryInfo.DirectoryChildren.Count > 0)
             {
                 return false;
             }
             while (true)
             {
                 /// 当前节点处理
-                CurrentInfo.CalculateLength();
-                if (CurrentInfo.IsRoot)
+                CurrentDirectoryInfo.CalculateLength();
+                if (CurrentDirectoryInfo.IsRoot)
                 {
                     return true;
                 }
-                if (CurrentInfo.Parent.IsRoot)
+                if (CurrentDirectoryInfo.Parent.IsRoot)
                 {
-                    TryUpdateViewModels(CurrentInfo);
+                    TryUpdateViewModels(CurrentDirectoryInfo);
                 }
                 /// 回溯至上级
                 int child_idx = QueryIndexStack.Pop(); 
-                CurrentInfo = CurrentInfo.Parent;
-                CurrentInfo.QueryCompleteFlags[child_idx] = true;
+                CurrentDirectoryInfo = CurrentDirectoryInfo.Parent;
+                CurrentDirectoryInfo.QueryCompleteFlags[child_idx] = true;
                 /// 循环退出条件
-                if (CurrentInfo.IsQueryComplete)
+                if (CurrentDirectoryInfo.IsQueryComplete)
                 {
                     continue;
                 }
@@ -121,7 +122,7 @@ namespace FileManager.Models.TransferLib
                     break;
                 }
                 //TransferDirectoryInfo currentInfo = __GetFirstQueryInfo();
-                if (CurrentInfo == null)
+                if (CurrentDirectoryInfo == null)
                 {
                     SetFirstQueryInfo();
                 }
@@ -134,57 +135,14 @@ namespace FileManager.Models.TransferLib
                     /// Query 并建立当前子节点
                     HB32Response resp = SocketFactory.Instance.RequestWithHeaderFlag(SocketPacketFlag.DirectoryResponse,
                         new HB32Header(SocketPacketFlag.DirectoryRequest), 
-                        Encoding.UTF8.GetBytes(CurrentInfo.RemotePath));
+                        Encoding.UTF8.GetBytes(CurrentDirectoryInfo.RemotePath));
                     List<SocketFileInfo> respInfos = SocketFileInfo.BytesToList(resp.Bytes);
-                    CurrentInfo.BuildChildrenFrom(respInfos);
+                    CurrentDirectoryInfo.BuildChildrenFrom(respInfos);
                     Thread.Sleep(200);
                     if (TryCompleteParent())
                     {
                         break;
                     }
-
-                    /*
-                    /// 判断当前节点是否为叶子节点 (不再包含子目录, 构造完成并计算 Length)
-                    if (respInfos.Count == 0 || !respInfos[0].IsDirectory)
-                    {
-                        currentInfo.CalculateLength();
-                        /// 向父节点以及可能更高节点反馈其子节点构造完成
-                        TransferDirectoryInfo pt = currentInfo.Parent;
-                        while (true)
-                        {
-                            pt.QueryCompleteCount++;
-                            if (pt.IsQueryComplete)
-                            {
-                                pt.CalculateLength();
-                                if (pt.IsRoot)
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    /// 更新 ViewModel
-                                    if (pt.Parent.IsRoot)
-                                    {
-                                        TryUpdateViewModels(pt);
-                                    }
-                                    else
-                                    {
-                                        ;
-                                    }
-                                    /// 继续返回上级
-                                    pt = pt.Parent;
-                                }
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    */
-
-
-
                 }
                 catch (SocketFlagException ex)
                 {
