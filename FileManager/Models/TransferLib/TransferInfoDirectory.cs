@@ -25,9 +25,15 @@ namespace FileManager.Models.TransferLib
 
 
         /// <summary>
-        /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren + FileChildren 相同
+        /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren 相同
         /// </summary>
-        public List<bool> TransferCompleteFlags { get; set; } = new List<bool>();
+        public List<bool> TransferCompleteDirectories { get; set; } = new List<bool>();
+
+        /// <summary>
+        /// 在 BuildChildrenFrom() 中初始化, 长度和 FileChildren 相同
+        /// </summary>
+        public List<bool> TransferCompleteFiles { get; set; } = new List<bool>();
+
 
         public List<TransferInfoDirectory> DirectoryChildren { get; set; } = new List<TransferInfoDirectory>();
 
@@ -174,7 +180,8 @@ namespace FileManager.Models.TransferLib
             bb.Append(Length);
             bb.Append(IsChildrenListBuilt);
             bb.Append(QueryCompleteFlags);
-            bb.Append(TransferCompleteFlags);
+            bb.Append(TransferCompleteDirectories);
+            bb.Append(TransferCompleteFiles);
             byte[] bs = bb.GetBytes();
             fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
             fs.Write(bs, 0, bs.Length);
@@ -209,7 +216,8 @@ namespace FileManager.Models.TransferLib
             info_dir.Length = BytesParser.GetLong(bs, ref idx);
             info_dir.IsChildrenListBuilt = BytesParser.GetBool(bs, ref idx);
             info_dir.QueryCompleteFlags = BytesParser.GetListBool(bs, ref idx);
-            info_dir.TransferCompleteFlags = BytesParser.GetListBool(bs, ref idx);
+            info_dir.TransferCompleteDirectories = BytesParser.GetListBool(bs, ref idx);
+            info_dir.TransferCompleteFiles = BytesParser.GetListBool(bs, ref idx);
             /// 构建子节点
             fs.Read(b_len, 0, 4);
             len = BitConverter.ToInt32(b_len, 0);

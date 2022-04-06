@@ -7,14 +7,62 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 
 namespace FileManager.SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
     {
+        private void ResponseDownloadFile(SocketResponder responder, byte[] bytes)
+        {
+            DownloadRequest request = DownloadRequest.FromBytes(bytes);
+            if (request.Type == DownloadRequest.RequestType.SmallFile)
+            {
+                // todo: server端对文件大小校验, 保证此时文件为小文件
+                ResponseDownloadSmallFile(responder, request);
+            }
+            else if (request.Type == DownloadRequest.RequestType.LargeFile)
+            {
+                throw new NotImplementedException();
+            }
 
+
+
+
+
+
+        }
+        
+        private void ResponseDownloadSmallFile(SocketResponder responder, DownloadRequest request)
+        {
+            DownloadResponse response = new DownloadResponse();
+            if ((GetIdentity(responder) & SocketIdentity.ReadFile) == 0)
+            {
+                response.Type = DownloadResponse.ResponseType.ResponseException;
+                response.Bytes = Encoding.UTF8.GetBytes("Socket not authenticated");
+            }
+            else
+            {
+                try
+                {
+                    byte[] file_bytes = File.ReadAllBytes(request.ServerPath);
+                    response.Type = DownloadResponse.ResponseType.BytesResponse;
+                    response.Bytes = file_bytes;
+                }
+                catch (Exception ex)
+                {
+                    response.Type = DownloadResponse.ResponseType.ResponseException;
+                    response.Bytes = Encoding.UTF8.GetBytes(ex.Message);
+                }
+            }
+            responder.SendBytes(SocketPacketFlag.DownloadResponse, response.ToBytes());
+        }
+
+
+
+
+        /*
         /// <summary>
         /// 小文件下载响应
         /// client : SocketPacketFlag.DownloadRequest + server 文件路径string -> (UTF-8)bytes
@@ -25,6 +73,7 @@ namespace FileManager.SocketLib.SocketServer
         /// <param name="bytes"></param>
         private void ResponseDownloadSmallFile(SocketResponder responder, byte[] bytes)
         {
+            
             byte[] _bytes = new byte[1];
             string err_msg = "";
             try
@@ -50,6 +99,7 @@ namespace FileManager.SocketLib.SocketServer
             }
                 
         }
+        */
 
         /// <summary>
         /// 小文件上传响应

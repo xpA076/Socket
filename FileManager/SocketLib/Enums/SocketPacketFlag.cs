@@ -55,6 +55,7 @@ namespace FileManager.SocketLib.Enums
         ///     0x2 - packet response
         ///     0x9 - denied
         DownloadRequest = 0x0201,
+        DownloadResponse = 0x220,
         DownloadAllowed = 0x0210,
         DownloadDenied = 0x0290,
         DownloadFileStreamIdRequest = 0x0202,

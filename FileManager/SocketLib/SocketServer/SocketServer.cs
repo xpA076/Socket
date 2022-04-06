@@ -112,7 +112,8 @@ namespace FileManager.SocketLib.SocketServer
 
                             #region Download
                             case SocketPacketFlag.DownloadRequest:
-                                ResponseDownloadSmallFile(responder, bytes);
+                                ResponseDownloadFile(responder, bytes);
+                                //ResponseDownloadSmallFile(responder, bytes);
                                 break;
                             case SocketPacketFlag.DownloadFileStreamIdRequest:
                                 ResponseFileStreamId(responder, header, bytes);

@@ -85,6 +85,9 @@
     <Compile Include="Exceptions\SocketFlagException.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
+    <Compile Include="Models\Serializable\DownloadRequest.cs" />
+    <Compile Include="Models\Serializable\DownloadResponse.cs" />
+    <Compile Include="Models\Serializable\ISocketSerializable.cs" />
     <Compile Include="Models\TransferLib\TransferInfoDirectory.cs" />
     <Compile Include="Models\TransferLib\TransferDiskManager.cs" />
     <Compile Include="Models\TransferLib\TransferInfoFile.cs" />
@@ -141,6 +144,7 @@
     <Compile Include="SocketLib\Models\SocketServerFileStreamInfo.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_DirectoryPart.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_FileTransferPart.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketSession.cs" />
     <Compile Include="SocketLib\SocketServer\SocketSessionInfo.cs" />
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FileManager.Models.Serializable;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Static;
@@ -33,16 +34,15 @@ namespace FileManager.Models.TransferLib
 
 
         private readonly Stack<int> DirectoryIndexStack = new Stack<int>();
-        private TransferInfoDirectory CurentDirectoryInfo = null;
-        private int FileIndex = 0;
-        private bool IsFirstMovePointer = true;
+        private TransferInfoDirectory CurrentDirectoryInfo = null;
+        private int IndexFile = 0;
 
         #endregion
 
         public TransferDispatcher(TransferInfoRoot rootInfo)
         {
             RootInfo = rootInfo;
-            CurentDirectoryInfo = rootInfo;
+            CurrentDirectoryInfo = rootInfo;
             TaskDispatcher = new TransferTaskDispatcher(rootInfo);
         }
 
@@ -56,10 +56,10 @@ namespace FileManager.Models.TransferLib
             IsTransfering = true;
 
             if (RootInfo.Type == TransferType.Download)
-            {
+            { 
                 DownloadMain();
             }
-
+            
 
             IsTransfering = false;
         }
@@ -76,68 +76,105 @@ namespace FileManager.Models.TransferLib
             {
                 /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
                 if (!MovePointerToFirstFile()) { break; }
+                /// 当前任务传输过程
+                TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
+                if (infoFile.Length < Config.SmallFileThreshold)
+                {
+                    DownloadSmallFile(infoFile);
+                }
+                else
+                {
+                    DownloadBigFile(infoFile);
+                }
+                /// 标记当前 File 任务完成
+                CurrentDirectoryInfo.TransferCompleteFiles[IndexFile] = true;
+            }
+        }
 
-
+        public void DownloadSmallFile(TransferInfoFile infoFile)
+        { 
+            DownloadRequest request = new DownloadRequest()
+            {
+                Type = DownloadRequest.RequestType.SmallFile,
+                ServerPath = infoFile.RemotePath
+            };
+            HB32Response hb_response;
+            try
+            {
+                hb_response = SocketFactory.Instance.Request(SocketPacketFlag.DownloadRequest, request.ToBytes());
+            }
+            catch (Exception)
+            {
+                // todo Server端 Socket 通信异常
+                throw new NotImplementedException();
+            }
+            DownloadResponse response = DownloadResponse.FromBytes(hb_response.Bytes);
+            if (response.Type == DownloadResponse.ResponseType.BytesResponse)
+            {
+                File.WriteAllBytes(infoFile.LocalPath, response.Bytes);
+            }
+            else
+            {
+                // todo Server端 返回内部异常 (权限问题等, 无 socket 异常)
+                throw new NotImplementedException();
             }
         }
 
 
+        public void DownloadBigFile(TransferInfoFile infoFile)
+        {
 
+        }
+
+
+
+        /// <summary>
+        /// 从 CurrentDirectoryInfo 开始, DFS查找下一个未传输文件位置
+        /// 并将路径上所有目录上节点 TransferInfoDirectory 正确标注
+        /// </summary>
+        /// <returns>是否成功移动至下一个文件节点, 若返回 false 证明已经全部传输完成</returns>
         private bool MovePointerToFirstFile()
         {
-            if (IsFirstMovePointer)
+            /// 因为保证整个目录树 Query 完成才能开始传输
+            /// 因此调用本函数时, 当前节点的子目录树应该已构建完成, 不考虑目录未构建问题
+            while (true)
             {
-                /// 获取第一个文件
-                //CurentDirectoryInfo = RootInfo;
-
-
-            }
-            else
-            {
-                /// 获取下一个文件
-                while (true)
+                /// 按顺序尝试进入当前 Directory 的未完成子目录, 若成功则在子目录重复该循环
+                for (int i = 0; i < CurrentDirectoryInfo.DirectoryChildren.Count; ++i)
                 {
-                    /// 创建当前目录
-                    if (!Directory.Exists(CurentDirectoryInfo.LocalPath))
+                    if (!CurrentDirectoryInfo.TransferCompleteDirectories[i])
                     {
-                        Directory.CreateDirectory(CurentDirectoryInfo.LocalPath);
-                    }
-                    /// 按顺序尝试进入当前 Directory 的未完成子目录, 若成功则在子目录重复该循环
-                    int c_dirs = CurentDirectoryInfo.DirectoryChildren.Count;
-                    for (int i = 0; i < c_dirs; ++i)
-                    {
-                        if (!CurentDirectoryInfo.TransferCompleteFlags[i])
+                        DirectoryIndexStack.Push(i);
+                        CurrentDirectoryInfo = CurrentDirectoryInfo.DirectoryChildren[i];
+                        /// 若成功进入当前子节点, 先建立文件夹, 而后在子目录中重复循环
+                        if (!Directory.Exists(CurrentDirectoryInfo.LocalPath))
                         {
-                            DirectoryIndexStack.Push(i);
-                            CurentDirectoryInfo = CurentDirectoryInfo.DirectoryChildren[i];
-                            continue;
+                            Directory.CreateDirectory(CurrentDirectoryInfo.LocalPath);
                         }
+                        continue;
                     }
-                    /// 未成功进入子目录, 则尝试获取子节点中的未完成文件
-                    for (int i = 0; i < CurentDirectoryInfo.FileChildren.Count; ++i)
-                    {
-                        if (!CurentDirectoryInfo.TransferCompleteFlags[i + c_dirs])
-                        {
-                            FileIndex = i;
-                            return true;
-                        }
-                    }
-                    /// 未获取到本级中的未完成文件, 回溯至上级
-
-
-
-
                 }
-
-
-
-
+                /// 未成功进入子目录, 则尝试获取子节点中的未完成文件
+                for (int i = 0; i < CurrentDirectoryInfo.FileChildren.Count; ++i)
+                {
+                    if (!CurrentDirectoryInfo.TransferCompleteFiles[i])
+                    {
+                        IndexFile = i;
+                        return true;
+                    }
+                }
+                /// 未获取到本级中的未完成文件
+                ///  if    当前节点为 Root, 说明已经完成所有文件
+                ///  else  回溯至上级, 将上级中本节点标记为完成, 在上级中重复查找 File 节点
+                if (CurrentDirectoryInfo.IsRoot)
+                {
+                    /// 已回溯至 Root 节点, 所有文件已经完成
+                    return false;
+                }
+                int idx = DirectoryIndexStack.Pop();
+                CurrentDirectoryInfo.Parent.TransferCompleteDirectories[idx] = true;
+                CurrentDirectoryInfo = CurrentDirectoryInfo.Parent;
             }
-
-
-
-
-
         }
 
 
