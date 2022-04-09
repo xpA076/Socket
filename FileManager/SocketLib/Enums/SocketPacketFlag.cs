@@ -34,6 +34,12 @@ namespace FileManager.SocketLib.Enums
         AuthenticationResponse = 0xAC10,
         AuthenticationException = 0xAC90,
 
+        /// <summary>
+        /// Mode 0x20 : Session
+        /// </summary>
+        SessionRequest = 0x2001,
+        SessionResponse = 0x2010,
+
 
 
         /// Mode 0x01 : Directory query

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FileManager.Models.Serializable;
+using FileManager.SocketLib.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +18,14 @@ namespace FileManager.SocketLib.SocketServer
         private readonly Dictionary<string, object> Objects = new Dictionary<string, object>();
 
         private readonly ReaderWriterLockSlim ObjectsLock = new ReaderWriterLockSlim();
+
+        /// <summary>
+        /// 这个为确认 session 用的 bytes
+        /// client 端建立新连接 / 设置session内容等情况下会发送
+        /// 头部包含 Index, Identity等信息, 方便确认
+        /// </summary>
+        public SessionBytesInfo BytesInfo = new SessionBytesInfo();
+
 
 
         public void SetSession(string name, object obj)
@@ -65,6 +75,11 @@ namespace FileManager.SocketLib.SocketServer
             }
         }
 
+        public bool IsOutOfTime()
+        {
+            return false;
+
+        }
 
     }
 }

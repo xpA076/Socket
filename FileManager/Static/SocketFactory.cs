@@ -11,6 +11,8 @@ using FileManager.SocketLib.Enums;
 using FileManager.Models;
 using System.Net.Sockets;
 using FileManager.SocketLib.Models;
+using FileManager.Models.Serializable;
+using FileManager.Exceptions;
 
 namespace FileManager.Static
 {
@@ -33,7 +35,9 @@ namespace FileManager.Static
 
 
 
-        private static byte[] SessionBytes = new byte[256];
+        private byte[] SessionBytes = null;
+
+        private ReaderWriterLockSlim SessionBytesLock = new ReaderWriterLockSlim();
 
 
         public ConnectionRoute CurrentRoute { get; set; } = null;
@@ -104,6 +108,17 @@ namespace FileManager.Static
                 client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
             }
+            for (int i = 0; i < 3; ++i)
+            {
+                if (BuildSessionOnce(client))
+                {
+                    return client;
+                }
+            }
+            throw new SocketSessionException();
+
+
+            /*
             /// 获取 socket 权限
             byte[] bytes = new byte[512];
             Array.Copy(SessionBytes, bytes, 256);
@@ -112,7 +127,63 @@ namespace FileManager.Static
             client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out byte[] session_bytes);
             SessionBytes[0] = (byte)session_bytes.Length;
             Array.Copy(session_bytes, 0, SessionBytes, 1, session_bytes.Length);
-            return client;
+            */
+        }
+
+
+        /// <summary>
+        /// 创建 Session 或加入现有 Session
+        /// 仅执行一次并返回是否成功
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
+        private bool BuildSessionOnce(SocketClient client)
+        {
+            SessionBytesLock.EnterWriteLock();
+            try
+            {
+                if (SessionBytes == null)
+                {
+                    /// 未建立过 session, 利用 KeyBytes 建立 session
+                    SessionRequest request = new SessionRequest()
+                    {
+                        Type = SessionRequest.BytesType.KeyBytes,
+                        Bytes = this.SessionBytes,
+                    };
+                    client.SendBytes(SocketPacketFlag.SessionRequest, request.ToBytes());
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
+                    SessionResponse response = SessionResponse.FromBytes(recv_bytes);
+                    SessionBytes = new byte[SessionBytesInfo.BytesLength];
+                    Array.Copy(response.Bytes, SessionBytes, SessionBytesInfo.BytesLength);
+                    return true;
+                }
+                else
+                {
+                    /// 已建立过 session
+                    SessionRequest request = new SessionRequest()
+                    {
+                        Type = SessionRequest.BytesType.SessionBytes,
+                        Bytes = this.SessionBytes,
+                    };
+                    client.SendBytes(SocketPacketFlag.SessionRequest, request.ToBytes());
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
+                    SessionResponse response = SessionResponse.FromBytes(recv_bytes);
+                    if (response.Type == SessionResponse.ResponseType.NoModify)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                }
+            }
+            finally
+            {
+                SessionBytesLock.ExitWriteLock();
+            }
+
         }
 
 
@@ -122,32 +193,45 @@ namespace FileManager.Static
             AsyncConnectForIdentity(CurrentRoute, asyncCallback, exceptionCallback);
         }
 
+        // todo 要改
         public void AsyncConnectForIdentity(ConnectionRoute route, SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
         {
             _ = Task.Run(() =>
             {
                 try
                 {
+                    SocketClient client = GenerateConnectedSocketClient();
+                    client.Close();
+                    asyncCallback.Invoke(null, EventArgs.Empty);
+                }
+                catch (Exception ex)
+                {
+                    exceptionCallback.Invoke(null, new SocketAsyncExceptionEventArgs(ex));
+                }
+                /*
+
+                try
+                {
                     SocketIdentity identity = SocketIdentity.None;
                     SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
-                //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                client.ConnectWithTimeout(Config.BuildConnectionTimeout);
+                    //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+                    client.ConnectWithTimeout(Config.BuildConnectionTimeout);
                     client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
                     if (route.IsNextNodeProxy)
                     {
-                    /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                    client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: 0);
+                        /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
+                        client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: 0);
                         client.ReceiveBytes(out HB32Header header, out byte[] bytes);
                         if (header.Flag != SocketPacketFlag.ProxyResponse)
                         {
-                        // todo 捕获异常方式有问题 : header.I1 为 SeverAddress 时会越界, 应该要改CurrentRoute.ProxyRoute 21.06.04
-                        throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
-                                header.I1, route.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
+                            // todo 捕获异常方式有问题 : header.I1 为 SeverAddress 时会越界, 应该要改CurrentRoute.ProxyRoute 21.06.04
+                            throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
+                                    header.I1, route.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
                         }
                     }
-                /// 获取 socket 权限
-                client.SendBytes(SocketPacketFlag.AuthenticationRequest, Config.KeyBytes);
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out HB32Header auth_header);
+                    /// 获取 socket 权限
+                    client.SendBytes(SocketPacketFlag.SessionRequest, Config.KeyBytes);
+                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.SessionResponse, out HB32Header auth_header);
                     identity = (SocketIdentity)auth_header.I1;
                     client.Close();
                     asyncCallback.Invoke(null, EventArgs.Empty);
@@ -156,6 +240,7 @@ namespace FileManager.Static
                 {
                     exceptionCallback.Invoke(null, new SocketAsyncExceptionEventArgs(ex));
                 }
+                */
             });
         }
 

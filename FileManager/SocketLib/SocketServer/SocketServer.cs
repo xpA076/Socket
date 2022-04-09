@@ -9,6 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using FileManager.Events;
+using FileManager.Exceptions;
+using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 
 
@@ -31,11 +33,11 @@ namespace FileManager.SocketLib.SocketServer
 
         }
 
-        private readonly Dictionary<SocketResponder, SocketSessionInfo> ClientSessions = new Dictionary<SocketResponder, SocketSessionInfo>();
+        //private readonly Dictionary<SocketResponder, SocketSessionInfo> ClientSessions = new Dictionary<SocketResponder, SocketSessionInfo>();
 
-        private readonly Dictionary<string, SocketSessionInfo> Sessions = new Dictionary<string, SocketSessionInfo>();
+        private readonly Dictionary<int, SocketSession> Sessions = new Dictionary<int, SocketSession>();
 
-        private readonly ReaderWriterLockSlim SessionLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim SessionsLock = new ReaderWriterLockSlim();
 
         /// <summary>
         /// 在 Socket.accept() 获取到的 client 在这里处理
@@ -46,42 +48,7 @@ namespace FileManager.SocketLib.SocketServer
         {
             SocketResponder responder = responderObject as SocketResponder;
             responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
-            /// 确认当前连接权限
-            try
-            {
-                /// 接收 KeyBytes, 调用 CheckIdentity();
-                /// 向 Dictionary 添加 SocketResponder 权限;
-                /// 并向 Client 端返回 SocketIdentity
-                responder.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                SocketSessionInfo session;
-                string sessid;
-                if (bytes[0] == 0)
-                {
-                    SocketIdentityCheckEventArgs e = new SocketIdentityCheckEventArgs(header, bytes);
-                    CheckIdentity(this, e);
-                    sessid = CreateNewSession();
-                    session = GetSession(sessid);
-                    session.Identity = e.CheckedIndentity;
-                }
-                else
-                {
-                    sessid = ParseSessionId(bytes);
-                    session = GetSession(sessid);
-                }
-
-                lock (ClientSessions)
-                {
-                    ClientSessions.Add(responder, session);
-                }
-                responder.SendBytes(SocketPacketFlag.AuthenticationResponse, sessid, i1: (int)session.Identity);
-
-            }
-            catch (Exception ex)
-            {
-                Log("Response identity error : " + ex.Message, LogLevel.Error);
-                ClientSessions.Remove(responder);
-                return;
-            }
+            SocketSession session = null;
             /// Server 数据响应主循环
             SocketPacketFlag f = SocketPacketFlag.Null;
             try
@@ -95,6 +62,10 @@ namespace FileManager.SocketLib.SocketServer
                         f = header.Flag;
                         switch (header.Flag)
                         {
+                            case SocketPacketFlag.SessionRequest:
+                                session = ResponseSession(responder, bytes);
+                                break;
+
                             case SocketPacketFlag.DirectoryRequest:
                                 ResponseDirectory(responder, bytes);
                                 break;
@@ -191,73 +162,127 @@ namespace FileManager.SocketLib.SocketServer
                 //Log("Identity authentication exception :" + ex.Message, LogLevel.Error);
                 Log("Unexcepted exception in server [" + f.ToString() + "] : " + ex.Message, LogLevel.Error);
             }
-            ClientSessions.Remove(responder);
         }
 
         #region Session
 
-        
-        private string ParseSessionId(byte[] bytes)
-        {
-            if (bytes[0] == 0)
-            {
-                return null;
-            }
-            else
-            {
-                int len = (int)bytes[0];
-                return Encoding.UTF8.GetString(bytes.Skip(1).Take(len).ToArray());
-            }
-        }
-
-
-        private SocketSessionInfo GetSession(string sessid)
-        {
-            try
-            {
-                SessionLock.EnterReadLock();
-                return Sessions[sessid];
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-            finally
-            {
-                SessionLock.ExitReadLock();
-            }
-        }
-
 
         /// <summary>
-        /// 创建新session
+        /// 在获取 Responder 后, 向 client 端的 session 请求做出响应
         /// </summary>
-        /// <returns> SessionId 字符串 </returns>
-        private string CreateNewSession()
+        /// <param name="responder"></param>
+        /// <returns> server 端新建立的或查找到的 session 对象, 不成功返回 null </returns>
+        private SocketSession ResponseSession(SocketResponder responder, byte[] recv_bytes)
         {
-            try
+            SessionRequest request = SessionRequest.FromBytes(recv_bytes);
+            if (request.Type == SessionRequest.BytesType.KeyBytes)
             {
-                SocketSessionInfo session = new SocketSessionInfo();
-                SessionLock.EnterWriteLock();
-                Random rd = new Random();
-                for (int sid = rd.Next(1, 2 << 30 - 1); ; sid = rd.Next(1, 2 << 30 - 1))
+                SessionsLock.EnterWriteLock();
+                try
                 {
-                    string sessid = sid.ToString();
-                    if (Sessions.ContainsKey(sessid))
+                    SocketSession ss = CreateSession(request.Bytes);
+                    Sessions.Add(ss.BytesInfo.Index, ss);
+                    SessionResponse response = new SessionResponse()
                     {
-                        continue;
+                        Type = SessionResponse.ResponseType.NewSessionBytes,
+                        Bytes = ss.BytesInfo.ToBytes()
+                    };
+                    responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
+                    return ss;
+                }
+                finally
+                {
+                    SessionsLock.ExitWriteLock();
+                }
+            }
+            else if (request.Type == SessionRequest.BytesType.SessionBytes)
+            {
+                SessionsLock.EnterReadLock();
+                try
+                {
+                    SessionBytesInfo sessionBytesInfo = SessionBytesInfo.FromBytes(recv_bytes);
+                    if (Sessions.ContainsKey(sessionBytesInfo.Index))
+                    {
+                        SocketSession ss = Sessions[sessionBytesInfo.Index];
+                        if (sessionBytesInfo.Equals(ss.BytesInfo))
+                        {
+                            /// SessionBytes 校验通过
+                            SessionResponse response = new SessionResponse()
+                            {
+                                Type = SessionResponse.ResponseType.NoModify,
+                                Bytes = new byte[0]
+                            };
+                            responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
+                            return ss;
+                        }
+                        else
+                        {
+                            /// client 和 server 端内容不一致
+                            throw new SocketSessionException("Content mismatch");
+                        }
                     }
                     else
                     {
-                        Sessions.Add(sessid, session);
-                        return sessid;
+                        /// client 和 server 端内容不一致, index 不存在
+                        throw new SocketSessionException("Invalid index");
                     }
                 }
+                catch (SocketSessionException ex)
+                {
+                    SessionResponse response = new SessionResponse()
+                    {
+                        Type = SessionResponse.ResponseType.SessionException,
+                        Bytes = Encoding.UTF8.GetBytes(ex.Message)
+                    };
+                    responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
+                    return null;
+                }
+                finally
+                {
+                    SessionsLock.ExitReadLock();
+                }
             }
-            finally
+            else
             {
-                SessionLock.ExitWriteLock();
+                return null;
             }
+        }
+
+
+
+        private SocketSession CreateSession(byte[] key_bytes)
+        {
+            /// SessionBytesInfo
+            SessionBytesInfo bytes_info = new SessionBytesInfo();
+            bytes_info.Identity = GetIdentity(key_bytes);
+            Random rd = new Random();
+            for (int sid = rd.Next(1, 2 << 30 - 1); ; sid = rd.Next(1, 2 << 30 - 1))
+            {
+                if (Sessions.ContainsKey(sid))
+                {
+                    continue;
+                }
+                else
+                {
+                    bytes_info.Index = sid;
+                    break;
+                }
+            }
+            rd.NextBytes(bytes_info.VerificationBytes);
+
+            /// SocketSession
+            SocketSession ss = new SocketSession();
+            ss.BytesInfo = bytes_info;
+            return ss;
+        }
+
+
+
+
+
+        private SocketIdentity GetIdentity(byte[] KeyBytes)
+        {
+            return SocketIdentity.All;
         }
 
 
@@ -277,26 +302,11 @@ namespace FileManager.SocketLib.SocketServer
             catch (Exception) { }
             finally
             {
-                ClientSessions.Remove(responder);
+                //ClientSessions.Remove(responder);
             }
         }
 
 
-
-        private SocketIdentity GetIdentity(SocketResponder responder)
-        {
-            lock (ClientSessions)
-            {
-                try
-                {
-                    return ClientSessions[responder].Identity;
-                }
-                catch (Exception)
-                {
-                    return SocketIdentity.None;
-                }
-            }
-        }
 
     }
 }

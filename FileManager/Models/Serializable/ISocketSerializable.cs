@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models.Serializable
 {
-    interface ISocketSerializable
+    public interface ISocketSerializable
     {
         byte[] ToBytes();
         void BuildFromBytes(byte[] bytes);
