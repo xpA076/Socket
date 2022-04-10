@@ -115,19 +115,8 @@ namespace FileManager.Static
                     return client;
                 }
             }
+            /// 建立 Session 失败
             throw new SocketSessionException();
-
-
-            /*
-            /// 获取 socket 权限
-            byte[] bytes = new byte[512];
-            Array.Copy(SessionBytes, bytes, 256);
-            Array.Copy(Config.KeyBytes, 0, bytes, 256, 256);
-            client.SendBytes(SocketPacketFlag.AuthenticationRequest, bytes);
-            client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.AuthenticationResponse, out byte[] session_bytes);
-            SessionBytes[0] = (byte)session_bytes.Length;
-            Array.Copy(session_bytes, 0, SessionBytes, 1, session_bytes.Length);
-            */
         }
 
 
@@ -193,7 +182,13 @@ namespace FileManager.Static
             AsyncConnectForIdentity(CurrentRoute, asyncCallback, exceptionCallback);
         }
 
-        // todo 要改
+
+        /// <summary>
+        /// 异步 Connect, 仅用于验证连接
+        /// </summary>
+        /// <param name="route"></param>
+        /// <param name="asyncCallback"></param>
+        /// <param name="exceptionCallback"></param>
         public void AsyncConnectForIdentity(ConnectionRoute route, SocketAsyncCallbackEventHandler asyncCallback, SocketAsyncExceptionEventHandler exceptionCallback)
         {
             _ = Task.Run(() =>

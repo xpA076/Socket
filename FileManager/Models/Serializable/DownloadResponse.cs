@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FileManager.SocketLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,12 +29,17 @@ namespace FileManager.Models.Serializable
 
         public void BuildFromBytes(byte[] bytes)
         {
-            throw new NotImplementedException();
+            int idx = 0;
+            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
+            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
         }
 
         public byte[] ToBytes()
         {
-            throw new NotImplementedException();
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append((int)Type);
+            bb.Append(Bytes);
+            return bb.GetBytes();
         }
     }
 }

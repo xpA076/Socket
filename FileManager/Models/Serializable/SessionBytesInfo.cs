@@ -1,4 +1,5 @@
-﻿using FileManager.SocketLib.Enums;
+﻿using FileManager.SocketLib;
+using FileManager.SocketLib.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace FileManager.Models.Serializable
 
         public SocketIdentity Identity { get; set; }
 
-        public byte[] VerificationBytes { get; set; } = new byte[BytesLength - 8];
+        public byte[] VerificationBytes { get; set; } = new byte[BytesLength - 12]; /// 序列化时, 自身长度也占4字节
 
 
         public override bool Equals(object obj)
@@ -55,12 +56,19 @@ namespace FileManager.Models.Serializable
 
         public void BuildFromBytes(byte[] bytes)
         {
-            throw new NotImplementedException();
+            int idx = 0;
+            this.Index = BytesParser.GetInt(bytes, ref idx);
+            this.Identity = (SocketIdentity)BytesParser.GetInt(bytes, ref idx);
+            this.VerificationBytes = BytesParser.GetBytes(bytes, ref idx);
         }
 
         public byte[] ToBytes()
         {
-            throw new NotImplementedException();
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(this.Index);
+            bb.Append((int)this.Identity);
+            bb.Append(this.VerificationBytes);
+            return bb.GetBytes();
         }
     }
 }

@@ -169,6 +169,7 @@ namespace FileManager.SocketLib.SocketServer
 
         /// <summary>
         /// 在获取 Responder 后, 向 client 端的 session 请求做出响应
+        /// 这里的 session 响应不应改变 SessionBytes, 仅反馈 client 端的 SessionBytes 是否有效
         /// </summary>
         /// <param name="responder"></param>
         /// <returns> server 端新建立的或查找到的 session 对象, 不成功返回 null </returns>
