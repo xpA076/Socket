@@ -75,17 +75,17 @@ namespace FileManager.Models.TransferLib
                 fs.Write(new byte[4] { 0x01, 0x01, 0x01, 0x01 }, 0, 4);
                 /// 写入 Root 节点信息
                 BytesBuilder bb = new BytesBuilder();
-                bb.AppendWithLength(Route.GetBytes());
-                bb.AppendWithLength(Rule.GetBytes());
+                bb.Append(Route.GetBytes());
+                bb.Append(Rule.GetBytes());
                 bb.Append((int)Type);
                 bb.Append(RemoteDirectory);
                 bb.Append(LocalDirectory);
                 bb.Append(Name);
                 bb.Append(Length);
                 bb.Append(IsChildrenListBuilt);
-                bb.Append(QueryCompleteFlags);
-                bb.Append(TransferCompleteDirectories);
-                bb.Append(TransferCompleteFiles);
+                bb.AppendListBool(QueryCompleteFlags);
+                bb.AppendListBool(TransferCompleteDirectories);
+                bb.AppendListBool(TransferCompleteFiles);
                 byte[] bs = bb.GetBytes();
                 fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
                 fs.Write(bs, 0, bs.Length);

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FileManager.SocketLib.Enums;
+using FileManager.Models.Serializable;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,28 +9,13 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-using FileManager.SocketLib.Enums;
+using FileManager.Exceptions;
 
 namespace FileManager.SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
     {
         private Dictionary<int, SocketServerFileStreamInfo> ServerFileSet = new Dictionary<int, SocketServerFileStreamInfo>();
-
-        private void ResponseDirectoryCheck(SocketResponder responder, byte[] bytes)
-        {
-            string path = Encoding.UTF8.GetString(bytes);
-            if (Directory.Exists(path))
-            {
-                responder.SendHeader(SocketPacketFlag.DirectoryResponse);
-            }
-            else
-            {
-                responder.SendHeader(SocketPacketFlag.DirectoryException);
-            }
-        }
-
 
 
         /// <summary>
@@ -40,32 +27,48 @@ namespace FileManager.SocketLib.SocketServer
         /// </summary>
         /// <param name="responder"></param>
         /// <param name="bytes"></param>
-        private void ResponseDirectory(SocketResponder responder, byte[] bytes)
+        private void ResponseDirectory(SocketResponder responder, byte[] bytes, SocketSession session)
         {
-            List<SocketFileInfo> fileClasses = new List<SocketFileInfo>();
-            string err_msg = "";
-            /// get SocketFileInfo[]
             try
             {
-                if ((GetIdentity(responder) & SocketIdentity.ReadFile) == 0)
+                DirectoryRequest request = DirectoryRequest.FromBytes(bytes);
+                if (request.Type == DirectoryRequest.RequestType.Query)
                 {
-                    throw new Exception("Socket not authenticated.");
+                    /// 获取目录下的 SocketFileInfo 列表
+                    if (!session.AllowQuery())
+                    {
+                        throw new AuthenticationException();
+                    }
+                    string path = Encoding.UTF8.GetString(bytes);
+                    List<SocketFileInfo> fileClasses = GetDirectoryAndFiles(path);
+                    DirectoryResponse response = new DirectoryResponse(fileClasses);
+                    responder.SendBytes(SocketPacketFlag.DirectoryResponse, response.ToBytes());
                 }
-                string path = Encoding.UTF8.GetString(bytes);
-                fileClasses = GetDirectoryAndFiles(path);
+                else if (request.Type == DirectoryRequest.RequestType.CreateDirectory)
+                {
+                    if (!session.AllowWriteFile())
+                    {
+                        throw new AuthenticationException();
+                    }
+                    //todo
+                    throw new NotImplementedException();
+                }
+                else
+                {
+                    throw new ServerInternalException();
+                }
             }
-            catch (Exception ex)
+            catch (AuthenticationException)
             {
-                err_msg = "Directory response exception from server: " + ex.Message;
+                string err_msg = "Authentication exception";
+                DirectoryResponse response = new DirectoryResponse(err_msg);
+                responder.SendBytes(SocketPacketFlag.DirectoryResponse, response.ToBytes());
             }
-            /// Send bytes
-            if (string.IsNullOrEmpty(err_msg))
+            catch (ServerInternalException ex)
             {
-                responder.SendBytes(SocketPacketFlag.DirectoryResponse, SocketFileInfo.ListToBytes(fileClasses));
-            }
-            else
-            {
-                responder.SendBytes(SocketPacketFlag.DirectoryException, err_msg);
+                string err_msg = "Directory response exception from server: " + ex.Message;
+                DirectoryResponse response = new DirectoryResponse(err_msg);
+                responder.SendBytes(SocketPacketFlag.DirectoryResponse, response.ToBytes());
             }
         }
 
@@ -74,51 +77,70 @@ namespace FileManager.SocketLib.SocketServer
         // 异常： DirectoryNotFoundException, SecurityException
         private List<SocketFileInfo> GetDirectoryAndFiles(string path)
         {
-            List<SocketFileInfo> list = new List<SocketFileInfo>();
-            if (string.IsNullOrEmpty(path))
+            try
             {
-                foreach (string _path in Config.AllowDirectoryList)
+                List<SocketFileInfo> list = new List<SocketFileInfo>();
+                if (string.IsNullOrEmpty(path))
                 {
-                    if (Directory.Exists(_path))
+                    foreach (string _path in Config.AllowDirectoryList)
                     {
-                        list.Add(new SocketFileInfo { Name = _path, IsDirectory = true });
-                    }
-                }
-                return list;
-            }
-            else
-            {
-                DirectoryInfo directory = new DirectoryInfo(path);
-                FileInfo[] fileInfos = directory.GetFiles();
-                DirectoryInfo[] directoryInfos = directory.GetDirectories();
-                foreach (DirectoryInfo directoryInfo in directoryInfos)
-                {
-                    try
-                    {
-                        list.Add(new SocketFileInfo
+                        if (Directory.Exists(_path))
                         {
-                            Name = directoryInfo.Name,
-                            IsDirectory = true,
+                            list.Add(new SocketFileInfo() 
+                            { 
+                                Name = _path, 
+                                IsDirectory = true,
+                                Length = 0,
+                                CreationTimeUtc = new DateTime(0),
+                                LastWriteTimeUtc = new DateTime(0)
+                            });
+                        }
+                    }
+                    return list;
+                }
+                else
+                {
+                    DirectoryInfo directory = new DirectoryInfo(path);
+                    FileInfo[] fileInfos = directory.GetFiles();
+                    DirectoryInfo[] directoryInfos = directory.GetDirectories();
+                    foreach (DirectoryInfo directoryInfo in directoryInfos)
+                    {
+                        try
+                        {
+                            list.Add(new SocketFileInfo()
+                            {
+                                Name = directoryInfo.Name,
+                                IsDirectory = true,
+                                Length = 0,
+                                CreationTimeUtc = new DateTime(0),
+                                LastWriteTimeUtc = new DateTime(0)
+                            });
+                        }
+                        catch (Exception) {; }
+                    }
+                    foreach (FileInfo fileInfo in fileInfos)
+                    {
+                        list.Add(new SocketFileInfo()
+                        {
+                            Name = fileInfo.Name,
+                            IsDirectory = false,
+                            Length = fileInfo.Length,
+                            CreationTimeUtc = fileInfo.CreationTimeUtc,
+                            LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
                         });
                     }
-                    catch (Exception) {; }
+                    list.Sort(SocketFileInfo.Compare);
+                    return list;
                 }
-                foreach (FileInfo fileInfo in fileInfos)
-                {
-                    list.Add(new SocketFileInfo
-                    {
-                        Name = fileInfo.Name,
-                        IsDirectory = false,
-                        Length = fileInfo.Length,
-                        CreationTimeUtc = fileInfo.CreationTimeUtc,
-                        LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
-                    });
-                }
-                list.Sort(SocketFileInfo.Compare);
-                return list;
             }
+            catch (Exception ex)
+            {
+                throw new ServerInternalException(ex.Message);
+            }
+
         }
 
+        /*
         /// <summary>
         /// 响应client请求文件大小
         /// client : SocketPacketFlag.DirectorySizeRequest + path bytes(UTF-8)
@@ -179,8 +201,9 @@ namespace FileManager.SocketLib.SocketServer
             }
             return size;
         }
+        */
 
-
+        // todo 这个争取不要 22.04.14
         /// <summary>
         /// 响应在server端创建目录请求
         /// client : SocketPacketFlag.CreateDirectoryRequest + (UTF-8)server目录名称

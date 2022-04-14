@@ -39,8 +39,8 @@ namespace FileManager.SocketLib.Enums
         /// </summary>
         SessionRequest = 0x2001,
         SessionResponse = 0x2010,
-        SessionSetRequest = 0x2002,
-        SessionSetResponse = 0x2020,
+        SetSessionRequest = 0x2002,
+        SetSessionResponse = 0x2020,
 
 
 

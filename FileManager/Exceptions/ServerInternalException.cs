@@ -6,25 +6,25 @@ using System.Threading.Tasks;
 
 namespace FileManager.Exceptions
 {
-    /// <summary>
-    /// Server 端查找或建立 session 时的异常
-    /// </summary>
-    public class SocketSessionException : Exception
+    public class ServerInternalException : Exception
     {
         private string _msg = "Default error message";
 
         public override string Message => _msg;
 
-        public SocketSessionException()
+        public ServerInternalException()
         {
-            
+
         }
 
 
-        public SocketSessionException(string msg)
+        public ServerInternalException(string msg)
         {
             _msg = msg;
         }
+
+
+
 
     }
 }

@@ -22,16 +22,10 @@ namespace FileManager.Models.Serializable
 
         public static DownloadResponse FromBytes(byte[] bytes)
         {
-            DownloadResponse response = new DownloadResponse();
-            response.BuildFromBytes(bytes);
-            return response;
-        }
-
-        public void BuildFromBytes(byte[] bytes)
-        {
             int idx = 0;
-            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
-            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
+            DownloadResponse response = new DownloadResponse();
+            response.BuildFromBytes(bytes, ref idx);
+            return response;
         }
 
         public byte[] ToBytes()
@@ -40,6 +34,12 @@ namespace FileManager.Models.Serializable
             bb.Append((int)Type);
             bb.Append(Bytes);
             return bb.GetBytes();
+        }
+
+        public void BuildFromBytes(byte[] bytes, ref int idx)
+        {
+            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
+            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
         }
     }
 }

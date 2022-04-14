@@ -13,6 +13,7 @@ using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Events;
 using FileManager.Exceptions;
+using FileManager.Models.Serializable;
 
 namespace FileManager.Models
 {

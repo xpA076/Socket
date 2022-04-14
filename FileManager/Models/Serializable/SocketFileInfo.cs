@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.SocketLib
+using FileManager.SocketLib;
+
+namespace FileManager.Models.Serializable
 {
-    public class SocketFileInfo
+    public class SocketFileInfo : ISocketSerializable
     {
         public string Name { get; set; } = "";
         public bool IsDirectory { get; set; } = false;
@@ -15,7 +17,6 @@ namespace FileManager.SocketLib
         public DateTime LastWriteTimeUtc { get; set; } = new DateTime(0);
 
 
-        [System.Web.Script.Serialization.ScriptIgnore]
         public string Size
         {
             get
@@ -67,7 +68,6 @@ namespace FileManager.SocketLib
             };
         }
 
-        #region Bytes convertion
 
         /// <summary>
         /// [4-byte List长度] + (List元素bytes)*n
@@ -121,6 +121,7 @@ namespace FileManager.SocketLib
 
         public static SocketFileInfo FromBytes(byte[] bytes, ref int idx)
         {
+            throw new NotImplementedException();
             SocketFileInfo info = new SocketFileInfo();
             info.Name = BytesParser.GetString(bytes, ref idx);
             info.IsDirectory = BytesParser.GetBool(bytes, ref idx);
@@ -130,7 +131,25 @@ namespace FileManager.SocketLib
             return info;
         }
 
-        #endregion
+        public byte[] ToBytes()
+        {
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(this.Name);
+            bb.Append(this.IsDirectory);
+            bb.Append(this.Length);
+            bb.Append(this.CreationTimeUtc);
+            bb.Append(this.LastWriteTimeUtc);
+            return bb.GetBytes();
+        }
+
+        public void BuildFromBytes(byte[] bytes, ref int idx)
+        {
+            this.Name = BytesParser.GetString(bytes, ref idx);
+            this.IsDirectory = BytesParser.GetBool(bytes, ref idx);
+            this.Length = BytesParser.GetLong(bytes, ref idx);
+            this.CreationTimeUtc = BytesParser.GetDateTime(bytes, ref idx);
+            this.LastWriteTimeUtc = BytesParser.GetDateTime(bytes, ref idx);
+        }
 
 
     }

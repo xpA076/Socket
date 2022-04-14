@@ -67,5 +67,19 @@ namespace FileManager.SocketLib
             return flags.ToList<bool>();
         }
 
+        public static List<T> GetListSerializable<T>(byte[] value, ref int startIndex) where T : ISocketSerializable, new()
+        {
+            int len = BitConverter.ToInt32(value, startIndex);
+            startIndex += 4;
+            List<T> slist = new List<T>();
+            for (int i = 0; i < len; ++i)
+            {
+                T t = new T();
+                t.BuildFromBytes(value, ref startIndex);
+                slist.Add(t);
+            }
+            return slist;
+        }
+
     }
 }

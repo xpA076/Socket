@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models.Serializable
 {
+    /// <summary>
+    /// 用于在Socket建立时
+    /// 利用 KeyBytes 创建 session 或利用 SessionBytes 加入现有 session
+    /// </summary>
     public class SessionRequest : ISocketSerializable
     {
         public enum BytesType : int
@@ -19,25 +23,12 @@ namespace FileManager.Models.Serializable
 
         public byte[] Bytes { get; set; } = new byte[0];
 
-        public string Name { get; set; } = "";
-
-        public byte[] InfoBytes { get; set; } = new byte[0];
-
-
         public static SessionRequest FromBytes(byte[] bytes)
         {
-            SessionRequest obj = new SessionRequest();
-            obj.BuildFromBytes(bytes);
-            return obj;
-        }
-
-        public void BuildFromBytes(byte[] bytes)
-        {
             int idx = 0;
-            this.Type = (BytesType)BytesParser.GetInt(bytes, ref idx);
-            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
-            this.Name = BytesParser.GetString(bytes, ref idx);
-            this.InfoBytes = BytesParser.GetBytes(bytes, ref idx);
+            SessionRequest obj = new SessionRequest();
+            obj.BuildFromBytes(bytes, ref idx);
+            return obj;
         }
 
         public byte[] ToBytes()
@@ -45,9 +36,13 @@ namespace FileManager.Models.Serializable
             BytesBuilder bb = new BytesBuilder();
             bb.Append((int)Type);
             bb.Append(Bytes);
-            bb.Append(Name);
-            bb.Append(InfoBytes);
             return bb.GetBytes();
+        }
+
+        public void BuildFromBytes(byte[] bytes, ref int idx)
+        {
+            this.Type = (BytesType)BytesParser.GetInt(bytes, ref idx);
+            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
         }
     }
 }

@@ -43,42 +43,79 @@ namespace FileManager.SocketLib
 
         public void Append(bool value)
         {
-            Append(new byte[1] { value ? (byte)1 : (byte)0 });
+            AppendBytes(new byte[1] { value ? (byte)1 : (byte)0 });
         }
 
         public void Append(int value)
         {
-            Append(BitConverter.GetBytes(value));
+            AppendBytes(BitConverter.GetBytes(value));
         }
 
         public void Append(long value)
         {
-            Append(BitConverter.GetBytes(value));
+            AppendBytes(BitConverter.GetBytes(value));
         }
 
         public void Append(string value)
         {
             Append(Encoding.UTF8.GetByteCount(value));
-            Append(Encoding.UTF8.GetBytes(value));
+            AppendBytes(Encoding.UTF8.GetBytes(value));
         }
 
         public void Append(DateTime value)
         {
-            Append(BitConverter.GetBytes(value.Ticks));
+            AppendBytes(BitConverter.GetBytes(value.Ticks));
         }
 
-        public void Append(List<bool> value)
+        /// <summary>
+        /// 每个 byte 保存一个 bool 信息
+        /// </summary>
+        /// <param name="value"></param>
+        public void AppendListBool(List<bool> value)
         {
             byte[] bytes = new byte[value.Count];
             for (int i = 0; i < value.Count; ++i)
             {
                 bytes[i] = (byte)(value[i] ? 1 : 0);
             }
-            AppendWithLength(bytes);
+            Append(bytes.Length);
+            AppendBytes(bytes);
+        }
+
+        /// <summary>
+        /// 向 byte 流写入前额外先写入 4byte-int 的 bytes 长度
+        /// </summary>
+        /// <param name="bytes"></param>
+        public void Append(byte[] bytes)
+        {
+            Append(bytes.Length);
+            AppendBytes(bytes);
         }
 
 
-        public void Append(byte[] bytes)
+        public void Append<T>(List<T> value) where T : ISocketSerializable
+        {
+            if (value == null)
+            {
+                Append((int)0);
+            }
+            else
+            {
+                Append(value.Count);
+                for (int i = 0; i < value.Count; ++i)
+                {
+                    AppendBytes(value[i].ToBytes());
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 供所有 public 的 Append() 方法调用
+        /// 直接进行 BytesBuilder 字节流的追加写入
+        /// </summary>
+        /// <param name="bytes"></param>
+        private void AppendBytes(byte[] bytes)
         {
             if (bytes.Length == 0)
             {
@@ -92,15 +129,8 @@ namespace FileManager.SocketLib
             _length += bytes.Length;
         }
 
-        /// <summary>
-        /// 向 byte 流写入前额外先写入 4byte-int 的 bytes 长度
-        /// </summary>
-        /// <param name="bytes"></param>
-        public void AppendWithLength(byte[] bytes)
-        {
-            Append(bytes.Length);
-            Append(bytes);
-        }
+
+
 
 
         private void Expand(int min_required_capacity)

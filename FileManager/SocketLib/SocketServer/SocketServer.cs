@@ -67,23 +67,12 @@ namespace FileManager.SocketLib.SocketServer
                                 break;
 
                             case SocketPacketFlag.DirectoryRequest:
-                                ResponseDirectory(responder, bytes);
-                                break;
-                            case SocketPacketFlag.DirectorySizeRequest:
-                                ResponseDirectorySize(responder, bytes);
-                                break;
-
-                            case SocketPacketFlag.DirectoryCheck:
-                                ResponseDirectoryCheck(responder, bytes);
-                                break;
-
-                            case SocketPacketFlag.CreateDirectoryRequest:
-                                ResponseCreateDirectory(responder, bytes);
+                                ResponseDirectory(responder, bytes, session);
                                 break;
 
                             #region Download
                             case SocketPacketFlag.DownloadRequest:
-                                ResponseDownloadFile(responder, bytes);
+                                ResponseDownloadFile(responder, bytes, session);
                                 //ResponseDownloadSmallFile(responder, bytes);
                                 break;
                             case SocketPacketFlag.DownloadFileStreamIdRequest:
@@ -163,131 +152,6 @@ namespace FileManager.SocketLib.SocketServer
                 Log("Unexcepted exception in server [" + f.ToString() + "] : " + ex.Message, LogLevel.Error);
             }
         }
-
-        #region Session
-
-
-        /// <summary>
-        /// 在获取 Responder 后, 向 client 端的 session 请求做出响应
-        /// 这里的 session 响应不应改变 SessionBytes, 仅反馈 client 端的 SessionBytes 是否有效
-        /// </summary>
-        /// <param name="responder"></param>
-        /// <returns> server 端新建立的或查找到的 session 对象, 不成功返回 null </returns>
-        private SocketSession ResponseSession(SocketResponder responder, byte[] recv_bytes)
-        {
-            SessionRequest request = SessionRequest.FromBytes(recv_bytes);
-            if (request.Type == SessionRequest.BytesType.KeyBytes)
-            {
-                SessionsLock.EnterWriteLock();
-                try
-                {
-                    SocketSession ss = CreateSession(request.Bytes);
-                    Sessions.Add(ss.BytesInfo.Index, ss);
-                    SessionResponse response = new SessionResponse()
-                    {
-                        Type = SessionResponse.ResponseType.NewSessionBytes,
-                        Bytes = ss.BytesInfo.ToBytes()
-                    };
-                    responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
-                    return ss;
-                }
-                finally
-                {
-                    SessionsLock.ExitWriteLock();
-                }
-            }
-            else if (request.Type == SessionRequest.BytesType.SessionBytes)
-            {
-                SessionsLock.EnterReadLock();
-                try
-                {
-                    SessionBytesInfo sessionBytesInfo = SessionBytesInfo.FromBytes(recv_bytes);
-                    if (Sessions.ContainsKey(sessionBytesInfo.Index))
-                    {
-                        SocketSession ss = Sessions[sessionBytesInfo.Index];
-                        if (sessionBytesInfo.Equals(ss.BytesInfo))
-                        {
-                            /// SessionBytes 校验通过
-                            SessionResponse response = new SessionResponse()
-                            {
-                                Type = SessionResponse.ResponseType.NoModify,
-                                Bytes = new byte[0]
-                            };
-                            responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
-                            return ss;
-                        }
-                        else
-                        {
-                            /// client 和 server 端内容不一致
-                            throw new SocketSessionException("Content mismatch");
-                        }
-                    }
-                    else
-                    {
-                        /// client 和 server 端内容不一致, index 不存在
-                        throw new SocketSessionException("Invalid index");
-                    }
-                }
-                catch (SocketSessionException ex)
-                {
-                    SessionResponse response = new SessionResponse()
-                    {
-                        Type = SessionResponse.ResponseType.SessionException,
-                        Bytes = Encoding.UTF8.GetBytes(ex.Message)
-                    };
-                    responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
-                    return null;
-                }
-                finally
-                {
-                    SessionsLock.ExitReadLock();
-                }
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-
-
-        private SocketSession CreateSession(byte[] key_bytes)
-        {
-            /// SessionBytesInfo
-            SessionBytesInfo bytes_info = new SessionBytesInfo();
-            bytes_info.Identity = GetIdentity(key_bytes);
-            Random rd = new Random();
-            for (int sid = rd.Next(1, 2 << 30 - 1); ; sid = rd.Next(1, 2 << 30 - 1))
-            {
-                if (Sessions.ContainsKey(sid))
-                {
-                    continue;
-                }
-                else
-                {
-                    bytes_info.Index = sid;
-                    break;
-                }
-            }
-            rd.NextBytes(bytes_info.VerificationBytes);
-
-            /// SocketSession
-            SocketSession ss = new SocketSession();
-            ss.BytesInfo = bytes_info;
-            return ss;
-        }
-
-
-
-
-
-        private SocketIdentity GetIdentity(byte[] KeyBytes)
-        {
-            return SocketIdentity.All;
-        }
-
-
-        #endregion
 
 
 

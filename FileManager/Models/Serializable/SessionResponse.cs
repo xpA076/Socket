@@ -20,18 +20,20 @@ namespace FileManager.Models.Serializable
 
         public byte[] Bytes { get; set; }
 
-        public static SessionResponse FromBytes(byte[] bytes)
+        public string ExceptionMessage
         {
-            SessionResponse obj = new SessionResponse();
-            obj.BuildFromBytes(bytes);
-            return obj;
+            get
+            {
+                return Encoding.UTF8.GetString(Bytes);
+            }
         }
 
-        public void BuildFromBytes(byte[] bytes)
+        public static SessionResponse FromBytes(byte[] bytes)
         {
             int idx = 0;
-            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
-            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
+            SessionResponse obj = new SessionResponse();
+            obj.BuildFromBytes(bytes, ref idx);
+            return obj;
         }
 
         public byte[] ToBytes()
@@ -40,6 +42,12 @@ namespace FileManager.Models.Serializable
             bb.Append((int)Type);
             bb.Append(Bytes);
             return bb.GetBytes();
+        }
+
+        public void BuildFromBytes(byte[] bytes, ref int idx)
+        {
+            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
+            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
         }
     }
 }

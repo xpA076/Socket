@@ -1,5 +1,6 @@
 ﻿using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
+using FileManager.SocketLib.SocketServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,16 +13,15 @@ namespace FileManager.Events
 
     public class SocketIdentityCheckEventArgs : EventArgs
     {
-        public SocketIdentity CheckedIndentity { get; set; } = SocketIdentity.None;
+        public SocketIdentity Identity;
 
-        public readonly HB32Header header;
+        public readonly HB32Header Header;
 
-        public readonly byte[] bytes;
+        public readonly byte[] KeyBytes;
 
-        public SocketIdentityCheckEventArgs(HB32Header header, byte[] bytes)
+        public SocketIdentityCheckEventArgs(byte[] key_bytes)
         {
-            this.header = header;
-            this.bytes = bytes;
+            this.KeyBytes = key_bytes;
         }
     }
 }

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib
 {
+    /// <summary>
+    /// 这个争取不用
+    /// </summary>
     public static class BytesConverter
     {
         public static byte[] Concatenate(byte[] bytes1, byte[] bytes2)

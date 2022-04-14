@@ -82,13 +82,19 @@
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
+    <Compile Include="Exceptions\AuthenticationException.cs" />
+    <Compile Include="Exceptions\ServerInternalException.cs" />
     <Compile Include="Exceptions\SocketFlagException.cs" />
+    <Compile Include="Exceptions\SocketRequestTypeException.cs" />
     <Compile Include="Exceptions\SocketSessionException.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
+    <Compile Include="Models\Serializable\DirectoryRequest.cs" />
+    <Compile Include="Models\Serializable\DirectoryResponse.cs" />
     <Compile Include="Models\Serializable\DownloadRequest.cs" />
     <Compile Include="Models\Serializable\DownloadResponse.cs" />
-    <Compile Include="Models\Serializable\ISocketSerializable.cs" />
+    <Compile Include="Models\Serializable\SetSessionRequest.cs" />
+    <Compile Include="SocketLib\ISocketSerializable.cs" />
     <Compile Include="Models\Serializable\SessionRequest.cs" />
     <Compile Include="Models\Serializable\SessionResponse.cs" />
     <Compile Include="Models\TransferLib\TransferInfoDirectory.cs" />
@@ -131,7 +137,7 @@
     <Compile Include="SocketLib\Models\FilterRule.cs" />
     <Compile Include="SocketLib\Models\RouteNode.cs" />
     <Compile Include="Models\Serializable\SessionBytesInfo.cs" />
-    <Compile Include="SocketLib\Models\SocketFileInfo.cs" />
+    <Compile Include="Models\Serializable\SocketFileInfo.cs" />
     <Compile Include="SocketLib\Models\TCPAddress.cs" />
     <Compile Include="SocketLib\SocketModels\SocketClient.cs" />
     <Compile Include="SocketLib\SocketModels\SocketEndPoint.cs" />
@@ -141,6 +147,7 @@
     <Compile Include="SocketLib\SocketProxy\SocketProxyConfig.cs" />
     <Compile Include="SocketLib\SocketModels\SocketResponder.cs" />
     <Compile Include="SocketLib\SocketModels\SocketSender.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketIdentity.cs" />
     <Compile Include="SocketLib\SocketServer\SocketReversedServer.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServerBase.cs" />
@@ -148,6 +155,7 @@
     <Compile Include="SocketLib\Models\SocketServerFileStreamInfo.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_DirectoryPart.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer_FileTransferPart.cs" />
+    <Compile Include="SocketLib\SocketServer\SocketServer_SessionPart.cs" />
     <Compile Include="SocketLib\SocketServer\SocketSession.cs" />
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />

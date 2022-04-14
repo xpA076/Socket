@@ -14,13 +14,13 @@ namespace FileManager.SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
     {
-        private void ResponseDownloadFile(SocketResponder responder, byte[] bytes)
+        private void ResponseDownloadFile(SocketResponder responder, byte[] bytes, SocketSession session)
         {
             DownloadRequest request = DownloadRequest.FromBytes(bytes);
             if (request.Type == DownloadRequest.RequestType.SmallFile)
             {
                 // todo: server端对文件大小校验, 保证此时文件为小文件
-                ResponseDownloadSmallFile(responder, request);
+                ResponseDownloadSmallFile(responder, request, session);
             }
             else if (request.Type == DownloadRequest.RequestType.LargeFile)
             {
@@ -34,10 +34,10 @@ namespace FileManager.SocketLib.SocketServer
 
         }
         
-        private void ResponseDownloadSmallFile(SocketResponder responder, DownloadRequest request)
+        private void ResponseDownloadSmallFile(SocketResponder responder, DownloadRequest request, SocketSession session)
         {
             DownloadResponse response = new DownloadResponse();
-            if ((GetIdentity(responder) & SocketIdentity.ReadFile) == 0)
+            if (session.AllowReadFile())
             {
                 response.Type = DownloadResponse.ResponseType.ResponseException;
                 response.Bytes = Encoding.UTF8.GetBytes("Socket not authenticated");

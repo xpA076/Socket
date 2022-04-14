@@ -84,7 +84,7 @@ namespace FileManager.Pages
 
         private void CheckIdentity(object sender, SocketIdentityCheckEventArgs e)
         {
-            e.CheckedIndentity = SocketLib.Enums.SocketIdentity.All;
+            e.Identity = SocketIdentity.All;
         }
 
 

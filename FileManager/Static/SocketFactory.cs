@@ -39,8 +39,30 @@ namespace FileManager.Static
 
         private ReaderWriterLockSlim SessionBytesLock = new ReaderWriterLockSlim();
 
-
         public ConnectionRoute CurrentRoute { get; set; } = null;
+
+        private SocketClient _client = null;
+
+        private readonly object ClientLock = new object();
+
+        private SocketClient Client
+        {
+            get
+            {
+                if (_client == null)
+                {
+                    _client = GenerateConnectedSocketClient();
+                }
+                return _client;
+            }
+            set
+            {
+                _client = value;
+            }
+        }
+
+
+
 
 
 
@@ -108,7 +130,7 @@ namespace FileManager.Static
                 client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
                 client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
             }
-            for (int i = 0; i < 3; ++i)
+            for (int i = 0; i < 2; ++i)
             {
                 if (BuildSessionOnce(client))
                 {
@@ -240,7 +262,7 @@ namespace FileManager.Static
         }
 
 
-        public HB32Response Request(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        private HB32Response Request(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, Encoding.UTF8.GetBytes(str));
         }
@@ -254,12 +276,22 @@ namespace FileManager.Static
 
         public HB32Response Request(HB32Header header, byte[] bytes)
         {
-            SocketClient client = GenerateConnectedSocketClient();
-            client.SendBytes(header, bytes);
-            client.ReceiveBytes(out HB32Header h, out byte[] bs);
-            client.Close();
-            return new HB32Response(h, bs);
+            lock (ClientLock)
+            {
+                try
+                {
+                    Client.SendBytes(header, bytes);
+                    Client.ReceiveBytes(out HB32Header h, out byte[] bs);
+                    return new HB32Response(h, bs);
+                }
+                catch (Exception ex)
+                {
+                    Client = null;
+                    throw ex;
+                }
+            }
         }
+
 
         public HB32Response RequestWithHeaderFlag(SocketPacketFlag requiredFlag, HB32Header header, byte[] bytes)
         {

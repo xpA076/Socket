@@ -1,10 +1,12 @@
-﻿using FileManager.SocketLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using FileManager.SocketLib;
+using FileManager.Models.Serializable;
 
 namespace FileManager.Models.TransferLib
 {
@@ -179,9 +181,9 @@ namespace FileManager.Models.TransferLib
             bb.Append(Name);
             bb.Append(Length);
             bb.Append(IsChildrenListBuilt);
-            bb.Append(QueryCompleteFlags);
-            bb.Append(TransferCompleteDirectories);
-            bb.Append(TransferCompleteFiles);
+            bb.AppendListBool(QueryCompleteFlags);
+            bb.AppendListBool(TransferCompleteDirectories);
+            bb.AppendListBool(TransferCompleteFiles);
             byte[] bs = bb.GetBytes();
             fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
             fs.Write(bs, 0, bs.Length);

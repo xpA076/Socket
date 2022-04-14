@@ -24,6 +24,7 @@ using FileManager.Windows;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Exceptions;
+using FileManager.Models.Serializable;
 
 namespace FileManager.Pages
 {
@@ -128,13 +129,24 @@ namespace FileManager.Pages
         {
             try
             {
-                string s = e.Path;
-                var resp = SocketFactory.Instance.Request(new HB32Header { Flag = SocketPacketFlag.DirectoryCheck }, Encoding.UTF8.GetBytes(e.Path));
+                DirectoryRequest request = new DirectoryRequest(e.Path);
+                HB32Response hb_resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, request.ToBytes());
+                DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
+                if (response.Type != DirectoryResponse.ResponseType.ListResponse)
+                {
+                    throw new ServerInternalException(response.ExceptionMessage);
+                }
+                e.IsPathValid = true;
+
+
+                /*
+                var resp = SocketFactory.Instance.Request(new HB32Header { Flag = SocketPacketFlag.DirectoryRequest }, Encoding.UTF8.GetBytes(e.Path));
                 if (resp.Header.Flag != SocketPacketFlag.DirectoryResponse)
                 {
                     throw new SocketFlagException();
                 }
                 e.IsPathValid = true;
+                */
             }
             catch (Exception)
             {
@@ -338,8 +350,14 @@ namespace FileManager.Pages
                 try
                 {
                     Logger.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
-                    HB32Response resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, Encoding.UTF8.GetBytes(RemoteDirectory));
-                    this.fileClasses = SocketFileInfo.BytesToList(resp.Bytes);
+                    DirectoryRequest request = new DirectoryRequest(RemoteDirectory);
+                    HB32Response hb_resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, request.ToBytes());
+                    DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
+                    if (response.Type != DirectoryResponse.ResponseType.ListResponse)
+                    {
+                        throw new ServerInternalException(response.ExceptionMessage);
+                    }
+                    this.fileClasses = response.FileInfos;
                     this.Dispatcher.Invoke(() => {
                         this.ListViewFile.ItemsSource = this.fileClasses;
                         this.TextRemoteDirectory.Text = RemoteDirectory;

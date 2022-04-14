@@ -3,12 +3,15 @@ using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Static;
 using FileManager.ViewModels;
+using FileManager.Models.Serializable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+
 
 namespace FileManager.Models.TransferLib
 {
@@ -133,11 +136,21 @@ namespace FileManager.Models.TransferLib
                 try
                 {
                     /// Query 并建立当前子节点
+                    DirectoryRequest request = new DirectoryRequest(CurrentDirectoryInfo.RemotePath);
+                    HB32Response hb_resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, request.ToBytes());
+                    DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
+                    if (response.Type != DirectoryResponse.ResponseType.ListResponse)
+                    {
+                        throw new ServerInternalException(response.ExceptionMessage);
+                    }
+                    CurrentDirectoryInfo.BuildChildrenFrom(response.FileInfos);
+                    /*
                     HB32Response resp = SocketFactory.Instance.RequestWithHeaderFlag(SocketPacketFlag.DirectoryResponse,
                         new HB32Header(SocketPacketFlag.DirectoryRequest), 
                         Encoding.UTF8.GetBytes(CurrentDirectoryInfo.RemotePath));
                     List<SocketFileInfo> respInfos = SocketFileInfo.BytesToList(resp.Bytes);
                     CurrentDirectoryInfo.BuildChildrenFrom(respInfos);
+                    */
                     Thread.Sleep(200);
                     if (TryCompleteParent())
                     {

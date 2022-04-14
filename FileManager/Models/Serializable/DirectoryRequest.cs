@@ -7,23 +7,32 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models.Serializable
 {
-    public class DownloadRequest : ISocketSerializable
+    public class DirectoryRequest : ISocketSerializable
     {
         public enum RequestType : int
         {
-            SmallFile,
-            LargeFile
+            Query,
+            CreateDirectory,
         }
 
         public RequestType Type { get; set; }
 
         public string ServerPath { get; set; }
 
+        public DirectoryRequest()
+        {
 
-        public static DownloadRequest FromBytes(byte[] bytes)
+        }
+
+        public DirectoryRequest(string server_path)
+        {
+            ServerPath = server_path;
+        }
+
+        public static DirectoryRequest FromBytes(byte[] bytes)
         {
             int idx = 0;
-            DownloadRequest obj = new DownloadRequest();
+            DirectoryRequest obj = new DirectoryRequest();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;
         }

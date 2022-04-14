@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 
 namespace FileManager.Exceptions
 {
+    /// <summary>
+    /// Receive 的 SocketPacketFlag 与预期不符
+    /// 正想办法可否用 Response 类中的内容代替 22.04.14
+    /// </summary>
     public class SocketFlagException : Exception
     {
         public SocketPacketFlag RequiredFlag { get; set; } = SocketPacketFlag.None;
