@@ -127,8 +127,8 @@ namespace FileManager.Static
             if (route.IsNextNodeProxy)
             {
                 /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
-                client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.ProxyResponse);
+                client.SendBytes(HB32Packet.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
+                client.ReceiveBytesWithHeaderFlag(HB32Packet.ProxyResponse);
             }
             for (int i = 0; i < 2; ++i)
             {
@@ -159,10 +159,10 @@ namespace FileManager.Static
                     SessionRequest request = new SessionRequest()
                     {
                         Type = SessionRequest.BytesType.KeyBytes,
-                        Bytes = this.SessionBytes,
+                        Bytes = Config.KeyBytes,
                     };
-                    client.SendBytes(SocketPacketFlag.SessionRequest, request.ToBytes());
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
+                    client.SendBytes(HB32Packet.SessionRequest, request.ToBytes());
+                    client.ReceiveBytesWithHeaderFlag(HB32Packet.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
                     SessionResponse response = SessionResponse.FromBytes(recv_bytes);
                     SessionBytes = new byte[SessionBytesInfo.BytesLength];
                     Array.Copy(response.Bytes, SessionBytes, SessionBytesInfo.BytesLength);
@@ -176,8 +176,8 @@ namespace FileManager.Static
                         Type = SessionRequest.BytesType.SessionBytes,
                         Bytes = this.SessionBytes,
                     };
-                    client.SendBytes(SocketPacketFlag.SessionRequest, request.ToBytes());
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
+                    client.SendBytes(HB32Packet.SessionRequest, request.ToBytes());
+                    client.ReceiveBytesWithHeaderFlag(HB32Packet.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
                     SessionResponse response = SessionResponse.FromBytes(recv_bytes);
                     if (response.Type == SessionResponse.ResponseType.NoModify)
                     {
@@ -262,13 +262,13 @@ namespace FileManager.Static
         }
 
 
-        private HB32Response Request(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        private HB32Response Request(HB32Packet flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, Encoding.UTF8.GetBytes(str));
         }
 
 
-        public HB32Response Request(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public HB32Response Request(HB32Packet flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, bytes);
         }
@@ -293,7 +293,7 @@ namespace FileManager.Static
         }
 
 
-        public HB32Response RequestWithHeaderFlag(SocketPacketFlag requiredFlag, HB32Header header, byte[] bytes)
+        public HB32Response RequestWithHeaderFlag(HB32Packet requiredFlag, HB32Header header, byte[] bytes)
         {
             SocketClient client = GenerateConnectedSocketClient();
             client.SendBytes(header, bytes);

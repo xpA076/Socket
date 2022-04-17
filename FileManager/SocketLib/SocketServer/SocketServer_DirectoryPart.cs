@@ -39,10 +39,9 @@ namespace FileManager.SocketLib.SocketServer
                     {
                         throw new AuthenticationException();
                     }
-                    string path = Encoding.UTF8.GetString(bytes);
-                    List<SocketFileInfo> fileClasses = GetDirectoryAndFiles(path);
+                    List<SocketFileInfo> fileClasses = GetDirectoryAndFiles(request.ServerPath);
                     DirectoryResponse response = new DirectoryResponse(fileClasses);
-                    responder.SendBytes(SocketPacketFlag.DirectoryResponse, response.ToBytes());
+                    responder.SendBytes(HB32Packet.DirectoryResponse, response.ToBytes());
                 }
                 else if (request.Type == DirectoryRequest.RequestType.CreateDirectory)
                 {
@@ -62,13 +61,13 @@ namespace FileManager.SocketLib.SocketServer
             {
                 string err_msg = "Authentication exception";
                 DirectoryResponse response = new DirectoryResponse(err_msg);
-                responder.SendBytes(SocketPacketFlag.DirectoryResponse, response.ToBytes());
+                responder.SendBytes(HB32Packet.DirectoryResponse, response.ToBytes());
             }
             catch (ServerInternalException ex)
             {
                 string err_msg = "Directory response exception from server: " + ex.Message;
                 DirectoryResponse response = new DirectoryResponse(err_msg);
-                responder.SendBytes(SocketPacketFlag.DirectoryResponse, response.ToBytes());
+                responder.SendBytes(HB32Packet.DirectoryResponse, response.ToBytes());
             }
         }
 
@@ -230,11 +229,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(SocketPacketFlag.CreateDirectoryAllowed, new byte[1]);
+                responder.SendBytes(HB32Packet.CreateDirectoryAllowed, new byte[1]);
             }
             else
             {
-                responder.SendBytes(SocketPacketFlag.CreateDirectoryDenied, err_msg);
+                responder.SendBytes(HB32Packet.CreateDirectoryDenied, err_msg);
             }
         }
         

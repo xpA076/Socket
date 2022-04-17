@@ -1,4 +1,5 @@
-﻿using FileManager.SocketLib;
+﻿using FileManager.Exceptions;
+using FileManager.SocketLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,14 @@ namespace FileManager.Models.Serializable
         {
             get
             {
-                return Encoding.UTF8.GetString(AdditionalBytes);
+                if (Type == ResponseType.ResponseException)
+                {
+                    return Encoding.UTF8.GetString(AdditionalBytes);
+                }
+                else
+                {
+                    throw new SocketTypeException(ResponseType.ResponseException, Type);
+                }
             }
         }
 

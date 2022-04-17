@@ -35,6 +35,8 @@ namespace FileManager.SocketLib.SocketServer
 
         //private readonly Dictionary<SocketResponder, SocketSessionInfo> ClientSessions = new Dictionary<SocketResponder, SocketSessionInfo>();
 
+
+
         private readonly Dictionary<int, SocketSession> Sessions = new Dictionary<int, SocketSession>();
 
         private readonly ReaderWriterLockSlim SessionsLock = new ReaderWriterLockSlim();
@@ -50,7 +52,7 @@ namespace FileManager.SocketLib.SocketServer
             responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
             SocketSession session = null;
             /// Server 数据响应主循环
-            SocketPacketFlag f = SocketPacketFlag.Null;
+            HB32Packet f = HB32Packet.Null;
             try
             {
                 int error_count = 0;
@@ -62,41 +64,46 @@ namespace FileManager.SocketLib.SocketServer
                         f = header.Flag;
                         switch (header.Flag)
                         {
-                            case SocketPacketFlag.SessionRequest:
+                            case HB32Packet.SessionRequest:
                                 session = ResponseSession(responder, bytes);
                                 break;
 
-                            case SocketPacketFlag.DirectoryRequest:
+                            case HB32Packet.DirectoryRequest:
                                 ResponseDirectory(responder, bytes, session);
                                 break;
 
+                            case HB32Packet.FileRequest:
+                                ResponseFileRequest(responder, bytes, session);
+                                break;
+
+
                             #region Download
-                            case SocketPacketFlag.DownloadRequest:
+                            case HB32Packet.DownloadRequest:
                                 ResponseDownloadFile(responder, bytes, session);
                                 //ResponseDownloadSmallFile(responder, bytes);
                                 break;
-                            case SocketPacketFlag.DownloadFileStreamIdRequest:
+                            case HB32Packet.DownloadFileStreamIdRequest:
                                 ResponseFileStreamId(responder, header, bytes);
                                 break;
-                            case SocketPacketFlag.DownloadPacketRequest:
+                            case HB32Packet.DownloadPacketRequest:
                                 ResponseTransferPacket(responder, header, bytes);
                                 break;
                             #endregion
 
                             #region Upload
-                            case SocketPacketFlag.UploadRequest:
+                            case HB32Packet.UploadRequest:
                                 ResponseUploadSmallFile(responder, bytes);
                                 break;
-                            case SocketPacketFlag.UploadFileStreamIdRequest:
+                            case HB32Packet.UploadFileStreamIdRequest:
                                 ResponseFileStreamId(responder, header, bytes);
                                 break;
-                            case SocketPacketFlag.UploadPacketRequest:
+                            case HB32Packet.UploadPacketRequest:
                                 ResponseTransferPacket(responder, header, bytes);
                                 break;
                             #endregion
 
 
-                            case SocketPacketFlag.DisconnectRequest:
+                            case HB32Packet.DisconnectRequest:
                                 DisposeClient(responder);
                                 return;
                             default:

@@ -220,11 +220,13 @@ namespace FileManager.Static
                 SocketSendTimeout = int.Parse(settings.Element("SocketSendTimeout").Value);
                 SocketReceiveTimeout = int.Parse(settings.Element("SocketReceiveTimeout").Value);
 
+                /*
                 try
                 {
                     UseLegacyFileInfo = bool.Parse(settings.Element("UseLegacyFileInfo").Value);
                 }
                 catch (Exception) {; }
+                */
             }
             catch (Exception)
             {

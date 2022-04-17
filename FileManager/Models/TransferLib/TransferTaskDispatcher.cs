@@ -71,12 +71,15 @@ namespace FileManager.Models.TransferLib
 
         private int GetIndexByCurrentId()
         {
-
+            //todo
+            return 0;
         }
 
 
         public TransferTaskBlock GetNewTask()
         {
+            //todo
+            return null;
             try
             {
                 Monitor.Enter(CurrentTask);

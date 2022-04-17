@@ -53,9 +53,9 @@ namespace FileManager.SocketLib
                     LongConnectSender.SetTimeout(LongConnectionTimeout, LongConnectionTimeout);
                     if (CurrentRoute.IsNextNodeProxy)
                     {
-                        LongConnectSender.SendBytes(SocketPacketFlag.ReversedProxyLongConnectionRequest, CurrentRoute.GetBytes(node_start_index: 1));
+                        LongConnectSender.SendBytes(HB32Packet.ReversedProxyLongConnectionRequest, CurrentRoute.GetBytes(node_start_index: 1));
                         LongConnectSender.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                        if (header.Flag != SocketPacketFlag.ProxyResponse)
+                        if (header.Flag != HB32Packet.ProxyResponse)
                         {
                             throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
                                 header.I1, CurrentRoute.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
@@ -80,7 +80,7 @@ namespace FileManager.SocketLib
                 HB32Header query_header;
                 try
                 {
-                    LongConnectSender.SendHeader(SocketPacketFlag.ReverserProxyLongConnectionQuery);
+                    LongConnectSender.SendHeader(HB32Packet.ReverserProxyLongConnectionQuery);
                     LongConnectSender.ReceiveBytes(out query_header, out _);
                 }
                 catch(Exception ex)
@@ -98,9 +98,9 @@ namespace FileManager.SocketLib
                         responder.SetTimeout(DefaultSendTimeout, DefaultReceiveTimeout);
                         if (CurrentRoute.IsNextNodeProxy)
                         {
-                            responder.SendBytes(SocketPacketFlag.ReversedProxyConnectionRequest, CurrentRoute.GetBytes(node_start_index: 1), i1: 0);
+                            responder.SendBytes(HB32Packet.ReversedProxyConnectionRequest, CurrentRoute.GetBytes(node_start_index: 1), i1: 0);
                             LongConnectSender.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                            if (header.Flag != SocketPacketFlag.ProxyResponse)
+                            if (header.Flag != HB32Packet.ProxyResponse)
                             {
                                 throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
                                     header.I1, CurrentRoute.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));

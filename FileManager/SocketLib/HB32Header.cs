@@ -14,9 +14,9 @@ namespace FileManager.SocketLib
     /// </summary>
     public class HB32Header
     {
-        public SocketPacketFlag Flag
+        public HB32Packet Flag
         {
-            get { return (SocketPacketFlag)GetInt(0); }
+            get { return (HB32Packet)GetInt(0); }
             set { WriteInt(0, (int)value); }
         }
         public int I1
@@ -67,7 +67,7 @@ namespace FileManager.SocketLib
             Array.Copy(bytes, _bytes, 32);
         }
 
-        public HB32Header(SocketPacketFlag flag)
+        public HB32Header(HB32Packet flag)
         {
             Flag = flag;
         }

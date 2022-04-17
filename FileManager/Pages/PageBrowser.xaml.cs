@@ -130,7 +130,7 @@ namespace FileManager.Pages
             try
             {
                 DirectoryRequest request = new DirectoryRequest(e.Path);
-                HB32Response hb_resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, request.ToBytes());
+                HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
                 DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
                 if (response.Type != DirectoryResponse.ResponseType.ListResponse)
                 {
@@ -351,7 +351,7 @@ namespace FileManager.Pages
                 {
                     Logger.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
                     DirectoryRequest request = new DirectoryRequest(RemoteDirectory);
-                    HB32Response hb_resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, request.ToBytes());
+                    HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
                     DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
                     if (response.Type != DirectoryResponse.ResponseType.ListResponse)
                     {

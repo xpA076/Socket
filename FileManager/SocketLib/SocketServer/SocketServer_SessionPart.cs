@@ -34,7 +34,7 @@ namespace FileManager.SocketLib.SocketServer
                         Type = SessionResponse.ResponseType.NewSessionBytes,
                         Bytes = ss.BytesInfo.ToBytes()
                     };
-                    responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
+                    responder.SendBytes(HB32Packet.SessionResponse, response.ToBytes());
                     return ss;
                 }
                 finally
@@ -47,7 +47,7 @@ namespace FileManager.SocketLib.SocketServer
                 SessionsLock.EnterReadLock();
                 try
                 {
-                    SessionBytesInfo sessionBytesInfo = SessionBytesInfo.FromBytes(bytes);
+                    SessionBytesInfo sessionBytesInfo = SessionBytesInfo.FromBytes(request.);
                     if (Sessions.ContainsKey(sessionBytesInfo.Index))
                     {
                         SocketSession ss = Sessions[sessionBytesInfo.Index];
@@ -59,7 +59,7 @@ namespace FileManager.SocketLib.SocketServer
                                 Type = SessionResponse.ResponseType.NoModify,
                                 Bytes = new byte[0]
                             };
-                            responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
+                            responder.SendBytes(HB32Packet.SessionResponse, response.ToBytes());
                             return ss;
                         }
                         else
@@ -81,7 +81,7 @@ namespace FileManager.SocketLib.SocketServer
                         Type = SessionResponse.ResponseType.SessionException,
                         Bytes = Encoding.UTF8.GetBytes(ex.Message)
                     };
-                    responder.SendBytes(SocketPacketFlag.SessionResponse, response.ToBytes());
+                    responder.SendBytes(HB32Packet.SessionResponse, response.ToBytes());
                     return null;
                 }
                 finally
@@ -133,33 +133,6 @@ namespace FileManager.SocketLib.SocketServer
             return e.Identity;
         }
         */
-
-
-        private void ResponseSetSession(SocketResponder responder, byte[] bytes, SocketSession session)
-        {
-            try
-            {
-                SetSessionRequest request = SetSessionRequest.FromBytes(bytes);
-                switch (request.Type)
-                {
-                    case SetSessionRequest.RequestType.FileReadOpen:
-                        ResponseSetSessionForFileReadOpen(responder, request.Bytes, session);
-                        break;
-                    default:
-                        throw new ServerInternalException("Invalid SetSession Type");
-                }
-
-            }
-            catch (ServerInternalException ex)
-            {
-
-            }
-        }
-
-        private void ResponseSetSessionForFileReadOpen(SocketResponder responder, byte[] request_bytes, SocketSession session)
-        {
-
-        }
 
 
 

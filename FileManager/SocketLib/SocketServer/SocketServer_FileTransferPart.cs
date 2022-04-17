@@ -14,6 +14,17 @@ namespace FileManager.SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
     {
+        private void ResponseFileRequest(SocketResponder responder, byte[] bytes, SocketSession session)
+        {
+            FileRequest request = FileRequest.FromBytes(bytes);
+
+
+
+        }
+
+
+
+
         private void ResponseDownloadFile(SocketResponder responder, byte[] bytes, SocketSession session)
         {
             DownloadRequest request = DownloadRequest.FromBytes(bytes);
@@ -56,7 +67,7 @@ namespace FileManager.SocketLib.SocketServer
                     response.Bytes = Encoding.UTF8.GetBytes(ex.Message);
                 }
             }
-            responder.SendBytes(SocketPacketFlag.DownloadResponse, response.ToBytes());
+            responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
         }
 
 
@@ -114,7 +125,7 @@ namespace FileManager.SocketLib.SocketServer
             string err_msg = "";
             try
             {
-                if ((GetIdentity(responder) & SocketIdentity.WriteFile) == 0)
+                if (true)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -130,11 +141,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(SocketPacketFlag.UploadAllowed, new byte[1]);
+                responder.SendBytes(HB32Packet.UploadAllowed, new byte[1]);
             }
             else
             {
-                responder.SendBytes(SocketPacketFlag.UploadDenied, err_msg);
+                responder.SendBytes(HB32Packet.UploadDenied, err_msg);
             }
         }
 
@@ -149,10 +160,10 @@ namespace FileManager.SocketLib.SocketServer
         {
             switch (header.Flag)
             {
-                case SocketPacketFlag.UploadPacketRequest:
+                case HB32Packet.UploadPacketRequest:
                     ResponseUploadPacket(responder, header, bytes);
                     break;
-                case SocketPacketFlag.DownloadPacketRequest:
+                case HB32Packet.DownloadPacketRequest:
                     ResponseDownloadPacket(responder, header);
                     break;
             }
@@ -167,7 +178,7 @@ namespace FileManager.SocketLib.SocketServer
             int i1 = 0;
             try
             {
-                if ((GetIdentity(responder) & SocketIdentity.ReadFile) == 0)
+                if (true)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -215,11 +226,11 @@ namespace FileManager.SocketLib.SocketServer
 
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(SocketPacketFlag.DownloadPacketResponse, responseBytes);
+                responder.SendBytes(HB32Packet.DownloadPacketResponse, responseBytes);
             }
             else
             {
-                responder.SendBytes(SocketPacketFlag.DownloadDenied, err_msg, i1: i1);
+                responder.SendBytes(HB32Packet.DownloadDenied, err_msg, i1: i1);
             }
         }
 
@@ -230,7 +241,7 @@ namespace FileManager.SocketLib.SocketServer
             string err_msg = "";
             try
             {
-                if ((GetIdentity(responder) & SocketIdentity.WriteFile) == 0)
+                if (true)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -269,11 +280,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendHeader(SocketPacketFlag.UploadPacketResponse);
+                responder.SendHeader(HB32Packet.UploadPacketResponse);
             }
             else
             {
-                responder.SendHeader(SocketPacketFlag.UploadDenied, i1: i1);
+                responder.SendHeader(HB32Packet.UploadDenied, i1: i1);
             }
         }
 
@@ -289,12 +300,12 @@ namespace FileManager.SocketLib.SocketServer
         private void ResponseFileStreamId(SocketResponder responder, HB32Header header, byte[] bytes)
         {
             string err_msg = "";
-            SocketPacketFlag mask = header.Flag & (SocketPacketFlag)(1 << 8);
+            HB32Packet mask = header.Flag & (HB32Packet)(1 << 8);
             int fsid = -1;
             try
             {
                 SocketIdentity required_identity = (mask > 0) ? SocketIdentity.WriteFile : SocketIdentity.ReadFile;
-                if ((GetIdentity(responder) & required_identity) == 0)
+                if (true)
                 {
                     throw new Exception("Socket not authenticated.");
                 }
@@ -321,11 +332,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(SocketPacketFlag.DownloadAllowed | mask, fsid.ToString());
+                responder.SendBytes(HB32Packet.DownloadAllowed | mask, fsid.ToString());
             }
             else
             {
-                responder.SendBytes(SocketPacketFlag.DownloadDenied | mask, err_msg);
+                responder.SendBytes(HB32Packet.DownloadDenied | mask, err_msg);
             }
         }
 

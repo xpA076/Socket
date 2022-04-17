@@ -91,7 +91,7 @@ namespace FileManager.SocketLib
         {
             try
             {
-                SendHeader(SocketPacketFlag.DisconnectRequest);
+                SendHeader(HB32Packet.DisconnectRequest);
                 client.Close();
             }
             catch { }

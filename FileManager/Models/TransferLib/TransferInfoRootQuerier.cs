@@ -137,7 +137,7 @@ namespace FileManager.Models.TransferLib
                 {
                     /// Query 并建立当前子节点
                     DirectoryRequest request = new DirectoryRequest(CurrentDirectoryInfo.RemotePath);
-                    HB32Response hb_resp = SocketFactory.Instance.Request(SocketPacketFlag.DirectoryRequest, request.ToBytes());
+                    HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
                     DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
                     if (response.Type != DirectoryResponse.ResponseType.ListResponse)
                     {

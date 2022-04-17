@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.Enums
 {
-    public enum SocketPacketFlag : int
+    public enum HB32Packet : int
     {
         None = 0x0,
-        Null = 0x1,
+        Null = 0x0001,
 
         ExceptionFlag = 0x0080,
 
@@ -107,6 +107,11 @@ namespace FileManager.SocketLib.Enums
         TransferRequest = 0x1001,
         TransferResponse = 0x1010,
         TransferException = 0x1090,
+
+        FileRequest = 0x1101,
+        FileResponse = 0x1110,
+        FileException = 0x1190,
+
 
 
         RemoteRunRequest,

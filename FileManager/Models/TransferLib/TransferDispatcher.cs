@@ -101,7 +101,7 @@ namespace FileManager.Models.TransferLib
             HB32Response hb_response;
             try
             {
-                hb_response = SocketFactory.Instance.Request(SocketPacketFlag.DownloadRequest, request.ToBytes());
+                hb_response = SocketFactory.Instance.Request(HB32Packet.DownloadRequest, request.ToBytes());
             }
             catch (Exception)
             {

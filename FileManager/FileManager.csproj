@@ -79,13 +79,14 @@
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\ConnectionStatusToForeColorConverter.cs" />
     <Compile Include="Events\CheckPathEventArgs.cs" />
+    <Compile Include="Events\DisposeEventArgs.cs" />
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
     <Compile Include="Exceptions\AuthenticationException.cs" />
     <Compile Include="Exceptions\ServerInternalException.cs" />
     <Compile Include="Exceptions\SocketFlagException.cs" />
-    <Compile Include="Exceptions\SocketRequestTypeException.cs" />
+    <Compile Include="Exceptions\SocketTypeException.cs" />
     <Compile Include="Exceptions\SocketSessionException.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="Models\Serializable\DirectoryResponse.cs" />
     <Compile Include="Models\Serializable\DownloadRequest.cs" />
     <Compile Include="Models\Serializable\DownloadResponse.cs" />
+    <Compile Include="Models\Serializable\FileRequest.cs" />
     <Compile Include="Models\Serializable\SetSessionRequest.cs" />
     <Compile Include="SocketLib\ISocketSerializable.cs" />
     <Compile Include="Models\Serializable\SessionRequest.cs" />
@@ -128,7 +130,7 @@
     <Compile Include="SocketLib\Enums\LogLevel.cs" />
     <Compile Include="SocketLib\Enums\ProxyHeader.cs" />
     <Compile Include="SocketLib\Enums\SocketIdentity.cs" />
-    <Compile Include="SocketLib\Enums\SocketPacketFlag.cs" />
+    <Compile Include="SocketLib\Enums\HB32Packet.cs" />
     <Compile Include="SocketLib\Enums\TransferType.cs" />
     <Compile Include="SocketLib\HB32Encoding.cs" />
     <Compile Include="SocketLib\HB32Header.cs" />
@@ -147,6 +149,11 @@
     <Compile Include="SocketLib\SocketProxy\SocketProxyConfig.cs" />
     <Compile Include="SocketLib\SocketModels\SocketResponder.cs" />
     <Compile Include="SocketLib\SocketModels\SocketSender.cs" />
+    <Compile Include="SocketLib\SocketServer\DisposableBase.cs" />
+    <Compile Include="SocketLib\SocketServer\Models\FileResource.cs" />
+    <Compile Include="SocketLib\SocketServer\Services\FileResourceManager.cs" />
+    <Compile Include="SocketLib\SocketServer\Services\PathTranslator.cs" />
+    <Compile Include="SocketLib\SocketServer\Services\TimeoutCollector.cs" />
     <Compile Include="SocketLib\SocketServer\SocketIdentity.cs" />
     <Compile Include="SocketLib\SocketServer\SocketReversedServer.cs" />
     <Compile Include="SocketLib\SocketServer\SocketServer.cs" />

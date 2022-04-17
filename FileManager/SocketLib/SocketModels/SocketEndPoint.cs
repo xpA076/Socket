@@ -51,7 +51,7 @@ namespace FileManager.SocketLib
         }
 
 
-        public void SendHeader(SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendHeader(HB32Packet flag, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendHeader(new HB32Header
             {
@@ -90,7 +90,7 @@ namespace FileManager.SocketLib
 
 
 
-        public void SendBytes(SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendBytes(HB32Packet flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(new HB32Header
             {
@@ -101,7 +101,7 @@ namespace FileManager.SocketLib
             }, bytes);
         }
 
-        public void SendBytes(SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        public void SendBytes(HB32Packet flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             SendBytes(flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
         }
@@ -139,7 +139,7 @@ namespace FileManager.SocketLib
         }
 
 
-        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out HB32Header header, out byte[] bytes)
+        public void ReceiveBytesWithHeaderFlag(HB32Packet flag, out HB32Header header, out byte[] bytes)
         {
             ReceiveBytes(out header, out bytes);
             if (header.Flag != flag)
@@ -149,23 +149,23 @@ namespace FileManager.SocketLib
         }
 
 
-        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag)
+        public void ReceiveBytesWithHeaderFlag(HB32Packet flag)
         {
             ReceiveBytesWithHeaderFlag(flag, out _, out _);
         }
 
-        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out HB32Header header)
+        public void ReceiveBytesWithHeaderFlag(HB32Packet flag, out HB32Header header)
         {
             ReceiveBytesWithHeaderFlag(flag, out header, out _);
         }
 
 
-        public void ReceiveBytesWithHeaderFlag(SocketPacketFlag flag, out byte[] bytes)
+        public void ReceiveBytesWithHeaderFlag(HB32Packet flag, out byte[] bytes)
         {
             ReceiveBytesWithHeaderFlag(flag, out _, out bytes);
         }
 
-        public static void CheckFlag(SocketPacketFlag required_flag, HB32Response response)
+        public static void CheckFlag(HB32Packet required_flag, HB32Response response)
         {
             if (response.Header.Flag != required_flag)
             {
