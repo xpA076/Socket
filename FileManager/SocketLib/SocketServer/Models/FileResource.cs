@@ -1,4 +1,6 @@
 ﻿using FileManager.Events;
+using FileManager.Exceptions;
+using FileManager.Exceptions.Server;
 using FileManager.SocketLib.SocketServer.Services;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.SocketServer.Models
 {
+    /// <summary>
+    /// FileStream 的封装类, 实现文件读写操作, 并保证线程安全
+    /// </summary>
     public class FileResource : IDisposable
     {
         public FileAccess FileAccess { get; set; }
@@ -34,18 +39,53 @@ namespace FileManager.SocketLib.SocketServer.Models
         }
 
 
-        public byte[] ReadSpan(long begin, long end)
+        public byte[] ReadSpan(long begin, long span)
         {
-
             TimeoutCollector.ServerInstance.Refresh(this);
-
-            throw new NotImplementedException();
+            if (FileAccess != FileAccess.Read)
+            {
+                throw new ServerFileException("Invalid FileAccess type");
+            }
+            if (span <= 0)
+            {
+                throw new ServerFileException("Invalid input argument");
+            }
+            byte[] bytes = new byte[span];
+            try
+            {
+                lock (FileStreamLock)
+                {
+                    FileStream.Seek(begin, SeekOrigin.Begin);
+                    FileStream.Read(bytes, 0, bytes.Length);
+                }
+            }
+            catch(Exception ex)
+            {
+                throw new ServerFileException("ReadSpan() exception : " + ex.Message);
+            }
+            return bytes;
         }
 
 
-        public void WriteSpan(long begin, long end, byte[] bytes)
+        public void WriteSpan(long begin, byte[] bytes)
         {
             TimeoutCollector.ServerInstance.Refresh(this);
+            if (FileAccess != FileAccess.Write)
+            {
+                throw new ServerFileException("Invalid FileAccess type");
+            }
+            try
+            {
+                lock (FileStreamLock)
+                {
+                    FileStream.Seek(begin, SeekOrigin.Begin);
+                    FileStream.Write(bytes, 0, bytes.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ServerFileException("ReadSpan() exception : " + ex.Message);
+            }
         }
 
 
@@ -66,7 +106,10 @@ namespace FileManager.SocketLib.SocketServer.Models
                 }
                 // TODO: 释放未托管的资源(未托管的对象)并重写终结器
                 // TODO: 将大型字段设置为 null
-                FileStream.Close();
+                lock (FileStreamLock)
+                {
+                    FileStream.Close();
+                }
                 disposedValue = true;
             }
         }

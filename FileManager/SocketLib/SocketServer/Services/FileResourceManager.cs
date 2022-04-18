@@ -1,4 +1,5 @@
 ﻿using FileManager.Exceptions;
+using FileManager.Exceptions.Server;
 using FileManager.SocketLib.SocketServer.Models;
 using System;
 using System.Collections.Generic;

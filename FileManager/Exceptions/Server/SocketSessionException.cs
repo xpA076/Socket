@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Exceptions
+namespace FileManager.Exceptions.Server
 {
     /// <summary>
-    /// session 无对应权限的异常
+    /// Server 端查找或建立 session 时的异常
     /// </summary>
-    public class AuthenticationException : Exception
+    public class SocketSessionException : ServerInternalException
     {
+
+
     }
 }

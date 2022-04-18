@@ -4,27 +4,30 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Exceptions
+namespace FileManager.Exceptions.Server
 {
     /// <summary>
-    /// Server 端查找或建立 session 时的异常
+    /// Server 内部异常, 是一部分异常类的基类
     /// </summary>
-    public class SocketSessionException : Exception
+    public class ServerInternalException : Exception
     {
         private string _msg = "Default error message";
 
         public override string Message => _msg;
 
-        public SocketSessionException()
+        public ServerInternalException()
         {
-            
+
         }
 
 
-        public SocketSessionException(string msg)
+        public ServerInternalException(string msg)
         {
             _msg = msg;
         }
+
+
+
 
     }
 }

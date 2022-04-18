@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Exceptions;
+using FileManager.Exceptions.Server;
 
 namespace FileManager.SocketLib.SocketServer
 {
@@ -37,7 +38,7 @@ namespace FileManager.SocketLib.SocketServer
                     /// 获取目录下的 SocketFileInfo 列表
                     if (!session.AllowQuery())
                     {
-                        throw new AuthenticationException();
+                        throw new SocketAuthenticationException();
                     }
                     List<SocketFileInfo> fileClasses = GetDirectoryAndFiles(request.ServerPath);
                     DirectoryResponse response = new DirectoryResponse(fileClasses);
@@ -47,7 +48,7 @@ namespace FileManager.SocketLib.SocketServer
                 {
                     if (!session.AllowWriteFile())
                     {
-                        throw new AuthenticationException();
+                        throw new SocketAuthenticationException();
                     }
                     //todo
                     throw new NotImplementedException();
@@ -57,7 +58,7 @@ namespace FileManager.SocketLib.SocketServer
                     throw new ServerInternalException();
                 }
             }
-            catch (AuthenticationException)
+            catch (SocketAuthenticationException)
             {
                 string err_msg = "Authentication exception";
                 DirectoryResponse response = new DirectoryResponse(err_msg);

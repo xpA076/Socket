@@ -8,7 +8,7 @@ namespace FileManager.Exceptions
 {
     /// <summary>
     /// Request 或 Response 类的Type不合法对应的异常
-    /// 一般是因为序列化问题或非法访问属性
+    /// 一般是因为序列化问题或非法访问 Respnose 属性
     /// </summary>
     public class SocketTypeException : Exception
     {

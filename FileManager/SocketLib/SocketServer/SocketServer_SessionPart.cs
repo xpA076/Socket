@@ -1,5 +1,6 @@
 ﻿using FileManager.Events;
 using FileManager.Exceptions;
+using FileManager.Exceptions.Server;
 using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 using System;
@@ -47,7 +48,7 @@ namespace FileManager.SocketLib.SocketServer
                 SessionsLock.EnterReadLock();
                 try
                 {
-                    SessionBytesInfo sessionBytesInfo = SessionBytesInfo.FromBytes(request.);
+                    SessionBytesInfo sessionBytesInfo = SessionBytesInfo.FromBytes(request.Bytes);
                     if (Sessions.ContainsKey(sessionBytesInfo.Index))
                     {
                         SocketSession ss = Sessions[sessionBytesInfo.Index];
