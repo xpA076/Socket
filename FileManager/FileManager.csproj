@@ -83,11 +83,12 @@
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
-    <Compile Include="Exceptions\AuthenticationException.cs" />
-    <Compile Include="Exceptions\ServerInternalException.cs" />
+    <Compile Include="Exceptions\Server\SocketAuthenticationException.cs" />
+    <Compile Include="Exceptions\Server\ServerFileException.cs" />
+    <Compile Include="Exceptions\Server\ServerInternalException.cs" />
     <Compile Include="Exceptions\SocketFlagException.cs" />
     <Compile Include="Exceptions\SocketTypeException.cs" />
-    <Compile Include="Exceptions\SocketSessionException.cs" />
+    <Compile Include="Exceptions\Server\SocketSessionException.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
     <Compile Include="Models\Serializable\DirectoryRequest.cs" />
