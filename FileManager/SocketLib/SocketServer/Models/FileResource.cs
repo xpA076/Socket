@@ -18,7 +18,7 @@ namespace FileManager.SocketLib.SocketServer.Models
     {
         public FileAccess FileAccess { get; set; }
 
-        public string Path { get; set; }
+        public string ServerPath { get; set; }
 
         private FileStream FileStream { get; set; } = null;
 
@@ -26,7 +26,7 @@ namespace FileManager.SocketLib.SocketServer.Models
 
         public FileResource(string path, FileAccess access)
         {
-            this.Path = path;
+            this.ServerPath = path;
             this.FileAccess = access;
             if (access == FileAccess.Read)
             {
@@ -39,18 +39,18 @@ namespace FileManager.SocketLib.SocketServer.Models
         }
 
 
-        public byte[] ReadSpan(long begin, long span)
+        public byte[] ReadSpan(long begin, long length)
         {
             TimeoutCollector.ServerInstance.Refresh(this);
             if (FileAccess != FileAccess.Read)
             {
                 throw new ServerFileException("Invalid FileAccess type");
             }
-            if (span <= 0)
+            if (length <= 0)
             {
                 throw new ServerFileException("Invalid input argument");
             }
-            byte[] bytes = new byte[span];
+            byte[] bytes = new byte[length];
             try
             {
                 lock (FileStreamLock)
@@ -59,7 +59,7 @@ namespace FileManager.SocketLib.SocketServer.Models
                     FileStream.Read(bytes, 0, bytes.Length);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ServerFileException("ReadSpan() exception : " + ex.Message);
             }

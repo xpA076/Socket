@@ -12,7 +12,7 @@ using FileManager.Events;
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
-
+using FileManager.SocketLib.SocketServer.Services;
 
 namespace FileManager.SocketLib.SocketServer
 {
@@ -21,14 +21,15 @@ namespace FileManager.SocketLib.SocketServer
     {
         public event SocketIdentityCheckEventHandler CheckIdentity;
 
-        public SocketServerConfig Config { get; set; } = new SocketServerConfig();
+        private readonly SocketServerConfig Config = new SocketServerConfig();
 
-        protected SocketServer()
-        {
+        private readonly FileResourceManager FileResourceManager = new FileResourceManager();
 
-        }
+        private readonly PathTranslator PathTranslator = new PathTranslator();
 
-        public SocketServer(IPAddress ip):base(ip)
+        //protected SocketServer() { }
+
+        public SocketServer(IPAddress ip) : base(ip)
         {
 
         }
@@ -72,16 +73,12 @@ namespace FileManager.SocketLib.SocketServer
                                 ResponseDirectory(responder, bytes, session);
                                 break;
 
-                            case HB32Packet.FileRequest:
-                                ResponseFileRequest(responder, bytes, session);
-                                break;
-
-
-                            #region Download
                             case HB32Packet.DownloadRequest:
                                 ResponseDownloadFile(responder, bytes, session);
-                                //ResponseDownloadSmallFile(responder, bytes);
                                 break;
+
+                            #region Download
+
                             case HB32Packet.DownloadFileStreamIdRequest:
                                 ResponseFileStreamId(responder, header, bytes);
                                 break;

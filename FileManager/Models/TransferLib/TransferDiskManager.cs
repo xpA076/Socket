@@ -1,50 +1,65 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace FileManager.Models.TransferLib
 {
-    public partial class TransferDispatcher
+    public class TransferDiskManager
     {
-        private class BufferBlock
+        public const long BlockSize = 4096;
+        
+        public string Path { get; private set; }
+
+        public FileAccess FileAccess { get; private set; }
+
+        private readonly object FileLock = new object();
+
+        private bool IsFileStreamClosed = true;
+
+        private FileStream FileStream = null;
+
+        public void SetPath(string path, FileAccess access)
         {
-            public int Index;
-            public byte[] Bytes;
+            lock (FileLock)
+            {
+                if (!IsFileStreamClosed)
+                {
+                    FileStream.Close();
+                }
+                Path = path;
+                FileAccess = access;
+                if (access == FileAccess.Read)
+                {
+                    FileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+                }
+                else
+                {
+                    FileStream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
+                }
+                IsFileStreamClosed = false;
+            }
         }
 
-
-        private class BufferQueue
+        public void WriteBytes(long index, byte[] bytes)
         {
-            private const int Capacity = 128;
-
-            private BufferBlock[] blocks;
-
-            public BufferQueue()
-            {
-                blocks = new BufferBlock[Capacity];
-            }
-
-            public void Enqueue()
-            {
-
-            }
-
-
+            WriteBytes(index * BlockSize, bytes, bytes.Length);
         }
 
-
-        private class TransferDiskManager
+        public void WriteBytes(long offset, byte[] bytes, int length)
         {
-            public void FinishDownloadPacket(TransferTaskBlock block, byte[] bytes)
+            lock (FileLock)
             {
-
+                FileStream.Seek(offset, SeekOrigin.Begin);
+                FileStream.Write(bytes, 0, length);
             }
-
         }
 
 
     }
+
+
 
 }

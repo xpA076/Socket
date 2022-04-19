@@ -24,18 +24,20 @@ namespace FileManager.Models.TransferLib
 
         private TransferInfoRoot RootInfo;
 
-        /// <summary>
-        /// 这个一会删掉
-        /// </summary>
-        private TransferTaskDispatcher TaskDispatcher;
 
         private bool IsTransfering = false;
 
 
-
+        /// <summary>
+        /// 目录路径对应 DFS 缓存栈
+        /// </summary>
         private readonly Stack<int> DirectoryIndexStack = new Stack<int>();
         private TransferInfoDirectory CurrentDirectoryInfo = null;
         private int IndexFile = 0;
+
+
+        private TransferDiskManager DiskManager = null;
+        private IndexGenerator IndexGenerator = null;
 
         #endregion
 
@@ -43,7 +45,6 @@ namespace FileManager.Models.TransferLib
         {
             RootInfo = rootInfo;
             CurrentDirectoryInfo = rootInfo;
-            TaskDispatcher = new TransferTaskDispatcher(rootInfo);
         }
 
         public void InitTransfer()
@@ -54,38 +55,30 @@ namespace FileManager.Models.TransferLib
         private void TransferMain()
         {
             IsTransfering = true;
-
             if (RootInfo.Type == TransferType.Download)
             { 
                 DownloadMain();
             }
-            
-
             IsTransfering = false;
         }
 
         private void DownloadMain()
         {
             /// todo 在这里确认当前任务已经 Query 完成
-            /// 先不搞异步那些, 对同一个路径的数据通信, 没必要通过异步提升效率
+            /// 先不搞 Query 和传输异步那些
+            /// 对同一个网络路径的数据通信, 没必要通过异步提升效率
             /// /todo
 
             /// --------
             /// 以文件为单位进行主循环
+            /// (以后优化可以将目录树序列化, 以块为单位进行主循环)
             while (true)
             {
                 /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
                 if (!MovePointerToFirstFile()) { break; }
                 /// 当前任务传输过程
                 TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
-                if (infoFile.Length < Config.SmallFileThreshold)
-                {
-                    DownloadSmallFile(infoFile);
-                }
-                else
-                {
-                    DownloadBigFile(infoFile);
-                }
+                DownloadOneFile(infoFile);
                 /// 标记当前 File 任务完成
                 CurrentDirectoryInfo.TransferCompleteFiles[IndexFile] = true;
             }
@@ -96,7 +89,7 @@ namespace FileManager.Models.TransferLib
             DownloadRequest request = new DownloadRequest()
             {
                 Type = DownloadRequest.RequestType.SmallFile,
-                ServerPath = infoFile.RemotePath
+                ViewPath = infoFile.RemotePath
             };
             HB32Response hb_response;
             try
@@ -121,7 +114,20 @@ namespace FileManager.Models.TransferLib
         }
 
 
-        public void DownloadBigFile(TransferInfoFile infoFile)
+        private void DownloadOneFile(TransferInfoFile infoFile)
+        {
+            int thread_count = 1;
+            if (infoFile.Length > (16 << 10))
+            {
+                thread_count = 10;
+            }
+
+
+
+        }
+
+
+        private void DownloadThreadUnit()
         {
 
         }
@@ -130,6 +136,7 @@ namespace FileManager.Models.TransferLib
 
         /// <summary>
         /// 从 CurrentDirectoryInfo 开始, DFS查找下一个未传输文件位置
+        /// 查找路径上经过的未建立目录的路径, 会建立对应目录
         /// 并将路径上所有目录上节点 TransferInfoDirectory 正确标注
         /// </summary>
         /// <returns>是否成功移动至下一个文件节点, 若返回 false 证明已经全部传输完成</returns>
@@ -178,9 +185,6 @@ namespace FileManager.Models.TransferLib
         }
 
 
-        //private ReaderWriterLockSlim _lockStack = new ReaderWriterLockSlim();
-
-
 
         private bool SetTransferSession(string path, TransferType transferType)
         {
@@ -203,29 +207,6 @@ namespace FileManager.Models.TransferLib
 
         }
 
-        private void DownloadThreadUnit()
-        {
-            for (TransferTaskBlock block = TaskDispatcher.GetNewTask(); block != null;
-                block = TaskDispatcher.GetNewTask())
-            {
-                // 根据 block 内容完成任务
-                switch (block.Content)
-                {
-                    case TransferTaskBlock.BlockContent.SetSession:
-                        
-
-
-                        break;
-                    case TransferTaskBlock.BlockContent.Transfer:
-
-                        break;
-                }
-
-                // 
-                //TaskDispatcher.FinishTask(block, TransferTaskBlock.BlockStatus.Success);
-
-            }
-        }
 
 
 

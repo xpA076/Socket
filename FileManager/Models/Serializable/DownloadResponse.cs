@@ -1,4 +1,5 @@
-﻿using FileManager.SocketLib;
+﻿using FileManager.Exceptions;
+using FileManager.SocketLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +13,44 @@ namespace FileManager.Models.Serializable
         public enum ResponseType : int
         {
             BytesResponse,
-            PacketResponse,
             ResponseException
         }
 
         public ResponseType Type { get; set; }
 
         public byte[] Bytes { get; set; }
+
+        public string ExceptionMessage
+        {
+            get
+            {
+                if (Type == ResponseType.ResponseException)
+                {
+                    return Encoding.UTF8.GetString(Bytes);
+                }
+                else
+                {
+                    throw new SocketTypeException(ResponseType.ResponseException, Type);
+                }
+            }
+        }
+
+        private DownloadResponse()
+        {
+
+        }
+
+        public DownloadResponse(byte[] bytes)
+        {
+            this.Type = ResponseType.BytesResponse;
+            this.Bytes = bytes;
+        }
+
+        public DownloadResponse(string err_msg)
+        {
+            this.Type = ResponseType.ResponseException;
+            this.Bytes = Encoding.UTF8.GetBytes(err_msg);
+        }
 
         public static DownloadResponse FromBytes(byte[] bytes)
         {

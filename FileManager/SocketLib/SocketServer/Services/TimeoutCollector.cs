@@ -24,6 +24,8 @@ namespace FileManager.SocketLib.SocketServer.Services
 
         public static TimeoutCollector ServerInstance => _server_instance.Value;
 
+        public TimeoutCollector() { }
+
 
         public const int TickInterval = 30;
 
@@ -61,9 +63,10 @@ namespace FileManager.SocketLib.SocketServer.Services
                 {
                     throw new ObjectDisposedException("");
                 }
-                lock (obj)
+                TimeoutInfo info = Objects[obj];
+                lock (info)
                 {
-                    Objects[obj].IdleSeconds = 0;
+                    info.IdleSeconds = 0;
                 }
             }
             finally

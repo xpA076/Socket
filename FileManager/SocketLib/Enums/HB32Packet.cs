@@ -63,8 +63,8 @@ namespace FileManager.SocketLib.Enums
         ///     0x2 - packet response
         ///     0x9 - denied
         DownloadRequest = 0x0201,
-        DownloadResponse = 0x220,
-        DownloadAllowed = 0x0210,
+        DownloadResponse = 0x0210,
+        DownloadAllowed = 0x0220,
         DownloadDenied = 0x0290,
         DownloadFileStreamIdRequest = 0x0202,
         DownloadPacketRequest = 0x010203, // 发往server的包不含byte[]数据
@@ -80,7 +80,7 @@ namespace FileManager.SocketLib.Enums
         ///     0x2 - packet response
         ///     0x9 - denied
         UploadRequest = 0x0301,
-        UploadAllowed = 0x0310,
+        UploadResponse = 0x0310,
         UploadDenied = 0x0390,
         UploadFileStreamIdRequest = 0x0302,
         UploadPacketRequest = 0x0303,

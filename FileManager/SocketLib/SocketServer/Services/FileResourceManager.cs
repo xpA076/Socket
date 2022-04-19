@@ -13,9 +13,12 @@ namespace FileManager.SocketLib.SocketServer.Services
 {
     public class FileResourceManager
     {
+        private readonly TimeoutCollector timeoutCollector;
+
         private readonly Dictionary<string, FileResource> FileResources = new Dictionary<string, FileResource>();
 
         private readonly ReaderWriterLockSlim FileResourcesLock = new ReaderWriterLockSlim();
+
 
 
         public FileResource GetResource(string path, FileAccess access)
@@ -79,7 +82,7 @@ namespace FileManager.SocketLib.SocketServer.Services
             try
             {
                 FileResource resource = (FileResource)sender;
-                FileResources.Remove(resource.Path);
+                FileResources.Remove(resource.ServerPath);
             }
             finally
             {

@@ -42,18 +42,23 @@ namespace FileManager.Models.Serializable
 
         }
 
-        public DirectoryResponse(string err_msg)
-        {
-            this.Type = ResponseType.ResponseException;
-            this.FileInfos = new List<SocketFileInfo>();
-            this.AdditionalBytes = Encoding.UTF8.GetBytes(err_msg);
-        }
-
         public DirectoryResponse(List<SocketFileInfo> fileInfos)
         {
             this.Type = ResponseType.ListResponse;
             this.FileInfos = fileInfos;
             this.AdditionalBytes = new byte[0];
+        }
+
+
+        /// <summary>
+        /// Sever 内部异常时的 DirectoryResponse 构造函数
+        /// </summary>
+        /// <param name="err_msg">异常信息</param>
+        public DirectoryResponse(string err_msg)
+        {
+            this.Type = ResponseType.ResponseException;
+            this.FileInfos = new List<SocketFileInfo>();
+            this.AdditionalBytes = Encoding.UTF8.GetBytes(err_msg);
         }
 
 

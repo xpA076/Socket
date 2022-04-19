@@ -15,10 +15,11 @@ namespace FileManager.Models.TransferLib
     {
         public int Priority { get; set; } = 0;
 
+        public long Length { get; set; } = 0;
+
         public DateTime CreationTimeUtc { get; set; } = new DateTime(0);
 
         public DateTime LastWriteTimeUtc { get; set; } = new DateTime(0);
-
 
         public long FinishedPacket { get; set; } = 0;
 

@@ -7,69 +7,55 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FileManager.Exceptions.Server;
 using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
+using FileManager.SocketLib.SocketServer.Models;
 
 namespace FileManager.SocketLib.SocketServer
 {
     public partial class SocketServer : SocketServerBase
     {
-        private void ResponseFileRequest(SocketResponder responder, byte[] bytes, SocketSession session)
-        {
-            FileRequest request = FileRequest.FromBytes(bytes);
-
-
-
-        }
-
-
-
-
         private void ResponseDownloadFile(SocketResponder responder, byte[] bytes, SocketSession session)
         {
-            DownloadRequest request = DownloadRequest.FromBytes(bytes);
-            if (request.Type == DownloadRequest.RequestType.SmallFile)
+            try
             {
-                // todo: server端对文件大小校验, 保证此时文件为小文件
-                ResponseDownloadSmallFile(responder, request, session);
+                DownloadRequest request = DownloadRequest.FromBytes(bytes);
+                FileResource resource;
+                /// 获取 FileResource
+                if (request.Type == DownloadRequest.RequestType.QueryByPath)
+                {
+                    string server_path = PathTranslator.ToTruePath(request.ViewPath, session);
+                    resource = FileResourceManager.GetResource(server_path, FileAccess.Read);
+                }
+                else
+                {
+                    throw new ServerInternalException("not implemented");
+                }
+                byte[] read_bytes = resource.ReadSpan(request.Begin, request.Length);
+                DownloadResponse response = new DownloadResponse(read_bytes);
+                responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
             }
-            else if (request.Type == DownloadRequest.RequestType.LargeFile)
+            catch (SocketAuthenticationException)
             {
-                throw new NotImplementedException();
+                string err_msg = "Authentication exception";
+                DownloadResponse response = new DownloadResponse(err_msg);
+                responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
             }
-
-
-
-
-
+            catch (ServerInternalException ex)
+            {
+                string err_msg = "Download response exception from server: " + ex.Message;
+                DownloadResponse response = new DownloadResponse(err_msg);
+                responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
+            }
 
         }
-        
-        private void ResponseDownloadSmallFile(SocketResponder responder, DownloadRequest request, SocketSession session)
+
+
+        private void ResponseUploadFile(SocketResponder responder, byte[] bytes, SocketSession session)
         {
-            DownloadResponse response = new DownloadResponse();
-            if (session.AllowReadFile())
-            {
-                response.Type = DownloadResponse.ResponseType.ResponseException;
-                response.Bytes = Encoding.UTF8.GetBytes("Socket not authenticated");
-            }
-            else
-            {
-                try
-                {
-                    byte[] file_bytes = File.ReadAllBytes(request.ServerPath);
-                    response.Type = DownloadResponse.ResponseType.BytesResponse;
-                    response.Bytes = file_bytes;
-                }
-                catch (Exception ex)
-                {
-                    response.Type = DownloadResponse.ResponseType.ResponseException;
-                    response.Bytes = Encoding.UTF8.GetBytes(ex.Message);
-                }
-            }
-            responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
+            throw new NotImplementedException();
         }
-
 
 
 
@@ -141,7 +127,7 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(HB32Packet.UploadAllowed, new byte[1]);
+                responder.SendBytes(HB32Packet.UploadResponse, new byte[1]);
             }
             else
             {

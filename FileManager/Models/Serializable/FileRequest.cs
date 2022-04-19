@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models.Serializable
 {
+    // TODO 改成 UploadRequest
     public class FileRequest : ISocketSerializable
     {
         public enum RequestType : int

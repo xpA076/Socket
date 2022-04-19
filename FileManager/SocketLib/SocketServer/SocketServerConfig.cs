@@ -17,6 +17,8 @@ namespace FileManager.SocketLib.SocketServer
 
         public int SocketReceiveTimeOut { get; set; } = 10000;
 
+        public long SinglePacketLimit { get; set; } = 1 << 30;
+
 
         public List<string> AllowDirectoryList { get; set; } = new List<string>()
         {

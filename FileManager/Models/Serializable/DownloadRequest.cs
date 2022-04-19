@@ -11,13 +11,17 @@ namespace FileManager.Models.Serializable
     {
         public enum RequestType : int
         {
-            SmallFile,
-            LargeFile
+            QueryByPath,
+            //QueryByDictionary,
         }
 
         public RequestType Type { get; set; }
 
-        public string ServerPath { get; set; }
+        public string ViewPath { get; set; }
+
+        public long Begin { get; set; }
+
+        public long Length { get; set; }
 
 
         public static DownloadRequest FromBytes(byte[] bytes)
@@ -32,14 +36,18 @@ namespace FileManager.Models.Serializable
         {
             BytesBuilder bb = new BytesBuilder();
             bb.Append((int)Type);
-            bb.Append(ServerPath);
+            bb.Append(ViewPath);
+            bb.Append(Begin);
+            bb.Append(Length);
             return bb.GetBytes();
         }
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
             this.Type = (RequestType)BytesParser.GetInt(bytes, ref idx);
-            this.ServerPath = BytesParser.GetString(bytes, ref idx);
+            this.ViewPath = BytesParser.GetString(bytes, ref idx);
+            this.Begin = BytesParser.GetLong(bytes, ref idx);
+            this.Length = BytesParser.GetLong(bytes, ref idx);
         }
     }
 }

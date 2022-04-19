@@ -437,7 +437,7 @@ namespace FileManager.Models
                     Array.Copy(headerBytes, 0, bytes, 0, headerBytes.Length);
                     Array.Copy(contentBytes, 0, bytes, headerBytes.Length, contentBytes.Length);
                     client.SendBytes(HB32Packet.UploadRequest, bytes);
-                    client.ReceiveBytesWithHeaderFlag(HB32Packet.UploadAllowed, out byte[] recvBytes);
+                    client.ReceiveBytesWithHeaderFlag(HB32Packet.UploadResponse, out byte[] recvBytes);
                     client.Close();
                 }
                 else

@@ -97,6 +97,7 @@
     <Compile Include="Models\Serializable\DownloadResponse.cs" />
     <Compile Include="Models\Serializable\FileRequest.cs" />
     <Compile Include="Models\Serializable\SetSessionRequest.cs" />
+    <Compile Include="Models\TransferLib\IndexGenerator.cs" />
     <Compile Include="SocketLib\ISocketSerializable.cs" />
     <Compile Include="Models\Serializable\SessionRequest.cs" />
     <Compile Include="Models\Serializable\SessionResponse.cs" />
@@ -108,8 +109,6 @@
     <Compile Include="Models\TransferLib\TransferInfoRoot.cs" />
     <Compile Include="Models\TransferLib\TransferInfoRootQuerier.cs" />
     <Compile Include="Models\TransferLib\TransferStatus.cs" />
-    <Compile Include="Models\TransferLib\TransferTaskBlock.cs" />
-    <Compile Include="Models\TransferLib\TransferTaskDispatcher.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatBase.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatConnectionMonitor.cs" />
     <Compile Include="Models\HeartBeatLib\HeartBeatTransferRecord.cs" />

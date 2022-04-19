@@ -28,8 +28,6 @@ namespace FileManager.Models.TransferLib
         /// </summary>
         public string Name { get; set; } = "";
 
-        public long Length { get; set; } = 0;
-
         #endregion
 
 
