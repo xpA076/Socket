@@ -17,7 +17,7 @@ namespace FileManager.Models.TransferLib
     /// 每个 Dispatcher 对应一个 TransferInfoRoot, 在 Pages 中被事件调用
     /// 每个 TransferInfoRoot 对应的目录树在传输过程中, 同时只能有一个文件处于正在传输状态
     /// </summary>
-    public partial class TransferDispatcher
+    public partial class TransferManager
     {
 
         #region Properties
@@ -37,11 +37,11 @@ namespace FileManager.Models.TransferLib
 
 
         private TransferDiskManager DiskManager = null;
-        private IndexGenerator IndexGenerator = null;
+        private PacketIndexGenerator IndexGenerator = null;
 
         #endregion
 
-        public TransferDispatcher(TransferInfoRoot rootInfo)
+        public TransferManager(TransferInfoRoot rootInfo)
         {
             RootInfo = rootInfo;
             CurrentDirectoryInfo = rootInfo;
@@ -84,6 +84,7 @@ namespace FileManager.Models.TransferLib
             }
         }
 
+        /*
         public void DownloadSmallFile(TransferInfoFile infoFile)
         { 
             DownloadRequest request = new DownloadRequest()
@@ -112,17 +113,29 @@ namespace FileManager.Models.TransferLib
                 throw new NotImplementedException();
             }
         }
+        */
 
 
         private void DownloadOneFile(TransferInfoFile infoFile)
         {
+            /// 初始化各辅助类
+            IndexGenerator.Reset();
+            IndexGenerator.TotalIndex = (infoFile.Length - 1) / TransferDiskManager.BlockSize + 1;
+            DiskManager.SetPath(infoFile.LocalPath, FileAccess.Write);
+            /// 启动子线程 (todo 线程复用)
             int thread_count = 1;
             if (infoFile.Length > (16 << 10))
             {
                 thread_count = 10;
             }
+            /// 向sever端发出请求, 释放文件
+            
+            /// 判断任务是否正确完成
+        }
 
 
+        private void RunDownloadSubThreads()
+        {
 
         }
 
@@ -182,29 +195,6 @@ namespace FileManager.Models.TransferLib
                 CurrentDirectoryInfo.Parent.TransferCompleteDirectories[idx] = true;
                 CurrentDirectoryInfo = CurrentDirectoryInfo.Parent;
             }
-        }
-
-
-
-        private bool SetTransferSession(string path, TransferType transferType)
-        {
-            
-
-            return false;
-        }
-
-        
-        private void RunSubThreads()
-        {
-
-        }
-
-
-        private void TransferThreadUnit()
-        {
-
-            
-
         }
 
 

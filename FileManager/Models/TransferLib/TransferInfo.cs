@@ -36,7 +36,7 @@ namespace FileManager.Models.TransferLib
         {
             get
             {
-                System.Diagnostics.Debug.Assert(this.Parent != null);
+                //System.Diagnostics.Debug.Assert(this.Parent != null);
                 TransferInfoDirectory pt = this.Parent;
                 while (!pt.IsRoot)
                 {

@@ -13,6 +13,7 @@ using System.Net.Sockets;
 using FileManager.SocketLib.Models;
 using FileManager.Models.Serializable;
 using FileManager.Exceptions;
+using FileManager.Exceptions.Server;
 
 namespace FileManager.Static
 {

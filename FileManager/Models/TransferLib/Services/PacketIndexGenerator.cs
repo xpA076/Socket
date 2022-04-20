@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.TransferLib
+namespace FileManager.Models.TransferLib.Services
 {
-    public class IndexGenerator
+    public class PacketIndexGenerator
     {
         private readonly HashSet<long> WorkingIndexes = new HashSet<long>();
 
@@ -17,6 +17,18 @@ namespace FileManager.Models.TransferLib
         public long LastFinishedIndex { get; set; }
 
         public long TotalIndex { get; set; }
+
+
+        public void Reset()
+        {
+            lock (IndexLock)
+            {
+                WorkingIndexes.Clear();
+                FinishedIndexes.Clear();
+                LastFinishedIndex = 0;
+                TotalIndex = 0;
+            }
+        }
 
         /// <summary>
         /// 按顺序申请下一个 Index, 若全部分配完则返回 -1
