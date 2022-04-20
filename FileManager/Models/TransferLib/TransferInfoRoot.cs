@@ -39,7 +39,7 @@ namespace FileManager.Models.TransferLib
 
         public FilterRule Rule { get; set; }
 
-        public TransferType Type { get; set; }
+        public SocketLib.Enums.TransferTypeDeprecated Type { get; set; }
 
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace FileManager.Models.TransferLib
             bs0 = BytesParser.GetBytes(bs, ref idx);
             root.Rule = FilterRule.FromBytes(bs0);
             ///   Other properties
-            root.Type = (TransferType)BytesParser.GetInt(bs, ref idx);
+            root.Type = (SocketLib.Enums.TransferTypeDeprecated)BytesParser.GetInt(bs, ref idx);
             root.RemoteDirectory = BytesParser.GetString(bs, ref idx);
             root.LocalDirectory = BytesParser.GetString(bs, ref idx);
             root.Name = BytesParser.GetString(bs, ref idx);

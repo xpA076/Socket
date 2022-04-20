@@ -43,6 +43,16 @@ namespace FileManager.Models.TransferLib.Services
             }
         }
 
+
+        public void Finish()
+        {
+            lock (FileLock)
+            {
+                FileStream.Close();
+                IsFileStreamClosed = true;
+            }
+        }
+
         public void WriteBytes(long index, byte[] bytes)
         {
             WriteBytes(index * BlockSize, bytes, bytes.Length);
@@ -56,6 +66,8 @@ namespace FileManager.Models.TransferLib.Services
                 FileStream.Write(bytes, 0, length);
             }
         }
+
+
 
 
     }

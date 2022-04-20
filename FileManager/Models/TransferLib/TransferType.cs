@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.SocketLib.Enums
+namespace FileManager.Models.TransferLib
 {
-    public enum TransferType: int
+    public enum TransferType : int
     {
         Download,
         Upload

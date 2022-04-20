@@ -247,7 +247,7 @@ namespace FileManager.Models
                 FileTask fileTask = new FileTask();
                 fileTask.Route = ConnectionRoute.FromBytes(Convert.FromBase64String(task.Element("Route").Value));
                 fileTask.IsDirectory = bool.Parse(task.Element("IsDirectory").Value);
-                fileTask.Type = (TransferType)Enum.Parse(typeof(TransferType), task.Element("Type").Value);
+                fileTask.Type = (TransferTypeDeprecated)Enum.Parse(typeof(TransferTypeDeprecated), task.Element("Type").Value);
                 fileTask.RemotePath = task.Element("RemotePath").Value;
                 fileTask.LocalPath = task.Element("LocalPath").Value;
                 fileTask.Length = long.Parse(task.Element("Length").Value);

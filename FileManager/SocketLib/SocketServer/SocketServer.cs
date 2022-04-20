@@ -159,6 +159,10 @@ namespace FileManager.SocketLib.SocketServer
 
 
 
+        private void ResponeNothing(SocketResponder responder, byte[] bytes)
+        {
+            responder.SendBytes(HB32Packet.Null, new byte[1]);
+        }
 
 
 

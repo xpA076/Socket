@@ -155,7 +155,7 @@ namespace FileManager.Models
         /// <returns></returns>
         public void RequestFileStreamId()
         {
-            HB32Packet mask = (HB32Packet)((Task.Type == TransferType.Upload ? 1 : 0) << 8);
+            HB32Packet mask = (HB32Packet)((Task.Type == TransferTypeDeprecated.Upload ? 1 : 0) << 8);
             try
             {
                 SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(Task, 1);

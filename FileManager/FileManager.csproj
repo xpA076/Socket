@@ -100,6 +100,7 @@
     <Compile Include="Models\TransferLib\Services\PacketIndexGenerator.cs" />
     <Compile Include="Models\TransferLib\Services\TransferThreadInfo.cs" />
     <Compile Include="Models\TransferLib\Services\TransferThreadPool.cs" />
+    <Compile Include="Models\TransferLib\TransferType.cs" />
     <Compile Include="SocketLib\ISocketSerializable.cs" />
     <Compile Include="Models\Serializable\SessionRequest.cs" />
     <Compile Include="Models\Serializable\SessionResponse.cs" />
@@ -133,7 +134,7 @@
     <Compile Include="SocketLib\Enums\ProxyHeader.cs" />
     <Compile Include="SocketLib\Enums\SocketIdentity.cs" />
     <Compile Include="SocketLib\Enums\HB32Packet.cs" />
-    <Compile Include="SocketLib\Enums\TransferType.cs" />
+    <Compile Include="SocketLib\Enums\TransferTypeDeprecated.cs" />
     <Compile Include="SocketLib\HB32Encoding.cs" />
     <Compile Include="SocketLib\HB32Header.cs" />
     <Compile Include="SocketLib\HB32Response.cs" />

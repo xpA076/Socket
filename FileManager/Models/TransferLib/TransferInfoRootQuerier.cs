@@ -37,7 +37,7 @@ namespace FileManager.Models.TransferLib
 
         public void StartQuery()
         {
-            if (RootInfo.Type == TransferType.Download)
+            if (RootInfo.Type == SocketLib.Enums.TransferTypeDeprecated.Download)
             {
                 Task.Run(() => { DownloadQuery(); });
             }

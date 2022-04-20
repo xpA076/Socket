@@ -116,7 +116,7 @@ namespace FileManager.Models
         /// <param name="task"></param>
         private void UpdateTaskLength(FileTask task)
         {
-            if (task.Type == TransferType.Download)
+            if (task.Type == TransferTypeDeprecated.Download)
             {
                 if (task.IsDirectory && task.Length == 0)
                 {
@@ -256,7 +256,7 @@ namespace FileManager.Models
         /// <param name="task"></param>
         private void TransferDirectoryTask(FileTask task)
         {
-            if (task.Type == TransferType.Upload) 
+            if (task.Type == TransferTypeDeprecated.Upload) 
             { 
                 UploadSingleTaskDirectory(task); 
             }
@@ -302,7 +302,7 @@ namespace FileManager.Models
                         {
                             Route = task.Route.Copy(),
                             IsDirectory = f.IsDirectory,
-                            Type = TransferType.Download,
+                            Type = TransferTypeDeprecated.Download,
                             RemotePath = Path.Combine(task.RemotePath, f.Name),
                             LocalPath = task.LocalPath + "\\" + f.Name,
                             Length = f.Length,
@@ -369,7 +369,7 @@ namespace FileManager.Models
                 {
                     Route = father_task.Route.Copy(),
                     IsDirectory = true,
-                    Type = TransferType.Upload,
+                    Type = TransferTypeDeprecated.Upload,
                     RemotePath = remote_path + "\\" + dir_info.Name,
                     LocalPath = local_path + "\\" + dir_info.Name,
                     Length = 0,
@@ -382,7 +382,7 @@ namespace FileManager.Models
                 {
                     Route = father_task.Route.Copy(),
                     IsDirectory = false,
-                    Type = TransferType.Upload,
+                    Type = TransferTypeDeprecated.Upload,
                     RemotePath = remote_path + "\\" + file_info.Name,
                     LocalPath = local_path + "\\" + file_info.Name,
                     Length = file_info.Length,
@@ -404,11 +404,11 @@ namespace FileManager.Models
         private void TransferSingleTask(FileTask task)
         {
             Logger.Log(string.Format("<FileTaskManager> call TransferSingleTask, {0, 20}{1}", "", task.ToString()), LogLevel.Debug);
-            if (task.Type == TransferType.Download)
+            if (task.Type == TransferTypeDeprecated.Download)
             {
                 task.Status = FileTaskStatus.Downloading;
             }
-            else if (task.Type == TransferType.Upload)
+            else if (task.Type == TransferTypeDeprecated.Upload)
             {
                 task.Status = FileTaskStatus.Uploading;
             }
@@ -423,12 +423,12 @@ namespace FileManager.Models
         }
 
 
-        private void TransferSingleTaskSmallFile(FileTask task, TransferType taskType)
+        private void TransferSingleTaskSmallFile(FileTask task, TransferTypeDeprecated taskType)
         {
             try
             {
                 SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(task, 1);
-                if (taskType == TransferType.Upload)
+                if (taskType == TransferTypeDeprecated.Upload)
                 {
                     int pt = 0;
                     byte[] headerBytes = BytesConverter.WriteString(new byte[4], task.RemotePath, ref pt);
@@ -478,7 +478,7 @@ namespace FileManager.Models
 
             /// 创建本地 FileStream
             localFileStream = new FileStream(task.LocalPath, FileMode.OpenOrCreate,
-                task.Type == TransferType.Upload ? FileAccess.Read : FileAccess.Write);
+                task.Type == TransferTypeDeprecated.Upload ? FileAccess.Read : FileAccess.Write);
 
 
             /// 运行下载子线程
@@ -492,7 +492,7 @@ namespace FileManager.Models
             try
             {
                 SocketClient sc = SocketFactory.Instance.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
-                if (task.Type == TransferType.Upload)
+                if (task.Type == TransferTypeDeprecated.Upload)
                 {
                     sc.SendBytes(HB32Packet.UploadPacketRequest, new byte[1], dispatcher.FileStreamId, -1);
                 }
@@ -535,7 +535,7 @@ namespace FileManager.Models
             TransferSubThreads = new Thread[threads_count];
             for (int i = 0; i < threads_count; ++i)
             {
-                if (dispatcher.Task.Type == TransferType.Upload)
+                if (dispatcher.Task.Type == TransferTypeDeprecated.Upload)
                 {
                     TransferSubThreads[i] = new Thread(new ParameterizedThreadStart(UploadThreadUnit)) { IsBackground = true };
                 }

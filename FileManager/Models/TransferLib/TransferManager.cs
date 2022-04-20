@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Models.Serializable;
+using FileManager.Models.TransferLib.Services;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Static;
@@ -35,9 +36,7 @@ namespace FileManager.Models.TransferLib
         private TransferInfoDirectory CurrentDirectoryInfo = null;
         private int IndexFile = 0;
 
-
-        private TransferDiskManager DiskManager = null;
-        private PacketIndexGenerator IndexGenerator = null;
+        private readonly TransferThreadPool TransferThreadPool = new TransferThreadPool();
 
         #endregion
 
@@ -55,34 +54,32 @@ namespace FileManager.Models.TransferLib
         private void TransferMain()
         {
             IsTransfering = true;
-            if (RootInfo.Type == TransferType.Download)
-            { 
-                DownloadMain();
+            TransferThreadPool.InitializeThreads();
+            if (RootInfo.Type == SocketLib.Enums.TransferTypeDeprecated.Download)
+            {
+                /// todo 在这里确认当前任务已经 Query 完成
+                /// 先不搞 Query 和传输异步那些
+                /// 对同一个网络路径的数据通信, 没必要通过异步提升效率
+                /// /todo
+
+                /// --------
+                /// 以文件为单位进行主循环
+                /// (以后优化可以将目录树序列化, 以块为单位进行主循环)
+                while (true)
+                {
+                    /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
+                    if (!MovePointerToFirstFile()) { break; }
+                    /// 当前任务传输过程
+                    TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
+                    TransferThreadPool.DownloadOne(infoFile);
+                    DownloadOneFile(infoFile);
+                    /// 标记当前 File 任务完成
+                    CurrentDirectoryInfo.TransferCompleteFiles[IndexFile] = true;
+                }
             }
             IsTransfering = false;
         }
 
-        private void DownloadMain()
-        {
-            /// todo 在这里确认当前任务已经 Query 完成
-            /// 先不搞 Query 和传输异步那些
-            /// 对同一个网络路径的数据通信, 没必要通过异步提升效率
-            /// /todo
-
-            /// --------
-            /// 以文件为单位进行主循环
-            /// (以后优化可以将目录树序列化, 以块为单位进行主循环)
-            while (true)
-            {
-                /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
-                if (!MovePointerToFirstFile()) { break; }
-                /// 当前任务传输过程
-                TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
-                DownloadOneFile(infoFile);
-                /// 标记当前 File 任务完成
-                CurrentDirectoryInfo.TransferCompleteFiles[IndexFile] = true;
-            }
-        }
 
         /*
         public void DownloadSmallFile(TransferInfoFile infoFile)
@@ -118,19 +115,7 @@ namespace FileManager.Models.TransferLib
 
         private void DownloadOneFile(TransferInfoFile infoFile)
         {
-            /// 初始化各辅助类
-            IndexGenerator.Reset();
-            IndexGenerator.TotalIndex = (infoFile.Length - 1) / TransferDiskManager.BlockSize + 1;
-            DiskManager.SetPath(infoFile.LocalPath, FileAccess.Write);
-            /// 启动子线程 (todo 线程复用)
-            int thread_count = 1;
-            if (infoFile.Length > (16 << 10))
-            {
-                thread_count = 10;
-            }
-            /// 向sever端发出请求, 释放文件
-            
-            /// 判断任务是否正确完成
+
         }
 
 

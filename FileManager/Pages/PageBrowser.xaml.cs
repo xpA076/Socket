@@ -203,7 +203,7 @@ namespace FileManager.Pages
                     {
                         Route = SocketFactory.Instance.CurrentRoute.Copy(),
                         IsDirectory = selected.IsDirectory,
-                        Type = TransferType.Download,
+                        Type = SocketLib.Enums.TransferTypeDeprecated.Download,
                         RemotePath = RemoteDirectory + selected.Name,
                         Length = selected.Length,
                     };
@@ -220,7 +220,7 @@ namespace FileManager.Pages
                 TransferInfoRoot rootInfo = new TransferInfoRoot();
                 rootInfo.Route = CurrentRoute.Copy();
                 rootInfo.Rule = new FilterRule();
-                rootInfo.Type = TransferType.Download;
+                rootInfo.Type = SocketLib.Enums.TransferTypeDeprecated.Download;
                 rootInfo.RemoteDirectory = RemoteDirectory;
                 List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
                 foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
@@ -283,7 +283,7 @@ namespace FileManager.Pages
                     {
                         Route = SocketFactory.Instance.CurrentRoute.Copy(),
                         IsDirectory = false,
-                        Type = TransferType.Upload,
+                        Type = SocketLib.Enums.TransferTypeDeprecated.Upload,
                         RemotePath = remoteDir + name,
                         LocalPath = localPath,
                         Length = new FileInfo(localPath).Length
@@ -299,7 +299,7 @@ namespace FileManager.Pages
                 {
                     Route = SocketFactory.Instance.CurrentRoute.Copy(),
                     IsDirectory = true,
-                    Type = TransferType.Upload,
+                    Type = SocketLib.Enums.TransferTypeDeprecated.Upload,
                     RemotePath = remoteDir + name,
                     LocalPath = localPath,
                     Length = 0,

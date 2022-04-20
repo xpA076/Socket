@@ -32,7 +32,7 @@ namespace FileManager.Models
         public bool IsDirectory { get; set; } = false;
 
 
-        public TransferType Type { get; set; }
+        public TransferTypeDeprecated Type { get; set; }
         public string RemotePath { get; set; }
         public string LocalPath { get; set; }
         public long Length { get; set; } = -1;
@@ -45,7 +45,7 @@ namespace FileManager.Models
         {
             get
             {
-                return Type == TransferType.Download;
+                return Type == TransferTypeDeprecated.Download;
             }
         }
 
