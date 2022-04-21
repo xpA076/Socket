@@ -23,25 +23,7 @@ namespace FileManager.Models.TransferLib
 
         public long FinishedPacket { get; set; } = 0;
 
-        public TransferStatus Status { get; set; }
-
-        private int _bytes_length = 0;
-
-        public int BytesLength
-        {
-            get
-            {
-                if (_bytes_length == 0)
-                {
-                    byte[] bs_name = Encoding.UTF8.GetBytes(Name);
-                    _bytes_length = 4 + bs_name.Length + 8 + 8 + 8 + 8 + 4;
-                }
-                return _bytes_length;
-            }
-            //set { _bytes_length = value; }
-        }
-
-
+        public TransferStatus Status { get; set; } = TransferStatus.Waiting;
 
 
         private const int bytes_init_capacity = 64;
@@ -64,8 +46,9 @@ namespace FileManager.Models.TransferLib
             byte[] bs = bb.GetBytes();
             fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
             fs.Write(bs, 0, bs.Length);
-            _bytes_length = 4 + bs.Length;
-            return _bytes_length;
+            //_bytes_length = 4 + bs.Length;
+            //return _bytes_length;
+            return 0;
         }
 
 

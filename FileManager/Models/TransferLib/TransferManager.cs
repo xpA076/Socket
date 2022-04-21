@@ -5,11 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FileManager.Events;
+using FileManager.Events.UI;
 using FileManager.Models.Serializable;
 using FileManager.Models.TransferLib.Services;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Static;
+using FileManager.ViewModels.PageTransfer;
 
 namespace FileManager.Models.TransferLib
 {
@@ -20,14 +23,17 @@ namespace FileManager.Models.TransferLib
     /// </summary>
     public partial class TransferManager
     {
-
-        #region Properties
-
         private TransferInfoRoot RootInfo;
 
+        /// <summary>
+        /// 这个 Flag 指示当前 TransferManager 是否处于传输状态
+        /// </summary>
+        public bool IsTransfering { get; private set; } = false;
 
-        private bool IsTransfering = false;
-
+        /// <summary>
+        /// UI 调用传输暂停事件时, 将此 Flag 置为 true
+        /// </summary>
+        private bool IsPausing = false;
 
         /// <summary>
         /// 目录路径对应 DFS 缓存栈
@@ -38,7 +44,9 @@ namespace FileManager.Models.TransferLib
 
         private readonly TransferThreadPool TransferThreadPool = new TransferThreadPool();
 
-        #endregion
+        /// 各类 UI 相关事件
+        public PageTransferViewModel PageViewModel = null;
+
 
         public TransferManager(TransferInfoRoot rootInfo)
         {
@@ -46,88 +54,93 @@ namespace FileManager.Models.TransferLib
             CurrentDirectoryInfo = rootInfo;
         }
 
+
         public void InitTransfer()
         {
             Task.Run(() => { TransferMain(); });
         }
 
+
         private void TransferMain()
         {
             IsTransfering = true;
+            /// 线程池和 UI 初始化
+            TransferThreadPool.Route = RootInfo.Route;
             TransferThreadPool.InitializeThreads();
-            if (RootInfo.Type == SocketLib.Enums.TransferTypeDeprecated.Download)
+            TransferThreadPool.UIFinishBytes += PageViewModel.OnFinishBytes;
+            PageViewModel.StartRefresh();
+            if (RootInfo.Type == TransferType.Download)
             {
-                /// todo 在这里确认当前任务已经 Query 完成
-                /// 先不搞 Query 和传输异步那些
-                /// 对同一个网络路径的数据通信, 没必要通过异步提升效率
-                /// /todo
-
+                PageViewModel.TransferStatus = "Querying...";
+                /// 确认当前任务已经 Query 完成
+                /// 对同一个网络路径的数据通信, 没必要通过Query和文件传输异步来提升效率
+                /// 若 Querier 为 null, 说明目录树是从文件或其它方式加载完成, 不需要等待 Query 信号
+                if (RootInfo.Querier != null)
+                {
+                    RootInfo.Querier.QueryCompleteSignal.WaitOne();
+                }
+                PageViewModel.TransferStatus = "Transfering...";
+                if (RootInfo.Querier.IsQueryHaveFailed)
+                {
+                    // todo 若有 Query 被server 拒绝, 可在此处理
+                }
                 /// --------
-                /// 以文件为单位进行主循环
-                /// (以后优化可以将目录树序列化, 以块为单位进行主循环)
+                /// 以文件为单位进行主循环, 没必要将目录树序列化, 以块为单位进行主循环
                 while (true)
                 {
                     /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
                     if (!MovePointerToFirstFile()) { break; }
+                    
                     /// 当前任务传输过程
                     TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
+                    infoFile.Status = TransferStatus.Transfering;
+                    PageViewModel.SetNewFile(infoFile);
                     TransferThreadPool.DownloadOne(infoFile);
-                    DownloadOneFile(infoFile);
+                    if (IsPausing)
+                    {
+                        // todo 保存进度
+                        
+                        break;
+                    }
                     /// 标记当前 File 任务完成
-                    CurrentDirectoryInfo.TransferCompleteFiles[IndexFile] = true;
-                }
+                    CurrentDirectoryInfo.TransferCompleteFileFlags[IndexFile] = true;
+                    if (infoFile.Status == TransferStatus.Failed)
+                    {
+                        PageViewModel.CurrentFileFailed();
+                    }
+                    else
+                    {
+                        infoFile.Status = TransferStatus.Finished;
+                        PageViewModel.CurrentFileFinished();
+                    }
+}
             }
+            /// 传输结束的 UI 显示
+            PageViewModel.StopRefresh();
+            if (IsPausing)
+            {
+                PageViewModel.TransferStatus = "Paused";
+                IsPausing = false;
+            }
+            else
+            {
+                PageViewModel.TransferStatus = "Finished";
+            }
+            /// 线程池清理
+            TransferThreadPool.Finish();
+            TransferThreadPool.UIFinishBytes -= PageViewModel.OnFinishBytes;
             IsTransfering = false;
         }
 
 
-        /*
-        public void DownloadSmallFile(TransferInfoFile infoFile)
-        { 
-            DownloadRequest request = new DownloadRequest()
-            {
-                Type = DownloadRequest.RequestType.SmallFile,
-                ViewPath = infoFile.RemotePath
-            };
-            HB32Response hb_response;
-            try
-            {
-                hb_response = SocketFactory.Instance.Request(HB32Packet.DownloadRequest, request.ToBytes());
-            }
-            catch (Exception)
-            {
-                // todo Server端 Socket 通信异常
-                throw new NotImplementedException();
-            }
-            DownloadResponse response = DownloadResponse.FromBytes(hb_response.Bytes);
-            if (response.Type == DownloadResponse.ResponseType.BytesResponse)
-            {
-                File.WriteAllBytes(infoFile.LocalPath, response.Bytes);
-            }
-            else
-            {
-                // todo Server端 返回内部异常 (权限问题等, 无 socket 异常)
-                throw new NotImplementedException();
-            }
-        }
-        */
-
-
-        private void DownloadOneFile(TransferInfoFile infoFile)
+        /// <summary>
+        /// 外部 UI 调用, 暂停下载
+        /// </summary>
+        public void Pause()
         {
-
-        }
-
-
-        private void RunDownloadSubThreads()
-        {
-
-        }
-
-
-        private void DownloadThreadUnit()
-        {
-
+            IsPausing = true;
+            /// 执行TransferThreadPool.Pause() 后, 主循环中的 DownloadOne() 函数会返回
+            TransferThreadPool.Pause();
         }
 
 
@@ -147,7 +160,7 @@ namespace FileManager.Models.TransferLib
                 /// 按顺序尝试进入当前 Directory 的未完成子目录, 若成功则在子目录重复该循环
                 for (int i = 0; i < CurrentDirectoryInfo.DirectoryChildren.Count; ++i)
                 {
-                    if (!CurrentDirectoryInfo.TransferCompleteDirectories[i])
+                    if (!CurrentDirectoryInfo.TransferCompleteDirectoryFlags[i])
                     {
                         DirectoryIndexStack.Push(i);
                         CurrentDirectoryInfo = CurrentDirectoryInfo.DirectoryChildren[i];
@@ -162,7 +175,7 @@ namespace FileManager.Models.TransferLib
                 /// 未成功进入子目录, 则尝试获取子节点中的未完成文件
                 for (int i = 0; i < CurrentDirectoryInfo.FileChildren.Count; ++i)
                 {
-                    if (!CurrentDirectoryInfo.TransferCompleteFiles[i])
+                    if (!CurrentDirectoryInfo.TransferCompleteFileFlags[i])
                     {
                         IndexFile = i;
                         return true;
@@ -177,7 +190,7 @@ namespace FileManager.Models.TransferLib
                     return false;
                 }
                 int idx = DirectoryIndexStack.Pop();
-                CurrentDirectoryInfo.Parent.TransferCompleteDirectories[idx] = true;
+                CurrentDirectoryInfo.Parent.TransferCompleteDirectoryFlags[idx] = true;
                 CurrentDirectoryInfo = CurrentDirectoryInfo.Parent;
             }
         }
@@ -185,13 +198,6 @@ namespace FileManager.Models.TransferLib
 
 
 
-
-        private bool IsTransferComplete()
-        {
-            // todo
-
-            return false;
-        }
 
     }
 }

@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.ViewModels
+namespace FileManager.ViewModels.PageTransfer
 {
-    public class PageTransferViewModel
+    public class TransferListViewTiem
     {
-
-
     }
 }

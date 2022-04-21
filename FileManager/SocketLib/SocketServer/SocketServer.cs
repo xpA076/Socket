@@ -21,7 +21,7 @@ namespace FileManager.SocketLib.SocketServer
     {
         public event SocketIdentityCheckEventHandler CheckIdentity;
 
-        private readonly SocketServerConfig Config = new SocketServerConfig();
+        public readonly SocketServerConfig Config = new SocketServerConfig();
 
         private readonly FileResourceManager FileResourceManager = new FileResourceManager();
 
@@ -65,6 +65,10 @@ namespace FileManager.SocketLib.SocketServer
                         f = header.Flag;
                         switch (header.Flag)
                         {
+                            case HB32Packet.Null:
+                                ResponeNothing(responder, bytes);
+                                break;
+
                             case HB32Packet.SessionRequest:
                                 session = ResponseSession(responder, bytes);
                                 break;

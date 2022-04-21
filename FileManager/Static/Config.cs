@@ -15,7 +15,7 @@ namespace FileManager.Static
 {
     public static class Config
     {
-        public static bool UseLegacyFileInfo { get; set; } = true;
+        public static bool UseLegacyFileInfo { get; set; } = false;
 
 
         #region UI

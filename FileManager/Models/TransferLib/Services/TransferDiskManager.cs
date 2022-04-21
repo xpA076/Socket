@@ -52,11 +52,11 @@ namespace FileManager.Models.TransferLib.Services
                 IsFileStreamClosed = true;
             }
         }
-
-        public void WriteBytes(long index, byte[] bytes)
+        public void WriteBytes(long offset, byte[] bytes)
         {
-            WriteBytes(index * BlockSize, bytes, bytes.Length);
+            WriteBytes(offset, bytes, bytes.Length);
         }
+        
 
         public void WriteBytes(long offset, byte[] bytes, int length)
         {

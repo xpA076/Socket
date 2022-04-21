@@ -293,6 +293,13 @@ namespace FileManager.Static
             }
         }
 
+        public static HB32Response Request(SocketClient client, HB32Packet flag, byte[] bytes)
+        {
+            client.SendBytes(new HB32Header { Flag = flag }, bytes);
+            client.ReceiveBytes(out HB32Header h, out byte[] bs);
+            return new HB32Response(h, bs);
+        }
+
 
         public HB32Response RequestWithHeaderFlag(HB32Packet requiredFlag, HB32Header header, byte[] bytes)
         {

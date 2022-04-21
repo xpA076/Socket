@@ -17,24 +17,33 @@ namespace FileManager.Models.TransferLib
     public class TransferInfoDirectory : TransferInfo
     {
         #region Parameters to be saved
+
+        public long Length { get; set; } = 0;
+
         /// <summary>
         /// 初始为 false, 在构造过当前节点列表(列表中子节点未构建)后为 true
+        /// 在 BuildChildrenFrom() 调用后为 true
         /// </summary>
         public bool IsChildrenListBuilt { get; set; } = false;
 
+        public TransferStatus Status { get; set; } = TransferStatus.Querying;
 
+        /// <summary>
+        /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren 相同
+        /// 初始全为 false, 目录及对应所有子目录全部构建完成后在 Querier 中置为 true
+        /// </summary>
         public List<bool> QueryCompleteFlags { get; set; } = new List<bool>();
 
 
         /// <summary>
         /// 在 BuildChildrenFrom() 中初始化, 长度和 DirectoryChildren 相同
         /// </summary>
-        public List<bool> TransferCompleteDirectories { get; set; } = new List<bool>();
+        public List<bool> TransferCompleteDirectoryFlags { get; set; } = new List<bool>();
 
         /// <summary>
         /// 在 BuildChildrenFrom() 中初始化, 长度和 FileChildren 相同
         /// </summary>
-        public List<bool> TransferCompleteFiles { get; set; } = new List<bool>();
+        public List<bool> TransferCompleteFileFlags { get; set; } = new List<bool>();
 
 
         public List<TransferInfoDirectory> DirectoryChildren { get; set; } = new List<TransferInfoDirectory>();
@@ -43,32 +52,6 @@ namespace FileManager.Models.TransferLib
         #endregion
 
         #region Parameters
-
-        /// <summary>
-        /// 这个或许可用于记录存档 bias, 快速更新
-        /// </summary>
-        private int _bytes_length = 0;
-        public virtual int BytesLength
-        {
-            get
-            {
-                if (_bytes_length == 0)
-                {
-                    int child_len = 0;
-                    foreach (var child in DirectoryChildren)
-                    {
-                        child_len += child.BytesLength;
-                    }
-                    foreach (var child in FileChildren)
-                    {
-                        child_len += child.BytesLength;
-                    }
-                    _bytes_length = 4 + Encoding.UTF8.GetBytes(Name).Length + 4 + 4 + child_len;
-                }
-                return _bytes_length;
-            }
-        }
-
 
         public bool IsRoot
         {
@@ -95,29 +78,6 @@ namespace FileManager.Models.TransferLib
             }
         }
 
-
-        /*
-        /// <summary>
-        /// 根据 QueryCompleteFlags 查询第一个未 query 的子节点
-        /// 在 Querier 中调用
-        /// </summary>
-        public TransferDirectoryInfo FirstUnqueriedChild
-        {
-            get
-            {
-                System.Diagnostics.Debug.Assert(this.IsChildrenListBuilt);
-                for (int i = 0; i < DirectoryChildren.Count; i++)
-                {
-                    if (!QueryCompleteFlags[i])
-                    {
-                        return DirectoryChildren[i];
-                    }
-                }
-                throw new Exception("TransferDirectoryInfo : Cannot find FirstUnqueriedChild.");
-            }
-        }
-
-        */
         #endregion
 
         /// <summary>
@@ -152,6 +112,7 @@ namespace FileManager.Models.TransferLib
                     directoryInfo.Parent = this;
                     this.DirectoryChildren.Add(directoryInfo);
                     this.QueryCompleteFlags.Add(false);
+                    this.TransferCompleteDirectoryFlags.Add(false);
                 }
                 else
                 {
@@ -162,7 +123,7 @@ namespace FileManager.Models.TransferLib
                     fileInfo.LastWriteTimeUtc = socketFileInfo.LastWriteTimeUtc;
                     fileInfo.Parent = this;
                     this.FileChildren.Add(fileInfo);
-                    this.QueryCompleteFlags.Add(false);
+                    this.TransferCompleteFileFlags.Add(false);
                 }
             }
             IsChildrenListBuilt = true;
@@ -182,8 +143,8 @@ namespace FileManager.Models.TransferLib
             bb.Append(Length);
             bb.Append(IsChildrenListBuilt);
             bb.AppendListBool(QueryCompleteFlags);
-            bb.AppendListBool(TransferCompleteDirectories);
-            bb.AppendListBool(TransferCompleteFiles);
+            bb.AppendListBool(TransferCompleteDirectoryFlags);
+            bb.AppendListBool(TransferCompleteFileFlags);
             byte[] bs = bb.GetBytes();
             fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
             fs.Write(bs, 0, bs.Length);
@@ -199,8 +160,9 @@ namespace FileManager.Models.TransferLib
             {
                 child_len += child.SaveToFile(fs);
             }
-            _bytes_length = 4 + bs.Length + 8 + child_len;
-            return _bytes_length;
+            //_bytes_length = 4 + bs.Length + 8 + child_len;
+            //return _bytes_length;
+            return 0;
         }
 
 
@@ -218,8 +180,8 @@ namespace FileManager.Models.TransferLib
             info_dir.Length = BytesParser.GetLong(bs, ref idx);
             info_dir.IsChildrenListBuilt = BytesParser.GetBool(bs, ref idx);
             info_dir.QueryCompleteFlags = BytesParser.GetListBool(bs, ref idx);
-            info_dir.TransferCompleteDirectories = BytesParser.GetListBool(bs, ref idx);
-            info_dir.TransferCompleteFiles = BytesParser.GetListBool(bs, ref idx);
+            info_dir.TransferCompleteDirectoryFlags = BytesParser.GetListBool(bs, ref idx);
+            info_dir.TransferCompleteFileFlags = BytesParser.GetListBool(bs, ref idx);
             /// 构建子节点
             fs.Read(b_len, 0, 4);
             len = BitConverter.ToInt32(b_len, 0);

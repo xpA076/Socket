@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.SocketServer
 {
-    public class SocketReversedServer : SocketServer
+    public class SocketReversedServer : SocketServerBase
     {
         /// <summary>
         /// 若此反向代理服务器直接挂载在 IP 1.2.3.4:10000 上名为 abc

@@ -15,9 +15,15 @@ namespace FileManager.Exceptions
         public int NeedType { get; set; } = -1;
         public int ExceptionType { get; set; }
 
+        public string Message { get; set; }
         public SocketTypeException()
         {
 
+        }
+
+        public SocketTypeException(string msg)
+        {
+            Message = msg;
         }
 
         public SocketTypeException(object need_type, object exception_type)

@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 namespace FileManager.Models.TransferLib
 {
     /// <summary>
-    /// 原计划作为 TransferFileInfo 和 TransferDirectoryInfo 的父类
-    /// 现在没用上
+    /// 作为 TransferFileInfo 和 TransferDirectoryInfo 的父类
+    /// 提供索引路径的方法, 以及父节点引用
     /// </summary>
     public class TransferInfo
     {
@@ -36,6 +36,10 @@ namespace FileManager.Models.TransferLib
         {
             get
             {
+                if (this.Parent == null)
+                {
+                    return this as TransferInfoRoot;
+                }
                 //System.Diagnostics.Debug.Assert(this.Parent != null);
                 TransferInfoDirectory pt = this.Parent;
                 while (!pt.IsRoot)

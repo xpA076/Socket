@@ -82,10 +82,12 @@
     <Compile Include="Events\DisposeEventArgs.cs" />
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
+    <Compile Include="Events\UI\FinishBytesEventArgs.cs" />
     <Compile Include="Events\UpdateUIInvokeEventArgs.cs" />
     <Compile Include="Exceptions\Server\SocketAuthenticationException.cs" />
     <Compile Include="Exceptions\Server\ServerFileException.cs" />
     <Compile Include="Exceptions\Server\ServerInternalException.cs" />
+    <Compile Include="Exceptions\SocketConnectionException.cs" />
     <Compile Include="Exceptions\SocketFlagException.cs" />
     <Compile Include="Exceptions\SocketTypeException.cs" />
     <Compile Include="Exceptions\Server\SocketSessionException.cs" />
@@ -98,7 +100,6 @@
     <Compile Include="Models\Serializable\FileRequest.cs" />
     <Compile Include="Models\Serializable\SetSessionRequest.cs" />
     <Compile Include="Models\TransferLib\Services\PacketIndexGenerator.cs" />
-    <Compile Include="Models\TransferLib\Services\TransferThreadInfo.cs" />
     <Compile Include="Models\TransferLib\Services\TransferThreadPool.cs" />
     <Compile Include="Models\TransferLib\TransferType.cs" />
     <Compile Include="SocketLib\ISocketSerializable.cs" />
@@ -173,7 +174,8 @@
     <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
     <Compile Include="ViewModels\DownloadConfirmViewModel.cs" />
-    <Compile Include="ViewModels\PageTransferViewModel.cs" />
+    <Compile Include="ViewModels\PageTransfer\PageTransferViewModel.cs" />
+    <Compile Include="ViewModels\PageTransfer\TransferListViewTiem.cs" />
     <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">

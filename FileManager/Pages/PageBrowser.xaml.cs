@@ -76,10 +76,6 @@ namespace FileManager.Pages
             fileDialog.Multiselect = true;
         }
 
-        public void SetConnectedIPText(TCPAddress address)
-        {
-            this.browserIPView.ServerAddress = address;
-        }
 
         public void ResetRemoteDirectory()
         {
@@ -134,19 +130,9 @@ namespace FileManager.Pages
                 DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
                 if (response.Type != DirectoryResponse.ResponseType.ListResponse)
                 {
-                    throw new ServerInternalException(response.ExceptionMessage);
+                    throw new SocketTypeException();
                 }
                 e.IsPathValid = true;
-
-
-                /*
-                var resp = SocketFactory.Instance.Request(new HB32Header { Flag = SocketPacketFlag.DirectoryRequest }, Encoding.UTF8.GetBytes(e.Path));
-                if (resp.Header.Flag != SocketPacketFlag.DirectoryResponse)
-                {
-                    throw new SocketFlagException();
-                }
-                e.IsPathValid = true;
-                */
             }
             catch (Exception)
             {
@@ -220,7 +206,7 @@ namespace FileManager.Pages
                 TransferInfoRoot rootInfo = new TransferInfoRoot();
                 rootInfo.Route = CurrentRoute.Copy();
                 rootInfo.Rule = new FilterRule();
-                rootInfo.Type = SocketLib.Enums.TransferTypeDeprecated.Download;
+                rootInfo.Type = TransferType.Download;
                 rootInfo.RemoteDirectory = RemoteDirectory;
                 List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
                 foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
@@ -228,6 +214,7 @@ namespace FileManager.Pages
                     selectedInfos.Add(selected.Copy());
                 }
                 rootInfo.BuildChildrenFrom(selectedInfos);
+                rootInfo.Status = TransferStatus.Querying;
                 DownloadConfirm(rootInfo);
             }
         }
@@ -355,7 +342,7 @@ namespace FileManager.Pages
                     DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
                     if (response.Type != DirectoryResponse.ResponseType.ListResponse)
                     {
-                        throw new ServerInternalException(response.ExceptionMessage);
+                        throw new SocketTypeException(response.ExceptionMessage);
                     }
                     this.fileClasses = response.FileInfos;
                     this.Dispatcher.Invoke(() => {

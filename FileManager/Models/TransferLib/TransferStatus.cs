@@ -8,12 +8,12 @@ namespace FileManager.Models.TransferLib
 {
     public enum TransferStatus : int
     {
+        Querying,
         Waiting,
-        Success,
-        //Denied,
-        Failed,
         Transfering,
-
+        Pause,
+        Finished,
+        Failed,
     }
 
 }

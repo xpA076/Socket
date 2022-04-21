@@ -27,19 +27,12 @@ namespace FileManager.Models.TransferLib
 
         #region Parameters to save
 
-        public override int BytesLength
-        {
-            get
-            {
-                return 0;
-            }
-        }
 
         public ConnectionRoute Route { get; set; }
 
         public FilterRule Rule { get; set; }
 
-        public SocketLib.Enums.TransferTypeDeprecated Type { get; set; }
+        public TransferType Type { get; set; }
 
 
         /// <summary>
@@ -54,11 +47,9 @@ namespace FileManager.Models.TransferLib
 
         #endregion
 
-        #region Parameters
         public TransferInfoRootQuerier Querier = null;
 
 
-        #endregion
 
 
 
@@ -84,8 +75,8 @@ namespace FileManager.Models.TransferLib
                 bb.Append(Length);
                 bb.Append(IsChildrenListBuilt);
                 bb.AppendListBool(QueryCompleteFlags);
-                bb.AppendListBool(TransferCompleteDirectories);
-                bb.AppendListBool(TransferCompleteFiles);
+                bb.AppendListBool(TransferCompleteDirectoryFlags);
+                bb.AppendListBool(TransferCompleteFileFlags);
                 byte[] bs = bb.GetBytes();
                 fs.Write(BitConverter.GetBytes(bs.Length), 0, 4);
                 fs.Write(bs, 0, bs.Length);
@@ -137,15 +128,15 @@ namespace FileManager.Models.TransferLib
             bs0 = BytesParser.GetBytes(bs, ref idx);
             root.Rule = FilterRule.FromBytes(bs0);
             ///   Other properties
-            root.Type = (SocketLib.Enums.TransferTypeDeprecated)BytesParser.GetInt(bs, ref idx);
+            root.Type = (TransferType)BytesParser.GetInt(bs, ref idx);
             root.RemoteDirectory = BytesParser.GetString(bs, ref idx);
             root.LocalDirectory = BytesParser.GetString(bs, ref idx);
             root.Name = BytesParser.GetString(bs, ref idx);
             root.Length = BytesParser.GetLong(bs, ref idx);
             root.IsChildrenListBuilt = BytesParser.GetBool(bs, ref idx);
             root.QueryCompleteFlags = BytesParser.GetListBool(bs, ref idx);
-            root.TransferCompleteDirectories = BytesParser.GetListBool(bs, ref idx);
-            root.TransferCompleteFiles = BytesParser.GetListBool(bs, ref idx);
+            root.TransferCompleteDirectoryFlags = BytesParser.GetListBool(bs, ref idx);
+            root.TransferCompleteFileFlags = BytesParser.GetListBool(bs, ref idx);
             /// 构造子节点
             fs.Read(b_len, 0, 4);
             len = BitConverter.ToInt32(b_len, 0);

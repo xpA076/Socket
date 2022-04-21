@@ -19,7 +19,7 @@ namespace FileManager.Models.TransferLib.Services
         public long TotalIndex { get; set; }
 
 
-        public void Reset()
+        public void Clear()
         {
             lock (IndexLock)
             {

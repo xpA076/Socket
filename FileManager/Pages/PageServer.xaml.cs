@@ -41,7 +41,7 @@ namespace FileManager.Pages
             this.TextBoxPort.Text = Config.DefaultServerPort.ToString();
             RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
             this.TextBoxNull.DataContext = RichTextBoxView;
-            //ButtonStartListen_Click(null, null);
+            ButtonStartListen_Click(null, null);
         }
 
 

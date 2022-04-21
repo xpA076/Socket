@@ -65,12 +65,12 @@
             <RowDefinition Height="2*" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
-            <TextBlock Text="Transfer2 status : " TextWrapping="Wrap" 
+            <TextBlock Text="{Binding TransferStatus}" TextWrapping="Wrap" 
                        Margin="20 20 20 0" FontSize="16"
                        Foreground="#ccc"/>
         </Grid>
         <Grid Grid.Row="1">
-            <ListView x:Name="ListViewTask" Margin="30 10 30 20" Background="#222" Foreground="#777">
+            <ListView x:Name="ListViewTransfer" Margin="30 10 30 20" Background="#222" Foreground="#777">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="30">
@@ -135,15 +135,6 @@
                                     <TextBlock Text="{Binding StatusString}" ToolTip="{Binding StatusString}"
                                                 Foreground="#aaa" Margin="10 0 0 0"
                                                 MinWidth="60"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Width="200">
-                            <GridViewColumnHeader Content="Address" Style="{StaticResource ListViewHeader}" />
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding TcpAddressString}" Foreground="#aaa" Margin="10 0 0 0"
-                                                   MinWidth="60"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

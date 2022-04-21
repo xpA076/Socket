@@ -87,6 +87,10 @@ namespace FileManager.SocketLib
         }
 
 
+        /// <summary>
+        /// 向 Server 端发送 DisconnectRequest 后关闭 Socket 连接
+        /// 即使不成功也不会抛出异常
+        /// </summary>
         public override void Close()
         {
             try
