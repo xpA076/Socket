@@ -10,10 +10,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FileManager.Models.TransferLib.Info;
+using FileManager.Models.TransferLib.Enums;
 
-
-
-namespace FileManager.Models.TransferLib
+namespace FileManager.Models.TransferLib.Services
 {
     public class TransferInfoRootQuerier
     {

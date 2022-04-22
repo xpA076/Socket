@@ -1,6 +1,8 @@
 ﻿using FileManager.Events.UI;
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
+using FileManager.Models.TransferLib.Enums;
+using FileManager.Models.TransferLib.Info;
 using FileManager.SocketLib;
 using FileManager.Static;
 using System;
@@ -13,8 +15,13 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models.TransferLib.Services
 {
+    /// <summary>
+    /// 由 PageTransfer 管理, 负责一个 Route 下的传输子线程调度
+    /// </summary>
     public class TransferThreadPool
     {
+        public ConnectionRoute Route = null;
+
         private readonly int[] RetryInterval = new int[] { 5, 5, 10, 10, 20, 60, 300 };
 
         private const int DefaultThreadLimit = 1;
@@ -28,8 +35,6 @@ namespace FileManager.Models.TransferLib.Services
         private readonly TransferDiskManager DiskManager = new TransferDiskManager();
 
         private readonly PacketIndexGenerator IndexGenerator = new PacketIndexGenerator();
-
-        public ConnectionRoute Route = null;
 
         private TransferInfoFile CurrentFile = null;
 
@@ -222,6 +227,7 @@ namespace FileManager.Models.TransferLib.Services
                         try
                         {
                             long count = DownloadSinglePacket(packet, ref client);
+                            CurrentFile.FinishedPacket = IndexGenerator.LastFinishedIndex;
                             UIFinishBytes(this, new FinishBytesEventArgs(count));
                         }
                         catch (SocketConnectionException)
@@ -358,16 +364,11 @@ namespace FileManager.Models.TransferLib.Services
 
         private int GetThreadCount(long length)
         {
-            return 1;
-            if (length <= (4 << 10))
+            if (length <= (64 << 10))
             {
                 return 1;
             }
-            else if (length <= (16 << 10))
-            {
-                return 2;
-            }
-            else if (length <= (128 << 20))
+            else if (length <= (4 << 20))
             {
                 return 4;
             }

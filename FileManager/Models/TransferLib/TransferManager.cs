@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using FileManager.Events;
 using FileManager.Events.UI;
 using FileManager.Models.Serializable;
+using FileManager.Models.TransferLib.Enums;
+using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
@@ -23,7 +25,11 @@ namespace FileManager.Models.TransferLib
     /// </summary>
     public partial class TransferManager
     {
-        private TransferInfoRoot RootInfo;
+        public TransferInfoRoot RootInfo;
+
+        public TransferThreadPool TransferThreadPool;
+
+        public PageTransferViewModel PageViewModel;
 
         /// <summary>
         /// 这个 Flag 指示当前 TransferManager 是否处于传输状态
@@ -42,11 +48,8 @@ namespace FileManager.Models.TransferLib
         private TransferInfoDirectory CurrentDirectoryInfo = null;
         private int IndexFile = 0;
 
-        private readonly TransferThreadPool TransferThreadPool = new TransferThreadPool();
-
-        /// 各类 UI 相关事件
-        public PageTransferViewModel PageViewModel = null;
-
+        public delegate void TransferFinishedEventHandler(object sender, EventArgs e);
+        public event TransferFinishedEventHandler TransferFinishedCallback;
 
         public TransferManager(TransferInfoRoot rootInfo)
         {
@@ -69,6 +72,8 @@ namespace FileManager.Models.TransferLib
             TransferThreadPool.InitializeThreads();
             TransferThreadPool.UIFinishBytes += PageViewModel.OnFinishBytes;
             PageViewModel.StartRefresh();
+
+            /// RootInfo 的文件传输
             if (RootInfo.Type == TransferType.Download)
             {
                 PageViewModel.TransferStatus = "Querying...";
@@ -113,8 +118,9 @@ namespace FileManager.Models.TransferLib
                         infoFile.Status = TransferStatus.Finished;
                         PageViewModel.CurrentFileFinished();
                     }
-}
+                }
             }
+
             /// 传输结束的 UI 显示
             PageViewModel.StopRefresh();
             if (IsPausing)
@@ -126,10 +132,14 @@ namespace FileManager.Models.TransferLib
             {
                 PageViewModel.TransferStatus = "Finished";
             }
+
             /// 线程池清理
             TransferThreadPool.Finish();
             TransferThreadPool.UIFinishBytes -= PageViewModel.OnFinishBytes;
             IsTransfering = false;
+
+            /// 回调
+            TransferFinishedCallback(this, EventArgs.Empty);
         }
 
 
@@ -184,6 +194,7 @@ namespace FileManager.Models.TransferLib
                 /// 未获取到本级中的未完成文件
                 ///  if    当前节点为 Root, 说明已经完成所有文件
                 ///  else  回溯至上级, 将上级中本节点标记为完成, 在上级中重复查找 File 节点
+                CurrentDirectoryInfo.Status = TransferStatus.Finished;
                 if (CurrentDirectoryInfo.IsRoot)
                 {
                     /// 已回溯至 Root 节点, 所有文件已经完成

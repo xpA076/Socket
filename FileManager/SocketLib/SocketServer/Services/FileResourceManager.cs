@@ -13,8 +13,6 @@ namespace FileManager.SocketLib.SocketServer.Services
 {
     public class FileResourceManager
     {
-        private readonly TimeoutCollector timeoutCollector;
-
         private readonly Dictionary<string, FileResource> FileResources = new Dictionary<string, FileResource>();
 
         private readonly ReaderWriterLockSlim FileResourcesLock = new ReaderWriterLockSlim();

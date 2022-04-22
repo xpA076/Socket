@@ -1,5 +1,6 @@
 ﻿using FileManager.Events.UI;
 using FileManager.Models.TransferLib;
+using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
 using System;
 using System.Collections.Generic;
@@ -18,8 +19,6 @@ namespace FileManager.ViewModels.PageTransfer
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private TransferInfoRoot RootInfo;
-
         public enum ProgressType : int
         {
             Bytes,
@@ -32,7 +31,7 @@ namespace FileManager.ViewModels.PageTransfer
         {
             set
             {
-                _transfer_status = "Transfer status : " + value;
+                _transfer_status = "Transfer status -> " + value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TransferStatus"));
             }
             get
@@ -40,7 +39,8 @@ namespace FileManager.ViewModels.PageTransfer
                 return _transfer_status;
             }
         }
-        
+
+        public List<TransferInfoRoot> InfoRoots;
 
         public readonly ObservableCollection<TransferListViewTiem> ListViewItems = new ObservableCollection<TransferListViewTiem>();
 
@@ -143,8 +143,7 @@ namespace FileManager.ViewModels.PageTransfer
 
         public void SetRoot(TransferInfoRoot rootInfo)
         {
-            RootInfo = rootInfo;
-            TotalLength = RootInfo.Length;
+            TotalLength = rootInfo.Length;
         }
 
 

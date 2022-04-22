@@ -25,6 +25,8 @@ using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
+using FileManager.Models.TransferLib.Info;
+using FileManager.Models.TransferLib.Enums;
 
 namespace FileManager.Pages
 {

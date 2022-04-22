@@ -15,7 +15,7 @@ namespace FileManager.Exceptions
         public int NeedType { get; set; } = -1;
         public int ExceptionType { get; set; }
 
-        public string Message { get; set; }
+        public string Msg { get; set; }
         public SocketTypeException()
         {
 
@@ -23,7 +23,7 @@ namespace FileManager.Exceptions
 
         public SocketTypeException(string msg)
         {
-            Message = msg;
+            Msg = msg;
         }
 
         public SocketTypeException(object need_type, object exception_type)

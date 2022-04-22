@@ -7,16 +7,18 @@ using System.Threading.Tasks;
 
 using FileManager.SocketLib;
 using FileManager.Models.Serializable;
+using FileManager.Models.TransferLib.Enums;
 
-namespace FileManager.Models.TransferLib
+namespace FileManager.Models.TransferLib.Info
 {
 
     /// <summary>
     /// 传输任务的文件夹信息, 同时作为 TransferInfoRoot的父类
     /// </summary>
-    public class TransferInfoDirectory : TransferInfo
+    public class TransferInfoDirectory
     {
         #region Parameters to be saved
+        public string Name { get; set; } = "";
 
         public long Length { get; set; } = 0;
 
@@ -53,10 +55,68 @@ namespace FileManager.Models.TransferLib
 
         #region Parameters
 
+        private TransferInfoRoot Root
+        {
+            get
+            {
+                if (this.Parent == null)
+                {
+                    return this as TransferInfoRoot;
+                }
+                TransferInfoDirectory pt = this.Parent;
+                while (!pt.IsRoot)
+                {
+                    pt = pt.Parent;
+                }
+                return pt as TransferInfoRoot;
+            }
+        }
+
+
+        /// <summary>
+        /// 最终形如 "xxx" 或 "xxx/xxx/xxx"
+        /// </summary>
+        public string RelativePath
+        {
+            get
+            {
+                string path = this.Name;
+                TransferInfoDirectory pt = this.Parent;
+                while (!pt.IsRoot)
+                {
+                    path = pt.Name + "\\" + path;
+                    pt = pt.Parent;
+                }
+                return path;
+            }
+        }
+
+        public string RemotePath
+        {
+            get
+            {
+                return Path.Combine(Root.RemoteDirectory, RelativePath);
+            }
+        }
+
+        public string LocalPath
+        {
+            get
+            {
+                return Path.Combine(Root.LocalDirectory, RelativePath);
+            }
+        }
+
+        /// <summary>
+        /// 父节点指针, TransferRootInfo 继承自 TransferDirectoryInfo
+        /// 区别在于, Root的父节点为空, Directory的父节点不为空
+        /// 不得在Root节点中调用 .Root 属性
+        /// </summary>
+        public TransferInfoDirectory Parent { get; set; } = null;
+
         public bool IsRoot
         {
             get
-
             {
                 return this.Parent == null;
             }
@@ -77,8 +137,8 @@ namespace FileManager.Models.TransferLib
                 }
             }
         }
-
         #endregion
+
 
         /// <summary>
         /// 当前节点构造完成后调用 (当前节点为叶子节点或所有子节点已经过DFS构造完成后)
@@ -201,5 +261,8 @@ namespace FileManager.Models.TransferLib
             }
             return info_dir;
         }
+
+
+
     }
 }

@@ -4,11 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using FileManager.Models.TransferLib.Enums;
+using FileManager.Models.TransferLib.Services;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 
-namespace FileManager.Models.TransferLib
+namespace FileManager.Models.TransferLib.Info
 {
     /// <summary>
     /// 添加任务的根节点信息, 为 InfoDirectory 的子类
@@ -48,10 +49,6 @@ namespace FileManager.Models.TransferLib
         #endregion
 
         public TransferInfoRootQuerier Querier = null;
-
-
-
-
 
 
         /// <summary>

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models
 {
+    /// <summary>
+    /// Connect 页面历史记录
+    /// </summary>
     public class ConnectionRecord : INotifyPropertyChanged
     {
         private bool _is_starred = false;

@@ -80,11 +80,6 @@ namespace FileManager.Pages
             if (!IsTransfering) { FTsManager.InitDownload(); }
         }
 
-        public void AddTransferTask(TransferInfoRoot rootInfo)
-        {
-            // do something
-        }
-
 
 
         /// <summary>

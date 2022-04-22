@@ -517,7 +517,7 @@ namespace FileManager.SocketLib
         private SocketSender AuthenticationProxy(Socket client)
         {
             // todo 重写 21.05.28
-            byte[] proxy_header;
+            //byte[] proxy_header;
             SocketIO.ReceiveBytes(client, out HB32Header route_header, out byte[] route_bytes);
             Debug.Assert(route_bytes[0] == 1);
             int pt = 0;

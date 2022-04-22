@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using FileManager.Models.TransferLib;
+using FileManager.Models.TransferLib.Info;
 
 namespace FileManager.ViewModels
 {
