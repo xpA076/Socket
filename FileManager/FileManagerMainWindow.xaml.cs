@@ -86,13 +86,6 @@ namespace FileManager
                 return (PageTransfer)this.pages["Transfer"];
             }
         }
-        public PageTransferLegacy SubPageTransferLegacy
-        {
-            get
-            {
-                return (PageTransferLegacy)this.pages["TransferLegacy"];
-            }
-        }
 
 
         public PageCode SubPageCode
@@ -202,7 +195,6 @@ namespace FileManager
                 { "Connect", new PageConnect(this) },
                 { "Browser", new PageBrowser(this) },
                 { "Transfer", new PageTransfer(this) },
-                { "TransferLegacy", new PageTransferLegacy(this) },
                 { "Code", new PageCode() },
                 { "Settings", new PageSettings() },
                 { "Server", new PageServer() },

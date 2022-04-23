@@ -101,13 +101,14 @@
     <Compile Include="Models\TransferLib\Services\PacketIndexGenerator.cs" />
     <Compile Include="Models\TransferLib\Services\TransferThreadPool.cs" />
     <Compile Include="Models\TransferLib\Enums\TransferType.cs" />
+    <Compile Include="Models\TransferLib\TransferManager.cs" />
     <Compile Include="SocketLib\ISocketSerializable.cs" />
     <Compile Include="Models\Serializable\SessionRequest.cs" />
     <Compile Include="Models\Serializable\SessionResponse.cs" />
     <Compile Include="Models\TransferLib\Info\TransferInfoDirectory.cs" />
     <Compile Include="Models\TransferLib\Services\TransferDiskManager.cs" />
     <Compile Include="Models\TransferLib\Info\TransferInfoFile.cs" />
-    <Compile Include="Models\TransferLib\TransferManager.cs" />
+    <Compile Include="Models\TransferLib\TransferSingleManager.cs" />
     <Compile Include="Models\TransferLib\Info\TransferInfoRoot.cs" />
     <Compile Include="Models\TransferLib\Services\TransferInfoRootQuerier.cs" />
     <Compile Include="Models\TransferLib\Enums\TransferStatus.cs" />
@@ -122,9 +123,6 @@
     </Compile>
     <Compile Include="Pages\PageSettings.xaml.cs">
       <DependentUpon>PageSettings.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Pages\PageTransferLegacy.xaml.cs">
-      <DependentUpon>PageTransferLegacy.xaml</DependentUpon>
     </Compile>
     <Compile Include="SocketLib\BytesBuilder.cs" />
     <Compile Include="SocketLib\BytesConverter.cs" />
@@ -229,10 +227,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Pages\PageTransferLegacy.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Windows\DownloadConfirmWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -248,7 +242,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\FileTaskLib\FileTask.cs" />
-    <Compile Include="ViewModels\ProgressViewModel.cs" />
     <Compile Include="Models\FileTaskLib\FileTasksManager.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskRecord.cs" />
     <Compile Include="Pages\PageBrowser.xaml.cs">

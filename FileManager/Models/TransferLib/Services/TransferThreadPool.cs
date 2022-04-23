@@ -24,13 +24,15 @@ namespace FileManager.Models.TransferLib.Services
 
         private readonly int[] RetryInterval = new int[] { 5, 5, 10, 10, 20, 60, 300 };
 
-        private const int DefaultThreadLimit = 1;
+        private const int DefaultThreadLimit = 16;
 
         public int ThreadLimit { get; private set; }
 
         private readonly Thread[] Threads;
 
-        private readonly AutoResetEvent[] ThreadSignals;
+        private readonly AutoResetEvent[] SubThreadSignals;
+
+        private readonly AutoResetEvent[] MainThreadSignals;
 
         private readonly TransferDiskManager DiskManager = new TransferDiskManager();
 
@@ -75,11 +77,13 @@ namespace FileManager.Models.TransferLib.Services
         {
             ThreadLimit = thread_limit;
             Threads = new Thread[thread_limit];
-            ThreadSignals = new AutoResetEvent[thread_limit];
+            SubThreadSignals = new AutoResetEvent[thread_limit];
+            MainThreadSignals = new AutoResetEvent[thread_limit];
             for (int i = 0; i < ThreadLimit; ++i)
             {
                 Threads[i] = null;
-                ThreadSignals[i] = new AutoResetEvent(false);
+                SubThreadSignals[i] = new AutoResetEvent(false);
+                MainThreadSignals[i] = new AutoResetEvent(false);
             }
         }
 
@@ -95,7 +99,8 @@ namespace FileManager.Models.TransferLib.Services
             {
                 Thread thread = new Thread(new ParameterizedThreadStart(TransferThreadUnit)) { IsBackground = true };
                 Threads[i] = thread;
-                ThreadSignals[i].Reset();
+                SubThreadSignals[i].Reset();
+                MainThreadSignals[i].Reset();
                 thread.Start(i);
                 //Thread.Sleep(10);
             }
@@ -133,8 +138,8 @@ namespace FileManager.Models.TransferLib.Services
             {
                 if (Threads[i] != null)
                 {
-                    ThreadSignals[i].Set();
-                    ThreadSignals[i].WaitOne();
+                    SubThreadSignals[i].Set();
+                    MainThreadSignals[i].WaitOne();
                     Threads[i] = null;
                 }
             }
@@ -161,11 +166,13 @@ namespace FileManager.Models.TransferLib.Services
 
             /// 启动子线程, 并阻塞直至所有子线程均通过信号释放控制权
             int thread_count = GetThreadCount(CurrentFile.Length);
+            AutoResetEvent[] signals = new AutoResetEvent[thread_count];
             for (int i = 0; i < thread_count; ++i)
             {
-                ThreadSignals[i].Set();
+                signals[i] = MainThreadSignals[i];
+                SubThreadSignals[i].Set();
             }
-            AutoResetEvent.WaitAll(ThreadSignals);
+            AutoResetEvent.WaitAll(signals);
 
             /// 结束本地文件写入
             DiskManager.Finish();
@@ -191,18 +198,19 @@ namespace FileManager.Models.TransferLib.Services
         private void TransferThreadUnit(object o)
         {
             int idx = (int)o;
-            AutoResetEvent Signal = ThreadSignals[idx];
+            AutoResetEvent sub_signal = SubThreadSignals[idx];
+            AutoResetEvent main_signal = MainThreadSignals[idx];
             SocketClient client = null;
             long packet;
             /// 主循环, 离开循环线程即终结
             /// 在任务间歇, 线程被信号量阻塞, 不应退出主 while 循环
             while (true)
             {
-                Signal.WaitOne();
+                sub_signal.WaitOne();
                 if (IsTerminateThreads)
                 {
-                    client.Close();
-                    Signal.Set();
+                    client?.Close();
+                    main_signal.Set();
                     break;
                 }
                 /// 唤醒该线程后的单个文件任务传输循环
@@ -212,14 +220,14 @@ namespace FileManager.Models.TransferLib.Services
                     /// 响应其它线程终止下载任务行为, 或任务失败应退出
                     if (IsStopTransfer || CurrentFile.Status == TransferStatus.Failed)
                     {
-                        Signal.Set();
+                        main_signal.Set();
                         break;
                     }
                     /// 获取 packet index, 已完成则退出单文件传输循环
                     packet = IndexGenerator.GenerateIndex();
                     if (packet < 0)
                     {
-                        Signal.Set();
+                        main_signal.Set();
                         break;
                     }
                     if (CurrentTransferType == TransferType.Download)

@@ -19,12 +19,6 @@ namespace FileManager.ViewModels.PageTransfer
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public enum ProgressType : int
-        {
-            Bytes,
-            Percent,
-        }
-
         private string _transfer_status = "Transfer status -> ";
 
         public string TransferStatus
@@ -44,13 +38,19 @@ namespace FileManager.ViewModels.PageTransfer
 
         public readonly ObservableCollection<TransferListViewTiem> ListViewItems = new ObservableCollection<TransferListViewTiem>();
 
+        public enum ProgressType : int
+        {
+            Bytes,
+            Percent,
+        }
+        
         private string _current_progress;
 
         public ProgressType CurrentProgressType = ProgressType.Bytes;
 
         public string CurrentProgress
         {
-            private set
+            protected set
             {
                 _current_progress = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CurrentProgress"));
@@ -67,7 +67,7 @@ namespace FileManager.ViewModels.PageTransfer
 
         public string TotalProgress
         {
-            private set
+            protected set
             {
                 _total_progress = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TotalProgress"));
@@ -82,7 +82,7 @@ namespace FileManager.ViewModels.PageTransfer
 
         public string Speed
         {
-            private set
+            protected set
             {
                 _speed = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Speed"));
@@ -97,7 +97,7 @@ namespace FileManager.ViewModels.PageTransfer
 
         public string TimeRemaining
         {
-            private set
+            protected set
             {
                 _time_remaining = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TimeRemaining"));
@@ -107,6 +107,7 @@ namespace FileManager.ViewModels.PageTransfer
                 return _time_remaining;
             }
         }
+
 
         /// <summary>
         /// 此任务以前的传输完成任务累计字节数
@@ -141,7 +142,7 @@ namespace FileManager.ViewModels.PageTransfer
         private bool IsUpdated = false;
              
 
-        public void SetRoot(TransferInfoRoot rootInfo)
+        public void SetNewRoot(TransferInfoRoot rootInfo)
         {
             TotalLength = rootInfo.Length;
         }
@@ -237,7 +238,6 @@ namespace FileManager.ViewModels.PageTransfer
             {
                 CurrentProgressType = ProgressType.Bytes;
             }
-            IsUpdated = true;
             UpdateProgress();
         }
 
@@ -252,7 +252,6 @@ namespace FileManager.ViewModels.PageTransfer
             {
                 TotalProgressType = ProgressType.Bytes;
             }
-            IsUpdated = true;
             UpdateProgress();
         }
 
@@ -282,7 +281,7 @@ namespace FileManager.ViewModels.PageTransfer
             }
             else
             {
-                int seconds = (int)((TotalLength - TotalFinished - TotalFailed) / speed);
+                int seconds = (int)((TotalLength - TotalFinished - TotalFailed - CurrentFinished) / speed);
                 TimeRemaining = string.Format("{0, 16}", SecondsToString(seconds));
             }
             /// 重置计数器

@@ -119,7 +119,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="60">
+                        <GridViewColumn Width="70">
                             <GridViewColumnHeader Content="Size" Style="{StaticResource ListViewHeader}" />
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>

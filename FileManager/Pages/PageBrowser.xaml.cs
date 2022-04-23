@@ -182,43 +182,19 @@ namespace FileManager.Pages
         private void ButtonDownload_Click(object sender, RoutedEventArgs e)
         {
             if (this.ListViewFile.SelectedIndex < 0) { return; }
-            if (Config.UseLegacyFileInfo)
+            TransferInfoRoot rootInfo = new TransferInfoRoot();
+            rootInfo.Route = CurrentRoute.Copy();
+            rootInfo.Rule = new FilterRule();
+            rootInfo.Type = TransferType.Download;
+            rootInfo.RemoteDirectory = RemoteDirectory;
+            List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
+            foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
             {
-                List<FileTask> fileTasks = new List<FileTask>();
-                foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
-                {
-                    FileTask task = new FileTask
-                    {
-                        Route = SocketFactory.Instance.CurrentRoute.Copy(),
-                        IsDirectory = selected.IsDirectory,
-                        Type = SocketLib.Enums.TransferTypeDeprecated.Download,
-                        RemotePath = RemoteDirectory + selected.Name,
-                        Length = selected.Length,
-                    };
-                    if (task.IsDirectory)
-                    {
-                        task.Length = FileTasksManager.GetDownloadDirectoryTaskLength(task);
-                    }
-                    fileTasks.Add(task);
-                }
-                DownloadConfirmLegacy(fileTasks);
+                selectedInfos.Add(selected.Copy());
             }
-            else
-            {
-                TransferInfoRoot rootInfo = new TransferInfoRoot();
-                rootInfo.Route = CurrentRoute.Copy();
-                rootInfo.Rule = new FilterRule();
-                rootInfo.Type = TransferType.Download;
-                rootInfo.RemoteDirectory = RemoteDirectory;
-                List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
-                foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
-                {
-                    selectedInfos.Add(selected.Copy());
-                }
-                rootInfo.BuildChildrenFrom(selectedInfos);
-                rootInfo.Status = TransferStatus.Querying;
-                DownloadConfirm(rootInfo);
-            }
+            rootInfo.BuildChildrenFrom(selectedInfos);
+            rootInfo.Status = TransferStatus.Querying;
+            DownloadConfirm(rootInfo);
         }
 
         private void DownloadConfirm(TransferInfoRoot rootInfo)
@@ -239,24 +215,11 @@ namespace FileManager.Pages
             }
         }
 
-        private void DownloadConfirmLegacy(List<FileTask> fileTasks)
-        {
-            DownloadConfirmWindow downloadConfirmWindow = new DownloadConfirmWindow();
-            downloadConfirmWindow.ListViewTask.ItemsSource = fileTasks; // to edit
-            if (downloadConfirmWindow.ShowDialog() != true) { return; }
-
-            string localPath = downloadConfirmWindow.SelectedPath;
-            foreach (FileTask ft in fileTasks)
-            {
-                ft.LocalPath = System.IO.Path.Combine(localPath, ft.Name);
-            }
-            this.MainWindow.SubPageTransferLegacy.AddTasks(fileTasks);
-            this.MainWindow.RedirectPage("TransferLegacy");
-        }
 
 
         private void ButtonUpload_Click(object sender, RoutedEventArgs e)
         {
+            /*
             string remoteDir = this.RemoteDirectory;
             if (remoteDir == "") { return; }
             UploadSelectWindow uploadSelectWindow = new UploadSelectWindow();
@@ -268,7 +231,7 @@ namespace FileManager.Pages
                 {
                     int idx = localPath.LastIndexOf("\\");
                     string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                    this.MainWindow.SubPageTransferLegacy.AddTask(new FileTask
+                    this.MainWindow.SubPageTransfer.AddTask(new FileTask
                     {
                         Route = SocketFactory.Instance.CurrentRoute.Copy(),
                         IsDirectory = false,
@@ -295,6 +258,7 @@ namespace FileManager.Pages
                 });
             }
             this.MainWindow.RedirectPage("Transfer");
+            */
         }
 
         public void ButtonCreate_Click(object sender, RoutedEventArgs e)
