@@ -34,9 +34,14 @@ namespace FileManager.ViewModels.PageTransfer
             }
         }
 
+        /// <summary>
+        /// 这个与 TransferManager 共用同一个InfoRoot列表
+        /// </summary>
         public List<TransferInfoRoot> InfoRoots;
 
-        public readonly ObservableCollection<TransferListViewTiem> ListViewItems = new ObservableCollection<TransferListViewTiem>();
+        public readonly ObservableCollection<ListViewTransferItem> ListViewItems = new ObservableCollection<ListViewTransferItem>();
+
+        private readonly List<ListViewTransferItem> OpenedItems = new List<ListViewTransferItem>();
 
         public enum ProgressType : int
         {
@@ -140,11 +145,70 @@ namespace FileManager.ViewModels.PageTransfer
         /// 将此 Flag 置为 true 可以防止在下一个刷新周期内刷新 UI
         /// </summary>
         private bool IsUpdated = false;
-             
 
-        public void SetNewRoot(TransferInfoRoot rootInfo)
+        #region about ListView
+
+
+        public void ListViewOpenOrCloseDirectory(ListViewTransferItem item)
         {
-            TotalLength = rootInfo.Length;
+            int opened_idx = 0; // 这个并不是显示列表中的选中item索引
+            bool found = false;
+            for (opened_idx = 0; opened_idx < OpenedItems.Count; ++opened_idx)
+            {
+                int result = OpenedItems[opened_idx].CompareTo(item);
+                if (result == 0)
+                {
+                    found = true;
+                    break;
+                }
+                else if (result > 0)
+                {
+                    found = false;
+                    break;
+                }
+            }
+            if (found)
+            {
+                /// 关闭已展开文件夹
+                
+            }
+            else
+            {
+                /// 展开文件夹
+                int idx;
+                for (idx = 0; idx < ListViewItems.Count; ++idx)
+                {
+                    if (ListViewItems[idx].Equals(item))
+                    {
+                        break;
+                    }
+                }
+
+
+            }
+
+        }
+
+
+        private TransferInfoDirectory FindTransferInfo(ListViewTransferItem item)
+        {
+            TransferInfoRoot root = InfoRoots[item.TaskIndex];
+        }
+
+
+
+        #endregion
+
+
+
+
+        /// <summary>
+        /// 设定当前传输任务为 InfoRoots 的 index 位置, 应按这个更新 Progress
+        /// </summary>
+        /// <param name="index"></param>
+        public void SetCurrentRoot(int index)
+        {
+            TotalLength = InfoRoots[index].Length;
         }
 
 

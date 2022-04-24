@@ -169,7 +169,7 @@
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
     <Compile Include="ViewModels\DownloadConfirmViewModel.cs" />
     <Compile Include="ViewModels\PageTransfer\PageTransferViewModel.cs" />
-    <Compile Include="ViewModels\PageTransfer\TransferListViewTiem.cs" />
+    <Compile Include="ViewModels\PageTransfer\ListViewTransferItem.cs" />
     <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">

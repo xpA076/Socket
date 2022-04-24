@@ -91,7 +91,18 @@ namespace FileManager.Pages
             TransferManager.AddTransferTask(rootInfo);
         }
 
-
-
+        private void ListViewTransferItem_DoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListViewTransferItem selected_item = this.ListViewTransfer.SelectedItem as ListViewTransferItem;
+            if (selected_item == null) { return; }
+            if (selected_item.IsDirectory)
+            {
+                /// 双击文件夹
+            }
+            else
+            {
+                /// 双击文件, todo 显示文件细节信息
+            }
+        }
     }
 }

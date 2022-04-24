@@ -82,7 +82,7 @@ namespace FileManager.Models.TransferLib
                 tm.TransferThreadPool = TransferThreadPool;
                 tm.ViewModel = ViewModel;
                 tm.TransferFinishedCallback += OnTransferManagerFinished;
-                ViewModel.SetNewRoot(InfoRoots[idx]);
+                ViewModel.SetCurrentRoot(idx);
                 SingleManagers.Add(tm);
                 tm.InitTransfer();
             }

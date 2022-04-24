@@ -150,6 +150,7 @@
 
                 <ListView.ItemContainerStyle>
                     <Style TargetType="{x:Type ListViewItem}">
+                        <EventSetter Event="MouseDoubleClick" Handler="ListViewTransferItem_DoubleClick" />
                         <Setter Property="Background" Value="#222" />
                         <Setter Property="Foreground" Value="#ddd" />
                         <!-- <Setter Property="HorizontalContentAlignment" Value="Left" />-->
