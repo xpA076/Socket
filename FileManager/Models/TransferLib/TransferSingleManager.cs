@@ -98,7 +98,7 @@ namespace FileManager.Models.TransferLib
                     
                     /// 当前任务传输过程
                     TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
-                    infoFile.Status = TransferStatus.Transfering;
+                    UpdateStatus(infoFile, TransferStatus.Transfering);
                     ViewModel.SetNewFile(infoFile);
                     TransferThreadPool.DownloadOne(infoFile);
                     if (IsPausing)
@@ -109,13 +109,13 @@ namespace FileManager.Models.TransferLib
                     }
                     /// 标记当前 File 任务完成
                     CurrentDirectoryInfo.TransferCompleteFileFlags[IndexFile] = true;
+                    UpdateStatus(infoFile, infoFile.Status);
                     if (infoFile.Status == TransferStatus.Failed)
                     {
                         ViewModel.CurrentFileFailed();
                     }
                     else
                     {
-                        infoFile.Status = TransferStatus.Finished;
                         ViewModel.CurrentFileFinished();
                     }
                 }
@@ -194,7 +194,7 @@ namespace FileManager.Models.TransferLib
                 /// 未获取到本级中的未完成文件
                 ///  if    当前节点为 Root, 说明已经完成所有文件
                 ///  else  回溯至上级, 将上级中本节点标记为完成, 在上级中重复查找 File 节点
-                CurrentDirectoryInfo.Status = TransferStatus.Finished;
+                UpdateStatus(CurrentDirectoryInfo, TransferStatus.Finished);
                 if (CurrentDirectoryInfo.IsRoot)
                 {
                     /// 已回溯至 Root 节点, 所有文件已经完成
@@ -207,8 +207,19 @@ namespace FileManager.Models.TransferLib
         }
 
 
-
-
-
+        private void UpdateStatus(object info, TransferStatus new_status)
+        {
+            if (info is TransferInfoDirectory)
+            {
+                TransferInfoDirectory t = info as TransferInfoDirectory;
+                t.Status = new_status;
+            }
+            else
+            {
+                TransferInfoFile t = info as TransferInfoFile;
+                t.Status = new_status;
+            }
+            ViewModel.UpdateStatus(info);
+        }
     }
 }

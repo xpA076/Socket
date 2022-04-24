@@ -187,6 +187,10 @@ namespace FileManager.Models.TransferLib.Services
                 TerminateAllThreads();
                 CurrentFile.Status = TransferStatus.Pause;
             }
+            else
+            {
+                CurrentFile.Status = TransferStatus.Finished;
+            }
         }
 
 

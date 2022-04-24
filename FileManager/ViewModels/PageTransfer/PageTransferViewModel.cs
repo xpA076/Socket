@@ -167,6 +167,9 @@ namespace FileManager.ViewModels.PageTransfer
                     break;
                 }
             }
+            /// 若 found == true, opened_idx 为与 item 相同的 OpenedItems 索引
+            /// 若 found == false, opened_idx 为第一个比 item 大的 OpenedItems 索引
+            ///   若均小于item, 则 opened_idx 为 OpenedItem.Count (即插入item的索引)
             if (found)
             {
                 /// 关闭已展开文件夹
@@ -175,26 +178,95 @@ namespace FileManager.ViewModels.PageTransfer
             else
             {
                 /// 展开文件夹
-                int idx;
-                for (idx = 0; idx < ListViewItems.Count; ++idx)
-                {
-                    if (ListViewItems[idx].Equals(item))
-                    {
-                        break;
-                    }
-                }
-
-
+                OpenedItems.Insert(opened_idx, item);
+                InsertChildren(item);
             }
 
         }
 
 
-        private TransferInfoDirectory FindTransferInfo(ListViewTransferItem item)
+        private TransferInfoDirectory FindDirectoryInfo(ListViewTransferItem item)
         {
             TransferInfoRoot root = InfoRoots[item.TaskIndex];
+            if (item.Level == 0) { return root; }
+            string[] splits = item.RelativePath.Split('\\');
+            for (int si = 0; si < splits.Length; ++si)
+            {
+                string name = splits[si];
+
+
+            }
+
+
+
+            return null;
+
         }
 
+
+        private void InsertChildren(ListViewTransferItem item)
+        {
+            /// idx 为当前选中 item 在 ListView 中的索引
+            int idx;
+            for (idx = 0; idx < ListViewItems.Count; ++idx)
+            {
+                if (ListViewItems[idx].Equals(item))
+                {
+                    break;
+                }
+            }
+            TransferInfoDirectory directory = FindDirectoryInfo(item);
+            int pt = idx + 1;
+            for (int i = 0; i < directory.DirectoryChildren.Count; ++i)
+            {
+                TransferInfoDirectory info = directory.DirectoryChildren[i];
+                ListViewTransferItem it = new ListViewTransferItem
+                {
+                    TaskIndex = item.TaskIndex,
+                    Level = item.Level + 1,
+                    IsDownload = item.IsDownload,
+                    IsDirectory = true,
+                    RelativePath = info.RelativePath,
+                    Name = info.Name,
+                    Status = info.Status
+                };
+                ListViewItems.Insert(pt, it);
+                ++pt;
+            }
+            for (int i = 0; i < directory.FileChildren.Count; ++i)
+            {
+                TransferInfoFile info = directory.FileChildren[i];
+                ListViewTransferItem it = new ListViewTransferItem
+                {
+                    TaskIndex = item.TaskIndex,
+                    Level = item.Level + 1,
+                    IsDownload = item.IsDownload,
+                    IsDirectory = false,
+                    RelativePath = info.RelativePath,
+                    Name = info.Name,
+                    Status = info.Status
+                };
+                ListViewItems.Insert(pt, it);
+                ++pt;
+            }
+        }
+
+
+        /// <summary>
+        /// 更新当前 ListViewItem 的 TransferStatus
+        /// </summary>
+        /// <param name="info"></param>
+        public void UpdateStatus(object info)
+        {
+            if (info is TransferInfoDirectory)
+            {
+
+            }
+            else
+            {
+
+            }
+        }
 
 
         #endregion

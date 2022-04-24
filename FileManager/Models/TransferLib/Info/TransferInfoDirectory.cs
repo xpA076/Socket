@@ -80,6 +80,7 @@ namespace FileManager.Models.TransferLib.Info
         {
             get
             {
+                if (this.IsRoot) { return ""; }
                 string path = this.Name;
                 TransferInfoDirectory pt = this.Parent;
                 while (!pt.IsRoot)

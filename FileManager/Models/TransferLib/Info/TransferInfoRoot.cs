@@ -55,7 +55,7 @@ namespace FileManager.Models.TransferLib.Info
         /// DFS 递归保存 TransferRootInfo
         /// </summary>
         /// <param name="path"></param>
-        public void Save(string path)
+        public void Save(string path) 
         {
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
             {
