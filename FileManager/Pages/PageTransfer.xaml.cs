@@ -98,6 +98,7 @@ namespace FileManager.Pages
             if (selected_item.IsDirectory)
             {
                 /// 双击文件夹
+                PageViewModel.ListViewOpenOrCloseDirectory(selected_item);
             }
             else
             {

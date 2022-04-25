@@ -325,6 +325,7 @@ namespace FileManager.Models.TransferLib.Services
             {
                 throw new Exception(ex.Message);
             }
+            Thread.Sleep(100);
             /// 任务完成, 返回写入字节数
             return response.Bytes.Length;
         }
@@ -376,18 +377,20 @@ namespace FileManager.Models.TransferLib.Services
 
         private int GetThreadCount(long length)
         {
+            int count = 1;
             if (length <= (64 << 10))
             {
-                return 1;
+                count = 1;
             }
             else if (length <= (4 << 20))
             {
-                return 4;
+                count = 4;
             }
             else
             {
-                return 16;
+                count = 16;
             }
+            return Math.Min(count, ThreadLimit);
         }
 
     }

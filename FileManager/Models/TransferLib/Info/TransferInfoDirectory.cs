@@ -55,7 +55,7 @@ namespace FileManager.Models.TransferLib.Info
 
         #region Parameters
 
-        private TransferInfoRoot Root
+        public TransferInfoRoot Root
         {
             get
             {

@@ -41,7 +41,7 @@ namespace FileManager.Models.TransferLib.Info
         /// </summary>
         public TransferInfoDirectory Parent { get; set; } = null;
 
-        private TransferInfoRoot Root
+        public TransferInfoRoot Root
         {
             get
             {

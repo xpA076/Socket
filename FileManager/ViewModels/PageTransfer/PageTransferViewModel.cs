@@ -1,5 +1,6 @@
 ﻿using FileManager.Events.UI;
 using FileManager.Models.TransferLib;
+using FileManager.Models.TransferLib.Enums;
 using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
 using System;
@@ -38,6 +39,8 @@ namespace FileManager.ViewModels.PageTransfer
         /// 这个与 TransferManager 共用同一个InfoRoot列表
         /// </summary>
         public List<TransferInfoRoot> InfoRoots;
+
+        private int CurrentInfoRootIndex = 0;
 
         public readonly ObservableCollection<ListViewTransferItem> ListViewItems = new ObservableCollection<ListViewTransferItem>();
 
@@ -151,7 +154,8 @@ namespace FileManager.ViewModels.PageTransfer
 
         public void ListViewOpenOrCloseDirectory(ListViewTransferItem item)
         {
-            int opened_idx = 0; // 这个并不是显示列表中的选中item索引
+            /// OpenedItems 中对应item的索引
+            int opened_idx = 0;
             bool found = false;
             for (opened_idx = 0; opened_idx < OpenedItems.Count; ++opened_idx)
             {
@@ -173,38 +177,20 @@ namespace FileManager.ViewModels.PageTransfer
             if (found)
             {
                 /// 关闭已展开文件夹
-                
+                OpenedItems.RemoveAt(opened_idx);
+                RemoveListViewItemChildren(item);
             }
             else
             {
                 /// 展开文件夹
                 OpenedItems.Insert(opened_idx, item);
-                InsertChildren(item);
+                InsertListViewItemChildren(item);
             }
 
         }
 
 
-        private TransferInfoDirectory FindDirectoryInfo(ListViewTransferItem item)
-        {
-            TransferInfoRoot root = InfoRoots[item.TaskIndex];
-            if (item.Level == 0) { return root; }
-            string[] splits = item.RelativePath.Split('\\');
-            for (int si = 0; si < splits.Length; ++si)
-            {
-                string name = splits[si];
-
-
-            }
-
-
-
-            return null;
-
-        }
-
-
-        private void InsertChildren(ListViewTransferItem item)
+        private void InsertListViewItemChildren(ListViewTransferItem item)
         {
             /// idx 为当前选中 item 在 ListView 中的索引
             int idx;
@@ -228,6 +214,7 @@ namespace FileManager.ViewModels.PageTransfer
                     IsDirectory = true,
                     RelativePath = info.RelativePath,
                     Name = info.Name,
+                    Size = info.Length,
                     Status = info.Status
                 };
                 ListViewItems.Insert(pt, it);
@@ -244,6 +231,7 @@ namespace FileManager.ViewModels.PageTransfer
                     IsDirectory = false,
                     RelativePath = info.RelativePath,
                     Name = info.Name,
+                    Size = info.Length,
                     Status = info.Status
                 };
                 ListViewItems.Insert(pt, it);
@@ -252,22 +240,117 @@ namespace FileManager.ViewModels.PageTransfer
         }
 
 
-        /// <summary>
-        /// 更新当前 ListViewItem 的 TransferStatus
-        /// </summary>
-        /// <param name="info"></param>
-        public void UpdateStatus(object info)
+        private void RemoveListViewItemChildren(ListViewTransferItem item)
         {
-            if (info is TransferInfoDirectory)
+            int idx;
+            for (idx = 0; idx < ListViewItems.Count; ++idx)
             {
-
+                if (ListViewItems[idx].Equals(item))
+                {
+                    break;
+                }
             }
-            else
+            TransferInfoDirectory directory = FindDirectoryInfo(item);
+            int begin = idx + 1;
+            int end;
+            for (end = begin; end < ListViewItems.Count; ++end)
             {
-
+                if (ListViewItems[end].Level > item.Level)
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            for (int i = Math.Min(end, ListViewItems.Count - 1); i >= begin; --i)
+            {
+                ListViewItems.RemoveAt(i);
             }
         }
 
+
+        private TransferInfoDirectory FindDirectoryInfo(ListViewTransferItem item)
+        {
+            TransferInfoRoot root = InfoRoots[item.TaskIndex];
+            if (item.Level == 0) { return root; }
+            string[] splits = item.RelativePath.Split('\\');
+            TransferInfoDirectory pt = root;
+            for (int si = 0; si < splits.Length; ++si)
+            {
+                string name = splits[si];
+                foreach(TransferInfoDirectory td in pt.DirectoryChildren)
+                {
+                    if (name == td.Name)
+                    {
+                        pt = td;
+                        break;
+                    }
+                }
+            }
+            return pt;
+        }
+
+
+        public void UpdateFileStatus(TransferInfoFile info, TransferStatus new_status)
+        {
+            UpdateStatus(info.RelativePath, false, info.Root, new_status);
+        }
+
+
+        public void UpdateDirectoryStatus(TransferInfoDirectory info, TransferStatus new_status)
+        {
+            UpdateStatus(info.RelativePath, true, info.Root, new_status);
+        }
+
+
+        /// <summary>
+        /// 更新当前 ListViewItem 的 TransferStatus
+        /// </summary>
+        private void UpdateStatus(string relative_path, bool is_directory, TransferInfoRoot root, TransferStatus new_status)
+        {
+            foreach (ListViewTransferItem item in this.ListViewItems)
+            {
+                if (item.IsDirectory == is_directory && item.RelativePath == relative_path)
+                {
+                    if (InfoRoots[item.TaskIndex] == root)
+                    {
+                        item.Status = new_status;
+                        return;
+                    }
+                }
+            }
+        }
+
+
+        public void UpdateRootSize(TransferInfoRoot root, long size)
+        {
+            foreach (ListViewTransferItem item in this.ListViewItems)
+            {
+                if (item.Level == 0 && InfoRoots[item.TaskIndex] == root)
+                {
+                    item.Size = size;
+                    return;
+                }
+            }
+        }
+
+
+
+        public void AfterAddNewRoot()
+        {
+            // todo 添加新节点对应的OpenedItems
+            ListViewItems.Add(new ListViewTransferItem
+            {
+                TaskIndex = InfoRoots.Count - 1,
+                Level = 0,
+                IsDownload = InfoRoots.Last().Type == TransferType.Download,
+                IsDirectory = true,
+                RelativePath = "",
+                Name = "Task " + InfoRoots.Count,
+            });
+        }
 
         #endregion
 
@@ -280,6 +363,7 @@ namespace FileManager.ViewModels.PageTransfer
         /// <param name="index"></param>
         public void SetCurrentRoot(int index)
         {
+            CurrentInfoRootIndex = index;
             TotalLength = InfoRoots[index].Length;
         }
 
@@ -445,7 +529,7 @@ namespace FileManager.ViewModels.PageTransfer
                 double percent = 0;
                 if (bot > 0)
                 {
-                    percent = top * 100 / bot;
+                    percent = (double)top * 100 / bot;
                 }
                 CurrentProgress = string.Format("{0, 16:0.00} %", percent);
             }
@@ -469,7 +553,7 @@ namespace FileManager.ViewModels.PageTransfer
                 double percent = 0;
                 if (bot > 0)
                 {
-                    percent = top * 100 / bot;
+                    percent = (double)top * 100 / bot;
                 }
                 TotalProgress = string.Format("{0, 16:0.00} %", percent);
             }
@@ -488,7 +572,7 @@ namespace FileManager.ViewModels.PageTransfer
             return string.Format("{0}:{1:D2}:{2:D2}", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
         }
 
-        private string SizeToString(double num)
+        public static string SizeToString(double num)
         {
             if (num > 1 << 30)
             {

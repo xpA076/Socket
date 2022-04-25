@@ -39,12 +39,14 @@ namespace FileManager.Models.TransferLib
             if (this.IsTransfering)
             {
                 InfoRoots.Add(rootInfo);
+                ViewModel.AfterAddNewRoot();
             }
             else
             {
                 InfoRoots.Clear();
                 SingleManagers.Clear();
                 InfoRoots.Add(rootInfo);
+                ViewModel.AfterAddNewRoot();
                 OnTransferManagerFinished(null, null);
             }
         }
