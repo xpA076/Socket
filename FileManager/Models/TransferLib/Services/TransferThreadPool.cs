@@ -325,7 +325,6 @@ namespace FileManager.Models.TransferLib.Services
             {
                 throw new Exception(ex.Message);
             }
-            Thread.Sleep(100);
             /// 任务完成, 返回写入字节数
             return response.Bytes.Length;
         }
