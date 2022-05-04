@@ -20,6 +20,10 @@ namespace FileManager.SocketLib.SocketServer
         {
             try
             {
+                if (!session.AllowReadFile())
+                {
+                    throw new SocketAuthenticationException();
+                }
                 DownloadRequest request = DownloadRequest.FromBytes(bytes);
                 FileResource resource;
                 /// 获取 FileResource
@@ -54,7 +58,39 @@ namespace FileManager.SocketLib.SocketServer
 
         private void ResponseUploadFile(SocketResponder responder, byte[] bytes, SocketSession session)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!session.AllowWriteFile())
+                {
+                    throw new SocketAuthenticationException();
+                }
+                UploadRequest request = UploadRequest.FromBytes(bytes);
+                FileResource resource;
+                if (request.Type == UploadRequest.RequestType.ByPath)
+                {
+                    string server_path = PathTranslator.ToTruePath(request.ViewPath, session);
+                    resource = FileResourceManager.GetResource(server_path, FileAccess.Write);
+                }
+                else
+                {
+                    throw new ServerInternalException("not implemented");
+                }
+                resource.WriteSpan(request.Begin, request.Bytes);
+                UploadResponse response = UploadResponse.BuildSuccessResponse();
+                responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
+            }
+            catch (SocketAuthenticationException)
+            {
+                string err_msg = "Authentication exception";
+                UploadResponse response = new UploadResponse(err_msg);
+                responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
+            }
+            catch (ServerInternalException ex)
+            {
+                string err_msg = "Upload response exception from server: " + ex.Message;
+                UploadResponse response = new UploadResponse(err_msg);
+                responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
+            }
         }
 
 

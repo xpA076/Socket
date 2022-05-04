@@ -81,6 +81,10 @@ namespace FileManager.SocketLib.SocketServer
                                 ResponseDownloadFile(responder, bytes, session);
                                 break;
 
+                            case HB32Packet.UploadRequest:
+                                ResponseUploadFile(responder, bytes, session);
+                                break;
+
                             #region Download
 
                             case HB32Packet.DownloadFileStreamIdRequest:
@@ -92,9 +96,6 @@ namespace FileManager.SocketLib.SocketServer
                             #endregion
 
                             #region Upload
-                            case HB32Packet.UploadRequest:
-                                ResponseUploadSmallFile(responder, bytes);
-                                break;
                             case HB32Packet.UploadFileStreamIdRequest:
                                 ResponseFileStreamId(responder, header, bytes);
                                 break;

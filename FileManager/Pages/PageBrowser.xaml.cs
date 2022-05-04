@@ -186,7 +186,7 @@ namespace FileManager.Pages
             rootInfo.Route = CurrentRoute.Copy();
             rootInfo.Rule = new FilterRule();
             rootInfo.Type = TransferType.Download;
-            rootInfo.RemoteDirectory = RemoteDirectory;
+            rootInfo.RemoteDirectory = this.RemoteDirectory;
             List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
             foreach (SocketFileInfo selected in this.ListViewFile.SelectedItems)
             {
@@ -196,6 +196,7 @@ namespace FileManager.Pages
             rootInfo.Status = TransferStatus.Querying;
             DownloadConfirm(rootInfo);
         }
+
 
         private void DownloadConfirm(TransferInfoRoot rootInfo)
         {
@@ -219,47 +220,57 @@ namespace FileManager.Pages
 
         private void ButtonUpload_Click(object sender, RoutedEventArgs e)
         {
-            /*
             string remoteDir = this.RemoteDirectory;
             if (remoteDir == "") { return; }
             UploadSelectWindow uploadSelectWindow = new UploadSelectWindow();
             uploadSelectWindow.DisplayPath = remoteDir;
             if (uploadSelectWindow.ShowDialog() != true) { return; }
-            if (uploadSelectWindow.UploadChoosen == FileManager.Windows.UploadChoose.Files)
+
+            /// 建立 TransferInfoRoot
+            TransferInfoRoot rootInfo = new TransferInfoRoot();
+            rootInfo.Route = CurrentRoute.Copy();
+            rootInfo.Rule = new FilterRule();
+            rootInfo.Type = TransferType.Upload;
+            rootInfo.RemoteDirectory = this.RemoteDirectory;
+
+            /// 创建 Root 的子节点信息
+            List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
+            string lp = uploadSelectWindow.UploadPathList[0];
+            int i = lp.LastIndexOf("\\");
+            rootInfo.LocalDirectory = lp.Substring(0, i);
+            if (uploadSelectWindow.UploadChoosen == UploadSelectWindow.UploadChoose.Files)
             {
                 foreach (string localPath in uploadSelectWindow.UploadPathList)
                 {
-                    int idx = localPath.LastIndexOf("\\");
-                    string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                    this.MainWindow.SubPageTransfer.AddTask(new FileTask
+                    FileInfo fileInfo = new FileInfo(localPath);
+                    selectedInfos.Add(new SocketFileInfo
                     {
-                        Route = SocketFactory.Instance.CurrentRoute.Copy(),
+                        Name = fileInfo.Name,
                         IsDirectory = false,
-                        Type = SocketLib.Enums.TransferTypeDeprecated.Upload,
-                        RemotePath = remoteDir + name,
-                        LocalPath = localPath,
-                        Length = new FileInfo(localPath).Length
+                        Length = 0,
+                        CreationTimeUtc = fileInfo.CreationTimeUtc,
+                        LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
                     });
                 }
             }
-            else if (uploadSelectWindow.UploadChoosen == FileManager.Windows.UploadChoose.Folder)
+            else if (uploadSelectWindow.UploadChoosen == UploadSelectWindow.UploadChoose.Folder)
             {
-                string localPath = uploadSelectWindow.UploadPathList[0];
-                int idx = localPath.LastIndexOf("\\");
-                string name = localPath.Substring(idx + 1, localPath.Length - (idx + 1));
-                this.MainWindow.SubPageTransferLegacy.AddTask(new FileTask
+                DirectoryInfo directoryInfo = new DirectoryInfo(uploadSelectWindow.UploadPathList[0]);
+                selectedInfos.Add(new SocketFileInfo
                 {
-                    Route = SocketFactory.Instance.CurrentRoute.Copy(),
+                    Name = directoryInfo.Name,
                     IsDirectory = true,
-                    Type = SocketLib.Enums.TransferTypeDeprecated.Upload,
-                    RemotePath = remoteDir + name,
-                    LocalPath = localPath,
                     Length = 0,
+                    CreationTimeUtc = new DateTime(0),
+                    LastWriteTimeUtc = new DateTime(0)
                 });
             }
+            rootInfo.BuildChildrenFrom(selectedInfos);
+            rootInfo.Querier.StartQuery();
+            MainWindow.SubPageTransfer.AddTransferTask(rootInfo);
             this.MainWindow.RedirectPage("Transfer");
-            */
         }
+
 
         public void ButtonCreate_Click(object sender, RoutedEventArgs e)
         {

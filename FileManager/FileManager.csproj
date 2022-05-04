@@ -98,6 +98,8 @@
     <Compile Include="Models\Serializable\DownloadRequest.cs" />
     <Compile Include="Models\Serializable\DownloadResponse.cs" />
     <Compile Include="Models\Serializable\SetSessionRequest.cs" />
+    <Compile Include="Models\Serializable\UploadRequest.cs" />
+    <Compile Include="Models\Serializable\UploadResponse.cs" />
     <Compile Include="Models\TransferLib\Services\PacketIndexGenerator.cs" />
     <Compile Include="Models\TransferLib\Services\TransferThreadPool.cs" />
     <Compile Include="Models\TransferLib\Enums\TransferType.cs" />

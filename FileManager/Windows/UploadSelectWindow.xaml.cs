@@ -15,18 +15,21 @@ using System.Windows.Shapes;
 
 namespace FileManager.Windows
 {
-    public enum UploadChoose
-    {
-        None = 0,
-        Files = 1,
-        Folder = 2
-    }
+
     /// <summary>
     /// UploadSelectWindow.xaml 的交互逻辑
     /// </summary>
     public partial class UploadSelectWindow : Window
     {
+        public enum UploadChoose
+        {
+            None = 0,
+            Files = 1,
+            Folder = 2
+        }
+
         private FolderBrowserDialog folderDialog = new FolderBrowserDialog();
+
         private OpenFileDialog fileDialog = new OpenFileDialog();
 
         public string DisplayPath
@@ -38,6 +41,7 @@ namespace FileManager.Windows
         }
 
         public UploadChoose UploadChoosen { get; private set; }
+
         public List<string> UploadPathList { get; private set; } = new List<string>();
         
 
@@ -64,8 +68,15 @@ namespace FileManager.Windows
                 {
                     UploadPathList.Add(localPath);
                 }
-                this.DialogResult = true;
-                UploadChoosen = UploadChoose.Files;
+                if (UploadPathList.Count > 0)
+                {
+                    this.DialogResult = true;
+                    UploadChoosen = UploadChoose.Files;
+                }
+                else
+                {
+                    this.DialogResult = false;
+                }
             }
             else { this.DialogResult = false; }
             this.Close();

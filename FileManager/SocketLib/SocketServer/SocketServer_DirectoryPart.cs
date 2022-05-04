@@ -86,8 +86,8 @@ namespace FileManager.SocketLib.SocketServer
                     {
                         if (Directory.Exists(_path))
                         {
-                            list.Add(new SocketFileInfo() 
-                            { 
+                            list.Add(new SocketFileInfo()
+                            {
                                 Name = _path, 
                                 IsDirectory = true,
                                 Length = 0,

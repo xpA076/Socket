@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Enums;
+using System.IO;
 
 namespace FileManager.Models.TransferLib.Services
 {
@@ -49,7 +50,7 @@ namespace FileManager.Models.TransferLib.Services
         {
             if (RootInfo.Type == TransferType.Download)
             {
-                Task.Run(() => { DownloadQuery(); });
+                Task.Run(() => { Query(); });
             }
         }
 
@@ -63,7 +64,7 @@ namespace FileManager.Models.TransferLib.Services
         /// <summary>
         /// DFS 方式遍历并建立目录树
         /// </summary>
-        private void DownloadQuery()
+        private void Query()
         {
             IsQuerying = true;
             QueryCompleteSignal.Reset();
@@ -102,15 +103,24 @@ namespace FileManager.Models.TransferLib.Services
                 try
                 {
                     /// Query 并建立当前子节点
-                    DirectoryRequest request = new DirectoryRequest(CurrentDirectoryInfo.RemotePath);
-                    HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
-                    DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
-                    if (response.Type != DirectoryResponse.ResponseType.ListResponse)
+                    if (RootInfo.Type == TransferType.Download)
                     {
-                        throw new SocketTypeException(response.ExceptionMessage);
+                        /// Download 任务
+                        DirectoryRequest request = new DirectoryRequest(CurrentDirectoryInfo.RemotePath);
+                        HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
+                        DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
+                        if (response.Type != DirectoryResponse.ResponseType.ListResponse)
+                        {
+                            throw new SocketTypeException(response.ExceptionMessage);
+                        }
+                        CurrentDirectoryInfo.BuildChildrenFrom(response.FileInfos);
                     }
-                    CurrentDirectoryInfo.BuildChildrenFrom(response.FileInfos);
-                    //Thread.Sleep(200);
+                    else
+                    {
+                        /// Upload 任务
+                        List<SocketFileInfo> list = GetLocalDirectoryInfo(CurrentDirectoryInfo.LocalPath);
+                        CurrentDirectoryInfo.BuildChildrenFrom(list);
+                    }
                     /// 回溯并完成父节点, 直至父节点包含未完成子节点
                     if (TryCompleteParent())
                     {
@@ -201,6 +211,45 @@ namespace FileManager.Models.TransferLib.Services
         {
             IsStopQuery = true;
         }
+
+
+        private List<SocketFileInfo> GetLocalDirectoryInfo(string path)
+        {
+            List<SocketFileInfo> list = new List<SocketFileInfo>();
+            DirectoryInfo directory = new DirectoryInfo(path);
+            FileInfo[] fileInfos = directory.GetFiles();
+            DirectoryInfo[] directoryInfos = directory.GetDirectories();
+            foreach (DirectoryInfo directoryInfo in directoryInfos)
+            {
+                try
+                {
+                    list.Add(new SocketFileInfo()
+                    {
+                        Name = directoryInfo.Name,
+                        IsDirectory = true,
+                        Length = 0,
+                        CreationTimeUtc = new DateTime(0),
+                        LastWriteTimeUtc = new DateTime(0)
+                    });
+                }
+                catch (Exception) {; }
+            }
+            foreach (FileInfo fileInfo in fileInfos)
+            {
+                list.Add(new SocketFileInfo()
+                {
+                    Name = fileInfo.Name,
+                    IsDirectory = false,
+                    Length = fileInfo.Length,
+                    CreationTimeUtc = fileInfo.CreationTimeUtc,
+                    LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
+                });
+            }
+            list.Sort(SocketFileInfo.Compare);
+            return list;
+
+        }
+
 
 
         /// <summary>

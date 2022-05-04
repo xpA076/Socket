@@ -52,6 +52,8 @@ namespace FileManager.Models.TransferLib.Services
                 IsFileStreamClosed = true;
             }
         }
+
+
         public void WriteBytes(long offset, byte[] bytes)
         {
             WriteBytes(offset, bytes, bytes.Length);
@@ -68,6 +70,16 @@ namespace FileManager.Models.TransferLib.Services
         }
 
 
+        public byte[] ReadBytes(long offset, int length)
+        {
+            lock (FileLock)
+            {
+                byte[] bytes = new byte[length];
+                FileStream.Seek(offset, SeekOrigin.Begin);
+                FileStream.Read(bytes, 0, length);
+                return bytes;
+            }
+        }
 
 
     }

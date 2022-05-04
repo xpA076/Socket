@@ -151,18 +151,25 @@ namespace FileManager.Models.TransferLib.Services
         /// 下载调度线程, 同步阻塞至当前任务完成
         /// </summary>
         /// <param name="file"></param>
-        public void DownloadOne(TransferInfoFile file)
+        public void TransferOne(TransferInfoFile file, TransferType type)
         {
             /// 重置 Flag
             IsStopTransfer = false;
 
             /// 初始化各辅助类
             CurrentFile = file;
-            CurrentTransferType = TransferType.Download;
+            CurrentTransferType = type;
             IndexGenerator.Clear();
             IndexGenerator.TotalIndex = (CurrentFile.Length - 1) / TransferDiskManager.BlockSize + 1;
             IndexGenerator.LastFinishedIndex = CurrentFile.FinishedPacket;
-            DiskManager.SetPath(CurrentFile.LocalPath, FileAccess.Write);
+            if (type == TransferType.Download)
+            {
+                DiskManager.SetPath(CurrentFile.LocalPath, FileAccess.Write);
+            }
+            else
+            {
+                DiskManager.SetPath(CurrentFile.LocalPath, FileAccess.Read);
+            }
 
             /// 启动子线程, 并阻塞直至所有子线程均通过信号释放控制权
             int thread_count = GetThreadCount(CurrentFile.Length);
@@ -192,6 +199,8 @@ namespace FileManager.Models.TransferLib.Services
                 CurrentFile.Status = TransferStatus.Finished;
             }
         }
+
+
 
 
         /// <summary>
@@ -234,30 +243,31 @@ namespace FileManager.Models.TransferLib.Services
                         main_signal.Set();
                         break;
                     }
-                    if (CurrentTransferType == TransferType.Download)
+                    try
                     {
-                        try
+                        long count;
+                        if (CurrentTransferType == TransferType.Download)
                         {
-                            long count = DownloadSinglePacket(packet, ref client);
-                            CurrentFile.FinishedPacket = IndexGenerator.LastFinishedIndex;
-                            UIFinishBytes(this, new FinishBytesEventArgs(count));
+                            count = DownloadSinglePacket(packet, ref client);
                         }
-                        catch (SocketConnectionException)
+                        else
                         {
-                            /// 若因网络异常导致任务失败, 则释放对应 packet, 并正常结束函数
-                            /// 下个 while 循环会尝试重启 SocketClient
-                            IndexGenerator.ReleaseIndex(packet);
+                            count = UploadSinglePacket(packet, ref client);
                         }
-                        catch (Exception)
-                        {
-                            /// 其它原因导致的任务失败 (server 端拒绝 / 本地写入异常 / 等) 会标记任务失败
-                            /// 所有子线程的下个 while 循环会直接退出并结束当前任务, 返回管理线程
-                            CurrentFile.Status = TransferStatus.Failed;
-                        }
+                        CurrentFile.FinishedPacket = IndexGenerator.LastFinishedIndex;
+                        UIFinishBytes(this, new FinishBytesEventArgs(count));
                     }
-                    else
+                    catch (SocketConnectionException)
                     {
-                        throw new NotImplementedException();
+                        /// 若因网络异常导致任务失败, 则释放对应 packet, 并正常结束函数
+                        /// 下个 while 循环会尝试重启 SocketClient
+                        IndexGenerator.ReleaseIndex(packet);
+                    }
+                    catch (Exception)
+                    {
+                        /// 其它原因导致的任务失败 (server 端拒绝 / 本地写入异常 / 等) 会标记任务失败
+                        /// 所有子线程的下个 while 循环会直接退出并结束当前任务, 返回管理线程
+                        CurrentFile.Status = TransferStatus.Failed;
                     }
                 }
             }
@@ -273,7 +283,90 @@ namespace FileManager.Models.TransferLib.Services
         /// <returns></returns>
         private long DownloadSinglePacket(long packet, ref SocketClient client)
         {
-            /// 确定 / 获取可用的 SocketClient
+            BuildValidSocketClient(ref client);
+
+            /// 构造 request
+            DownloadRequest request = new DownloadRequest(); 
+            request.Type = DownloadRequest.RequestType.QueryByPath;
+            request.ViewPath = CurrentFile.RemotePath;
+            request.Begin = packet * TransferDiskManager.BlockSize;
+            request.Length = Math.Min(CurrentFile.Length - request.Begin, TransferDiskManager.BlockSize);
+            DownloadResponse response;
+
+            /// 向 server 端请求内容
+            try
+            {
+                HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.HB32Packet.DownloadRequest, request.ToBytes());
+                response = DownloadResponse.FromBytes(resp.Bytes);
+            }
+            catch
+            {
+                client = null;
+                throw new SocketConnectionException();
+            }
+
+            /// 写入本地文件
+            if (response.Type != DownloadResponse.ResponseType.BytesResponse)
+            {
+                throw new Exception("Download denied");
+            }
+            DiskManager.WriteBytes(request.Begin, response.Bytes);
+
+            /// 任务完成, 返回写入字节数
+            return response.Bytes.Length;
+        }
+
+
+        /// <summary>
+        /// 进行单个上传 packet 本地读取和网络请求, 返回上传成功字节数
+        /// 任务失败会抛出不同异常 (SocketConnectionException 或 Exception)
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="client"></param>
+        /// <returns></returns>
+        private long UploadSinglePacket(long packet, ref SocketClient client)
+        {
+            BuildValidSocketClient(ref client);
+
+            /// 确定相关参数
+            UploadRequest request = new UploadRequest();
+            request.Type = UploadRequest.RequestType.ByPath;
+            request.ViewPath = CurrentFile.RemotePath;
+            request.Begin = packet * TransferDiskManager.BlockSize;
+            request.Length = Math.Min(CurrentFile.Length - request.Begin, TransferDiskManager.BlockSize);
+
+            /// 读取本地文件
+            request.Bytes = DiskManager.ReadBytes(request.Begin, (int)request.Length);
+
+            UploadResponse response;
+            /// 网络请求
+            try
+            {
+                HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.HB32Packet.UploadRequest, request.ToBytes());
+                response = UploadResponse.FromBytes(resp.Bytes);
+            }
+            catch
+            {
+                client = null;
+                throw new SocketConnectionException();
+            }
+
+            /// 确认packet是否正确完成
+            if (response.Type != UploadResponse.ResponseType.SuccessResponse)
+            {
+                throw new Exception("Upload denied");
+            }
+
+            return request.Bytes.Length;
+        }
+
+
+        /// <summary>
+        /// 确定 / 获取可用的 SocketClient
+        /// </summary>
+        /// <param name="client"></param>
+        private void BuildValidSocketClient(ref SocketClient client)
+        {
             if (client == null)
             {
                 while (!IsStopTransfer)
@@ -282,7 +375,7 @@ namespace FileManager.Models.TransferLib.Services
                     ConnectionAvailableEvent.WaitOne();
                     try
                     {
-                        
+
                         client = SocketFactory.Instance.GenerateConnectedSocketClient(Route);
                         break;
                     }
@@ -293,40 +386,6 @@ namespace FileManager.Models.TransferLib.Services
                     }
                 }
             }
-            /// 向 server 端请求内容
-            DownloadRequest request = new DownloadRequest();
-            DownloadResponse response;
-            try
-            {
-                /// 构造 request
-                request.Type = DownloadRequest.RequestType.QueryByPath;
-                request.ViewPath = CurrentFile.RemotePath;
-                request.Begin = packet * TransferDiskManager.BlockSize;
-                request.Length = Math.Min(CurrentFile.Length - request.Begin, TransferDiskManager.BlockSize);
-                /// 网络请求
-                HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.HB32Packet.DownloadRequest, request.ToBytes());
-                response = DownloadResponse.FromBytes(resp.Bytes);
-            }
-            catch
-            {
-                client = null;
-                throw new SocketConnectionException();
-            }
-            /// 写入本地文件
-            try
-            {
-                if (response.Type != DownloadResponse.ResponseType.BytesResponse)
-                {
-                    throw new Exception("Download denied");
-                }
-                DiskManager.WriteBytes(request.Begin, response.Bytes);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            /// 任务完成, 返回写入字节数
-            return response.Bytes.Length;
         }
 
 
@@ -376,7 +435,7 @@ namespace FileManager.Models.TransferLib.Services
 
         private int GetThreadCount(long length)
         {
-            int count = 1;
+            int count;
             if (length <= (64 << 10))
             {
                 count = 1;

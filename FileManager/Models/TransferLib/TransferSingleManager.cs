@@ -67,59 +67,57 @@ namespace FileManager.Models.TransferLib
         private void TransferMain()
         {
             IsTransfering = true;
+
             /// 线程池和 UI 初始化
             TransferThreadPool.Route = RootInfo.Route;
             TransferThreadPool.InitializeThreads();
             TransferThreadPool.UIFinishBytes += ViewModel.OnFinishBytes;
             ViewModel.StartRefresh();
 
-            /// RootInfo 的文件传输
-            if (RootInfo.Type == TransferType.Download)
+            /// 确认当前任务已经 Query 完成
+            /// 对同一个网络路径的数据通信, 没必要通过Query和文件传输异步来提升效率
+            /// 若 Querier 为 null, 说明目录树是从文件或其它方式加载完成, 不需要等待 Query 信号
+            ViewModel.TransferStatus = "Querying...";
+            if (RootInfo.Querier != null)
             {
-                ViewModel.TransferStatus = "Querying...";
-                /// 确认当前任务已经 Query 完成
-                /// 对同一个网络路径的数据通信, 没必要通过Query和文件传输异步来提升效率
-                /// 若 Querier 为 null, 说明目录树是从文件或其它方式加载完成, 不需要等待 Query 信号
-                if (RootInfo.Querier != null)
+                RootInfo.Querier.QueryCompleteSignal.WaitOne();
+            }
+            ViewModel.TransferStatus = "Transfering...";
+            ViewModel.UpdateRootSize(RootInfo, RootInfo.Length);
+            UpdateDirectoryStatus(RootInfo, TransferStatus.Transfering);
+            if (RootInfo.Querier.IsQueryHaveFailed)
+            {
+                // todo 若有 Query 被server 拒绝, 可在此处理
+            }
+
+            /// RootInfo 的文件传输
+            /// 以文件为单位进行主循环, 没必要将目录树序列化, 以块为单位进行主循环
+            while (true)
+            {
+                /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
+                if (!MovePointerToFirstFile()) { break; }
+
+                /// 当前任务传输过程
+                TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
+                UpdateFileStatus(infoFile, TransferStatus.Transfering);
+                ViewModel.SetNewFile(infoFile);
+                TransferThreadPool.TransferOne(infoFile, RootInfo.Type);
+                if (IsPausing)
                 {
-                    RootInfo.Querier.QueryCompleteSignal.WaitOne();
+                    // todo 保存进度
+
+                    break;
                 }
-                ViewModel.TransferStatus = "Transfering...";
-                ViewModel.UpdateRootSize(RootInfo, RootInfo.Length);
-                UpdateDirectoryStatus(RootInfo, TransferStatus.Transfering);
-                if (RootInfo.Querier.IsQueryHaveFailed)
+                /// 标记当前 File 任务完成
+                CurrentDirectoryInfo.TransferCompleteFileFlags[IndexFile] = true;
+                UpdateFileStatus(infoFile, infoFile.Status);
+                if (infoFile.Status == TransferStatus.Failed)
                 {
-                    // todo 若有 Query 被server 拒绝, 可在此处理
+                    ViewModel.CurrentFileFailed();
                 }
-                /// --------
-                /// 以文件为单位进行主循环, 没必要将目录树序列化, 以块为单位进行主循环
-                while (true)
+                else
                 {
-                    /// 将 Stack 和 CurrentDirectoryInfo 指向正确位置
-                    if (!MovePointerToFirstFile()) { break; }
-                    
-                    /// 当前任务传输过程
-                    TransferInfoFile infoFile = CurrentDirectoryInfo.FileChildren[IndexFile];
-                    UpdateFileStatus(infoFile, TransferStatus.Transfering);
-                    ViewModel.SetNewFile(infoFile);
-                    TransferThreadPool.DownloadOne(infoFile);
-                    if (IsPausing)
-                    {
-                        // todo 保存进度
-                        
-                        break;
-                    }
-                    /// 标记当前 File 任务完成
-                    CurrentDirectoryInfo.TransferCompleteFileFlags[IndexFile] = true;
-                    UpdateFileStatus(infoFile, infoFile.Status);
-                    if (infoFile.Status == TransferStatus.Failed)
-                    {
-                        ViewModel.CurrentFileFailed();
-                    }
-                    else
-                    {
-                        ViewModel.CurrentFileFinished();
-                    }
+                    ViewModel.CurrentFileFinished();
                 }
             }
 

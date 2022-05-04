@@ -149,6 +149,8 @@ namespace FileManager.ViewModels.PageTransfer
         /// </summary>
         private bool IsUpdated = false;
 
+        private AutoResetEvent StopRefreshSignal = new AutoResetEvent(false);
+
         #region about ListView
 
 
@@ -381,6 +383,7 @@ namespace FileManager.ViewModels.PageTransfer
         {
             IsRefreshingUI = true;
             LastRefreshTime = DateTime.Now;
+            StopRefreshSignal.Reset();
             while (IsRefreshingUI)
             {
                 Thread.Sleep(RefreshInterval);
@@ -392,12 +395,17 @@ namespace FileManager.ViewModels.PageTransfer
                 UpdateSpeed();
                 UpdateProgress();
             }
+            StopRefreshSignal.Set();
         }
 
 
         public void StopRefresh()
         {
-            IsRefreshingUI = false;
+            if (IsRefreshingUI)
+            {
+                IsRefreshingUI = false;
+                StopRefreshSignal.WaitOne();
+            }
         }
 
 
