@@ -40,6 +40,7 @@ namespace FileManager.Models.Serializable
             bb.Append(ViewPath);
             bb.Append(Begin);
             bb.Append(Length);
+            bb.Append(Bytes);
             return bb.GetBytes();
         }
 

@@ -98,11 +98,6 @@ namespace FileManager.SocketLib.SocketServer
             }
         }
 
-        public bool IsOutOfTime()
-        {
-            return false;
-
-        }
 
     }
 }

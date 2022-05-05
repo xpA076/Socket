@@ -60,7 +60,7 @@ namespace FileManager.Models.TransferLib.Services
 
         private readonly object TryingToConnectLock = new object();
 
-        private ManualResetEvent ConnectionAvailableEvent = new ManualResetEvent(false);
+        private ManualResetEvent ConnectionAvailableSignal = new ManualResetEvent(false);
 
         /// <summary>
         /// 子线程单元完成每个 packet 后调用, 用于计数器更新UI
@@ -372,16 +372,15 @@ namespace FileManager.Models.TransferLib.Services
                 while (!IsStopTransfer)
                 {
                     Task.Run(() => { TryUntilConnectionAvailable(); });
-                    ConnectionAvailableEvent.WaitOne();
+                    ConnectionAvailableSignal.WaitOne();
                     try
                     {
-
                         client = SocketFactory.Instance.GenerateConnectedSocketClient(Route);
                         break;
                     }
                     catch (Exception)
                     {
-                        ConnectionAvailableEvent.Reset();
+                        ConnectionAvailableSignal.Reset();
                         continue;
                     }
                 }
@@ -417,7 +416,7 @@ namespace FileManager.Models.TransferLib.Services
                 try
                 {
                     SocketFactory.Instance.Request(SocketLib.Enums.HB32Packet.Null, new byte[1]);
-                    ConnectionAvailableEvent.Set();
+                    ConnectionAvailableSignal.Set();
                     break;
                 }
                 catch (Exception)

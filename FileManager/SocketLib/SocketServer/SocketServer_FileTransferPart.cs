@@ -30,7 +30,7 @@ namespace FileManager.SocketLib.SocketServer
                 if (request.Type == DownloadRequest.RequestType.QueryByPath)
                 {
                     string server_path = PathTranslator.ToTruePath(request.ViewPath, session);
-                    resource = FileResourceManager.GetResource(server_path, FileAccess.Read);
+                    resource = FileResourceManager.GetResource(server_path, FileAccess.Read, session);
                 }
                 else
                 {
@@ -69,7 +69,7 @@ namespace FileManager.SocketLib.SocketServer
                 if (request.Type == UploadRequest.RequestType.ByPath)
                 {
                     string server_path = PathTranslator.ToTruePath(request.ViewPath, session);
-                    resource = FileResourceManager.GetResource(server_path, FileAccess.Write);
+                    resource = FileResourceManager.GetResource(server_path, FileAccess.Write, session);
                 }
                 else
                 {

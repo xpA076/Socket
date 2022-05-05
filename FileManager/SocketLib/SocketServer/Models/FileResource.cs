@@ -20,6 +20,8 @@ namespace FileManager.SocketLib.SocketServer.Models
 
         public string ServerPath { get; set; }
 
+        public int WriterSessionIndex { get; set; }
+
         private FileStream FileStream { get; set; } = null;
 
         private readonly object FileStreamLock = new object();

@@ -11,7 +11,7 @@ namespace FileManager.Models.Serializable
 {
     /// <summary>
     /// 每个 SessionBytes 的内容, 客户端通信凭证
-    /// 包含Server端索引(随机int), 身份信息, 和验证字节
+    /// 包含Server端索引(随机int, 唯一), 身份信息, 和验证字节
     /// Session 的索引和权限信息一经建立不再更新, 因此不必加锁
     /// </summary>
     public class SessionBytesInfo : ISocketSerializable

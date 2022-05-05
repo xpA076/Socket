@@ -247,7 +247,7 @@ namespace FileManager.Pages
                     {
                         Name = fileInfo.Name,
                         IsDirectory = false,
-                        Length = 0,
+                        Length = fileInfo.Length,
                         CreationTimeUtc = fileInfo.CreationTimeUtc,
                         LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
                     });

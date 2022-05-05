@@ -48,10 +48,7 @@ namespace FileManager.Models.TransferLib.Services
 
         public void StartQuery()
         {
-            if (RootInfo.Type == TransferType.Download)
-            {
-                Task.Run(() => { Query(); });
-            }
+            Task.Run(() => { Query(); });
         }
 
         public TransferInfoRootQuerier(TransferInfoRoot rootInfo)

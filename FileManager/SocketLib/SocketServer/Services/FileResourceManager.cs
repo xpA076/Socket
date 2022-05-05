@@ -19,7 +19,7 @@ namespace FileManager.SocketLib.SocketServer.Services
 
 
 
-        public FileResource GetResource(string path, FileAccess access)
+        public FileResource GetResource(string path, FileAccess access, SocketSession session)
         {
             FileResourcesLock.EnterUpgradeableReadLock();
             try
@@ -27,7 +27,7 @@ namespace FileManager.SocketLib.SocketServer.Services
                 if (FileResources.ContainsKey(path))
                 {
                     FileResource resource = FileResources[path];
-                    if (access == resource.FileAccess)
+                    if (access == FileAccess.Read)
                     {
                         if (resource.FileAccess == FileAccess.Read)
                         {
@@ -40,7 +40,21 @@ namespace FileManager.SocketLib.SocketServer.Services
                     }
                     else
                     {
-                        throw new ServerInternalException("FileResourceManager.GetResource() : FileMode not match.");
+                        if (resource.FileAccess == FileAccess.Write)
+                        {
+                            if (resource.WriterSessionIndex == session.BytesInfo.Index)
+                            {
+                                return resource;
+                            }
+                            else
+                            {
+                                throw new ServerInternalException("FileResourceManager.GetResource() : another FileResource writter is occupied.");
+                            }
+                        }
+                        else
+                        {
+                            throw new ServerInternalException("FileResourceManager.GetResource() : FileResource reader is occupied.");
+                        }
                     }
                 }
                 else
@@ -49,6 +63,10 @@ namespace FileManager.SocketLib.SocketServer.Services
                     try
                     {
                         FileResource resource = CreateResource(path, access);
+                        if (access == FileAccess.Write)
+                        {
+                            resource.WriterSessionIndex = session.BytesInfo.Index;
+                        }
                         FileResources.Add(path, resource);
                         return resource;
                     }
