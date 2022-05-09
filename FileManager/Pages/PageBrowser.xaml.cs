@@ -237,7 +237,7 @@ namespace FileManager.Pages
             List<SocketFileInfo> selectedInfos = new List<SocketFileInfo>();
             string lp = uploadSelectWindow.UploadPathList[0];
             int i = lp.LastIndexOf("\\");
-            rootInfo.LocalDirectory = lp.Substring(0, i);
+            rootInfo.LocalDirectory = lp.Substring(0, i + 1);
             if (uploadSelectWindow.UploadChoosen == UploadSelectWindow.UploadChoose.Files)
             {
                 foreach (string localPath in uploadSelectWindow.UploadPathList)

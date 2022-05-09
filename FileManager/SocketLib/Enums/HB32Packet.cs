@@ -97,9 +97,15 @@ namespace FileManager.SocketLib.Enums
         DeleteAllowed,
         DeleteDenied,
 
+
         /// Mode 0x06 : Status report
         StatusReport = 0x0601,
         StatusQuery = 0x0602,
+
+
+        /// Mode 0x07 : Release file
+        ReleaseFileRequest = 0x0701,
+        ReleaseFileResponse = 0x0710,
 
 
         /// Mode 0x10 : Transfer

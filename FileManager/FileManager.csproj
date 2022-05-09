@@ -97,6 +97,8 @@
     <Compile Include="Models\Serializable\DirectoryResponse.cs" />
     <Compile Include="Models\Serializable\DownloadRequest.cs" />
     <Compile Include="Models\Serializable\DownloadResponse.cs" />
+    <Compile Include="Models\Serializable\ReleaseFileRequest.cs" />
+    <Compile Include="Models\Serializable\ReleaseFileResponse.cs" />
     <Compile Include="Models\Serializable\SetSessionRequest.cs" />
     <Compile Include="Models\Serializable\UploadRequest.cs" />
     <Compile Include="Models\Serializable\UploadResponse.cs" />

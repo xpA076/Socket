@@ -168,6 +168,7 @@ namespace FileManager.Models.TransferLib
             while (true)
             {
                 /// 按顺序尝试进入当前 Directory 的未完成子目录, 若成功则在子目录重复该循环
+                bool is_entered = false;
                 for (int i = 0; i < CurrentDirectoryInfo.DirectoryChildren.Count; ++i)
                 {
                     if (!CurrentDirectoryInfo.TransferCompleteDirectoryFlags[i])
@@ -179,8 +180,13 @@ namespace FileManager.Models.TransferLib
                         {
                             Directory.CreateDirectory(CurrentDirectoryInfo.LocalPath);
                         }
-                        continue;
+                        is_entered = true;
+                        break;
                     }
+                }
+                if (is_entered)
+                {
+                    continue;
                 }
                 /// 未成功进入子目录, 则尝试获取子节点中的未完成文件
                 for (int i = 0; i < CurrentDirectoryInfo.FileChildren.Count; ++i)

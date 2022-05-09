@@ -83,6 +83,14 @@ namespace FileManager.SocketLib.SocketServer.Services
         }
 
 
+        public void ReleaseResource(string path, FileAccess access, SocketSession session)
+        {
+            FileResource resource = GetResource(path, access, session);
+            TimeoutCollector.ServerInstance.UnRegister(resource);
+            resource.Dispose();
+        }
+
+
         private FileResource CreateResource(string path, FileAccess access)
         {
             FileResource resource = new FileResource(path, access);

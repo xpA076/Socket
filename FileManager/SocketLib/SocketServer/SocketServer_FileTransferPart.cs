@@ -75,7 +75,7 @@ namespace FileManager.SocketLib.SocketServer
                 {
                     throw new ServerInternalException("not implemented");
                 }
-                resource.WriteSpan(request.Begin, request.Bytes);
+                resource.WriteSpan(request.Begin, request.Bytes, request.Bytes.Length);
                 UploadResponse response = UploadResponse.BuildSuccessResponse();
                 responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
             }
@@ -93,6 +93,38 @@ namespace FileManager.SocketLib.SocketServer
             }
         }
 
+
+        private void ReleaseFile(SocketResponder responder, byte[] bytes, SocketSession session)
+        {
+            try
+            {
+                ReleaseFileRequest request = ReleaseFileRequest.FromBytes(bytes);
+                if (request.Type == ReleaseFileRequest.RequestType.Default)
+                {
+                    string server_path = PathTranslator.ToTruePath(request.ViewPath, session);
+                    if (request.From == ReleaseFileRequest.ReleaseFrom.Download)
+                    {
+                        FileResourceManager.ReleaseResource(server_path, FileAccess.Read, session);
+                    }
+                    else
+                    {
+                        FileResourceManager.ReleaseResource(server_path, FileAccess.Write, session);
+                    }
+                    ReleaseFileResponse response = ReleaseFileResponse.BuildSuccessResponse();
+                    responder.SendBytes(HB32Packet.ReleaseFileResponse, response.ToBytes());
+                }
+                else
+                {
+                    throw new ServerInternalException("not implemented");
+                }
+            }
+            catch (ServerInternalException ex)
+            {
+                string err_msg = "Upload response exception from server: " + ex.Message;
+                ReleaseFileResponse response = ReleaseFileResponse.BuildFailedResponse(err_msg);
+                responder.SendBytes(HB32Packet.ReleaseFileResponse, response.ToBytes());
+            }
+        }
 
 
         /*

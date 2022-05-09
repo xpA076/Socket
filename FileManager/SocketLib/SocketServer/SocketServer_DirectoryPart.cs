@@ -140,6 +140,16 @@ namespace FileManager.SocketLib.SocketServer
 
         }
 
+        /// <summary>
+        
+        /// </summary>
+        /// <param name="server_dir"></param>
+        private void CreateDirectory(string server_dir)
+        {
+
+        }
+
+
         /*
         /// <summary>
         /// 响应client请求文件大小

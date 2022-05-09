@@ -328,6 +328,7 @@ namespace FileManager.ViewModels.PageTransfer
 
         public void UpdateRootSize(TransferInfoRoot root, long size)
         {
+            TotalLength = size;
             foreach (ListViewTransferItem item in this.ListViewItems)
             {
                 if (item.Level == 0 && InfoRoots[item.TaskIndex] == root)
@@ -366,7 +367,7 @@ namespace FileManager.ViewModels.PageTransfer
         public void SetCurrentRoot(int index)
         {
             CurrentInfoRootIndex = index;
-            TotalLength = InfoRoots[index].Length;
+            
         }
 
 

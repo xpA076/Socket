@@ -53,6 +53,24 @@ namespace FileManager.SocketLib.SocketServer.Services
             }
         }
 
+        public void UnRegister(IDisposable obj)
+        {
+            ObjectsLock.EnterWriteLock();
+            try
+            {
+                if (Objects.ContainsKey(obj))
+                {
+                    Objects.Remove(obj);
+                }
+            }
+            finally
+            {
+                ObjectsLock.ExitWriteLock();
+            }
+
+        }
+
+
 
         public void Refresh(IDisposable obj)
         {
@@ -124,7 +142,5 @@ namespace FileManager.SocketLib.SocketServer.Services
                 }
             }
         }
-
-
     }
 }

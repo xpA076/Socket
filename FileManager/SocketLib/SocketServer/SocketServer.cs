@@ -85,6 +85,10 @@ namespace FileManager.SocketLib.SocketServer
                                 ResponseUploadFile(responder, bytes, session);
                                 break;
 
+                            case HB32Packet.ReleaseFileRequest:
+                                ReleaseFile(responder, bytes, session);
+                                break;
+
                             #region Download
 
                             case HB32Packet.DownloadFileStreamIdRequest:

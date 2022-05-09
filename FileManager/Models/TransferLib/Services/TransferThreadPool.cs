@@ -102,7 +102,6 @@ namespace FileManager.Models.TransferLib.Services
                 SubThreadSignals[i].Reset();
                 MainThreadSignals[i].Reset();
                 thread.Start(i);
-                //Thread.Sleep(10);
             }
         }
 
@@ -184,7 +183,8 @@ namespace FileManager.Models.TransferLib.Services
             /// 结束本地文件写入
             DiskManager.Finish();
 
-            /// 向sever端发出请求, 释放文件 (目前不处理, 交给server自动回收)
+            /// 向sever端发出请求, 释放文件
+            ReleaseFile(type, file.RemotePath);
 
             /// 判断任务是否正确完成
             /// 若因调用 Pause() 结束当前 File 传输任务, 则终止所有子线程, 返回调用方
@@ -338,6 +338,7 @@ namespace FileManager.Models.TransferLib.Services
             /// 读取本地文件
             request.Bytes = DiskManager.ReadBytes(request.Begin, (int)request.Length);
 
+            
             UploadResponse response;
             /// 网络请求
             try
@@ -385,6 +386,23 @@ namespace FileManager.Models.TransferLib.Services
                     }
                 }
             }
+        }
+
+
+        private void ReleaseFile(TransferType type, string path)
+        {
+            try
+            {
+                ReleaseFileRequest request = new ReleaseFileRequest
+                {
+                    Type = ReleaseFileRequest.RequestType.Default,
+                    From = type == TransferType.Download ? ReleaseFileRequest.ReleaseFrom.Download : ReleaseFileRequest.ReleaseFrom.Upload,
+                    ViewPath = path
+                };
+                HB32Response resp = SocketFactory.Instance.Request(SocketLib.Enums.HB32Packet.ReleaseFileRequest, request.ToBytes());
+                ReleaseFileResponse response = ReleaseFileResponse.FromBytes(resp.Bytes);
+            }
+            catch { }
         }
 
 

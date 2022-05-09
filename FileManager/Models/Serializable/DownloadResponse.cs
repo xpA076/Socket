@@ -13,7 +13,7 @@ namespace FileManager.Models.Serializable
         public enum ResponseType : int
         {
             BytesResponse,
-            ResponseException
+            ResponseException,
         }
 
         public ResponseType Type { get; set; }
