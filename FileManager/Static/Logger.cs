@@ -1,74 +1,92 @@
-﻿using System;
+﻿using FileManager.SocketLib.Enums;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
-
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
-
-namespace FileManager.Static
+namespace FileManager.Models
 {
-    public static class Logger
+    public sealed class Logger
     {
-        private static object obj = new object();
-        public static void ThreadPackage(int threadId, int package, string mode, string others)
+        private Logger()
         {
-            lock (obj)
+
+        }
+
+        private static readonly Lazy<Logger> _client = new Lazy<Logger>(() => new Logger());
+
+        public static Logger Client
+        {
+            get
             {
-                try
+                return _client.Value;
+            }
+        }
+
+
+        private static readonly Lazy<Logger> _server = new Lazy<Logger>(() => new Logger());
+
+        public static Logger Server
+        {
+            get
+            {
+                return _server.Value;
+            }
+        }
+
+
+        private ConcurrentQueue<string> LogQueue = new ConcurrentQueue<string>();
+
+
+        public void InitClient()
+        {
+            Task.Run(() => { LogCycle("E:\\client.log"); });
+        }
+
+        public void InitServer()
+        {
+            Task.Run(() => { LogCycle("E:\\server.log"); });
+        }
+
+
+        public void Log(string logInfo, LogLevel logLevel = LogLevel.Info)
+        {
+            string time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string logLevel_str = "[" + logLevel.ToString().PadRight(5) + "]";
+            string log_str = string.Format("{0} {1} {2}", time, logLevel_str, logInfo);
+            LogQueue.Enqueue(log_str);
+        }
+
+        public void DebugLog(string log)
+        {
+            Log(log, LogLevel.Debug);
+        }
+
+
+        private void LogCycle(string path)
+        {
+            while (true)
+            {
+                if (LogQueue.Count > 0)
                 {
-                    using (FileStream stream = new FileStream("thread.log", FileMode.Append))
+                    using (FileStream stream = new FileStream(path, FileMode.Append))
                     using (StreamWriter writer = new StreamWriter(stream))
                     {
-                        writer.WriteLine("{0} : ThreadId {1} {3} package {2} - {4}", 
-                            DateTime.Now.ToString("O"), threadId, package, mode, others);
+                        string log;
+                        while (LogQueue.TryDequeue(out log))
+                        {
+                            writer.WriteLine(log);
+                        }
                     }
                 }
-                catch {; }
-            }
-        }
-        private static object loggerLock = new object();
-
-        public static void Log(string logInfo, LogLevel logLevel = LogLevel.Info)
-        {
-            lock (loggerLock)
-            {
-                string time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                string logLevel_str = "[" + logLevel.ToString().PadRight(5) + "]";
-                /// log in file
-                string fileName = Config.LogDir + "FileManager" + DateTime.Now.ToString("-yyyy-MM-dd") + ".log";
-                using (FileStream stream = new FileStream(fileName, FileMode.Append))
-                using (StreamWriter writer = new StreamWriter(stream))
-                {
-                    writer.WriteLine("{0} {1} {2}", time, logLevel_str, logInfo);
-                }
+                Thread.Sleep(5000);
             }
         }
 
-        public static void ServerLog(string logInfo, LogLevel logLevel)
-        {
-            ServerLog(logInfo, logLevel, DateTime.Now);
-        }
-
-
-        public static void ServerLog(string logInfo, LogLevel logLevel, DateTime curr_time)
-        {
-            lock (loggerLock)
-            {
-                string time = curr_time.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                string logLevel_str = "[" + logLevel.ToString().PadRight(5) + "]";
-                /// log in file
-                string fileName = Config.LogDir + "FileManagerServer" + curr_time.ToString("-yyyy-MM-dd") + ".log";
-                using (FileStream stream = new FileStream(fileName, FileMode.Append))
-                using (StreamWriter writer = new StreamWriter(stream))
-                {
-                    writer.WriteLine("{0} {1} {2}", time, logLevel_str, logInfo);
-                }
-            }
-        }
 
     }
 }

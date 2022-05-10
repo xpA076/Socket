@@ -93,6 +93,7 @@
     <Compile Include="Exceptions\Server\SocketSessionException.cs" />
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
+    <Compile Include="Static\Logger.cs" />
     <Compile Include="Models\Serializable\DirectoryRequest.cs" />
     <Compile Include="Models\Serializable\DirectoryResponse.cs" />
     <Compile Include="Models\Serializable\DownloadRequest.cs" />
@@ -103,6 +104,7 @@
     <Compile Include="Models\Serializable\UploadRequest.cs" />
     <Compile Include="Models\Serializable\UploadResponse.cs" />
     <Compile Include="Models\TransferLib\Services\PacketIndexGenerator.cs" />
+    <Compile Include="Models\TransferLib\Services\TransferRecorder.cs" />
     <Compile Include="Models\TransferLib\Services\TransferThreadPool.cs" />
     <Compile Include="Models\TransferLib\Enums\TransferType.cs" />
     <Compile Include="Models\TransferLib\TransferManager.cs" />
@@ -198,7 +200,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Static\Config.cs" />
-    <Compile Include="Static\Logger.cs" />
+    <Compile Include="Static\LoggerStatic.cs" />
     <Compile Include="FileManagerMainWindow.xaml.cs">
       <DependentUpon>FileManagerMainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

@@ -36,7 +36,7 @@ namespace FileManager.Pages
         public PageProxy()
         {
             InitializeComponent();
-            this.TextBoxPort.Text = Config.DefaultProxyPort.ToString();
+            this.TextBoxPort.Text = Config.Instance.DefaultProxyPort.ToString();
             RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
             this.TextBoxNull.DataContext = RichTextBoxView;
             //ButtonStartProxy_Click(null, null);
@@ -76,7 +76,7 @@ namespace FileManager.Pages
             {
                 //return;
             }
-            Logger.ServerLog(e.log, e.logLevel, e.time);
+            LoggerStatic.ServerLog(e.log, e.logLevel, e.time);
             this.RichTextBoxView.InvokeLog(e);
         }
 

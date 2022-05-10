@@ -95,7 +95,7 @@ namespace FileManager.Models
 
         public bool NeedSaveRecord()
         {
-            return (DateTime.Now - LastSaveTime).TotalMilliseconds > Config.SaveRecordInterval;
+            return (DateTime.Now - LastSaveTime).TotalMilliseconds > Config.Instance.SaveRecordInterval;
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace FileManager.Models
                 CurrentLength = task.Length; // 更新 CurrentLength
                 CurrentFinished = task.FinishedPacket * HB32Encoding.DataSize;
             }
-            Logger.Log(string.Format("<FileTaskRecord> call StartNewTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
+            LoggerStatic.Log(string.Format("<FileTaskRecord> call StartNewTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);
         }
         
@@ -123,7 +123,7 @@ namespace FileManager.Models
             {
                 PrevBytesAddup += CurrentLength;
             }
-            Logger.Log(string.Format("<FileTaskRecord> call FinishCurrentTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
+            LoggerStatic.Log(string.Format("<FileTaskRecord> call FinishCurrentTask, TotalLength={0}, TotalFinished={1}, CurrentLength={2}, CurrentFinished={3}, PrevBytesAddup={4}",
                 TotalLength, TotalFinished, CurrentLength, CurrentFinished, PrevBytesAddup), LogLevel.Debug);
         }
 
@@ -151,7 +151,7 @@ namespace FileManager.Models
                 }
                 FileTasks.Add(task);
                 TotalLength += task.Length;
-                Logger.Log("<FiletaskRecord> call AddTask : " + task.ToString(), LogLevel.Debug);
+                LoggerStatic.Log("<FiletaskRecord> call AddTask : " + task.ToString(), LogLevel.Debug);
             }
         }
 
@@ -163,7 +163,7 @@ namespace FileManager.Models
                 FileTask task = this.FileTasks[index];
                 this.FileTasks.RemoveAt(index);
                 TotalLength -= task.Length;
-                Logger.Log(string.Format("<FiletaskRecord> call RemoveTaskAt : " + index.ToString()), LogLevel.Debug);
+                LoggerStatic.Log(string.Format("<FiletaskRecord> call RemoveTaskAt : " + index.ToString()), LogLevel.Debug);
             }
         }
 
@@ -174,7 +174,7 @@ namespace FileManager.Models
             {
                 this.FileTasks.Insert(index, task);
                 TotalLength += task.Length;
-                Logger.Log("<FiletaskRecord> call InsertTask " + index.ToString() + " : " + task.ToString(), LogLevel.Debug);
+                LoggerStatic.Log("<FiletaskRecord> call InsertTask " + index.ToString() + " : " + task.ToString(), LogLevel.Debug);
             }
         }
 
@@ -222,7 +222,7 @@ namespace FileManager.Models
             root.Add(tasks);
             root.Save(RecordPath);
             LastSaveTime = DateTime.Now;
-            Logger.Log("Saved record.", LogLevel.Info);
+            LoggerStatic.Log("Saved record.", LogLevel.Info);
         }
 
         /// <summary>
@@ -275,7 +275,7 @@ namespace FileManager.Models
                     PrevBytesAddup += FileTasks[i].Length;
                 }
             }
-            Logger.Log("Loaded record.", LogLevel.Info);
+            LoggerStatic.Log("Loaded record.", LogLevel.Info);
         }
         #endregion
     }

@@ -13,75 +13,106 @@ using FileManager.Models;
 
 namespace FileManager.Static
 {
-    public static class Config
+    public sealed class Config
     {
-        public static bool UseLegacyFileInfo { get; set; } = false;
+        private enum ConfigType : int
+        {
+            Client,
+            Server
+        }
+
+        private ConfigType Type { get; set; }
+
+        private Config(ConfigType type)
+        {
+            Type = type;
+        }
+
+        private static readonly Lazy<Config> _client = new Lazy<Config>(() => new Config(ConfigType.Client));
+
+        public static Config Instance
+        {
+            get
+            {
+                return _client.Value;
+            }
+        }
+
+
+        private static readonly Lazy<Config> _server = new Lazy<Config>(() => new Config(ConfigType.Server));
+
+        public static Config Server
+        {
+            get
+            {
+                return _server.Value;
+            }
+        }
 
 
         #region UI
         /// <summary>
         /// 窗口关闭操作
         /// </summary>
-        public static bool ClickCloseToMinimize { get; set; } = true;
+        public bool ClickCloseToMinimize { get; set; } = true;
 
         /// <summary>
         /// 刷新界面所需传输最小字节数
         /// </summary>
-        public static long UpdateLengthThreshold { get; set; } = 128 * 1024;
+        public long UpdateLengthThreshold { get; set; } = 128 * 1024;
         /// <summary>
         /// 刷新界面最短时间间隔 (ms)
         /// </summary>
-        public static int UpdateTimeThreshold { get; set; } = 500;
+        public int UpdateTimeThreshold { get; set; } = 500;
 
         #endregion
 
 
 
         #region HeartBeatConnection 相关参数
-        public static int ConnectionMonitorRecordCount { get; set; } = 10;
-        public static int ConnectionMonitorRecordInterval { get; set; } = 3000;
+        public int ConnectionMonitorRecordCount { get; set; } = 10;
+        public int ConnectionMonitorRecordInterval { get; set; } = 3000;
 
         #endregion
 
-        public static int DefaultServerPort { get; set; } = 12138;
+        public int DefaultServerPort { get; set; } = 12138;
 
-        public static int DefaultProxyPort { get; set; } = 12139;
+        public int DefaultProxyPort { get; set; } = 12139;
 
-        public static int BuildConnectionTimeout { get; set; } = 2000;
+        public int BuildConnectionTimeout { get; set; } = 2000;
 
-        public static int SocketSendTimeout { get; set; } = 5000;
+        public int SocketSendTimeout { get; set; } = 5000;
 
-        public static int SocketReceiveTimeout { get; set; } = 5000;
+        public int SocketReceiveTimeout { get; set; } = 5000;
 
         /// <summary>
         /// 启动多线程传输文件大小阈值
         /// </summary>
-        public static long SmallFileThreshold { get; set; } = 4 * 1024 * 1024;
+        public long SmallFileThreshold { get; set; } = 4 * 1024 * 1024;
 
         /// <summary>
         /// 文件传输过程每个Packet大小
         /// </summary>
-        public static long TransferBlockSize { get; set; } = 4096;
+        public long TransferBlockSize { get; set; } = 4096;
 
-        public static int ThreadLimit { get; set; } = 16;
+        public int ThreadLimit { get; set; } = 16;
 
         /// <summary>
         /// Transfer 过程中保存 Record 间隔
         /// </summary>
-        public static int SaveRecordInterval { get; set; } = 5000;
+        public int SaveRecordInterval { get; set; } = 5000;
 
 
         
 
-        public static byte[] KeyBytes { get; set; } = new byte[256];
+        public byte[] KeyBytes { get; set; } = new byte[256];
 
         
 
-        public static ObservableCollection<ConnectionRecord> Histories = new ObservableCollection<ConnectionRecord>();
+        public ObservableCollection<ConnectionRecord> Histories = new ObservableCollection<ConnectionRecord>();
 
-        public static ObservableCollection<ConnectionRecord> Stars = new ObservableCollection<ConnectionRecord>();
+        public ObservableCollection<ConnectionRecord> Stars = new ObservableCollection<ConnectionRecord>();
 
-        private static string _log_path = "";
 
         public static string ConfigDir
         {
@@ -117,7 +148,15 @@ namespace FileManager.Static
             }
         }
 
-        public static void InsertHistory(ConnectionRecord connectionRecord)
+        public static string RecordPath
+        {
+            get
+            {
+                return ConfigDir + "TransferRecord.fmrec";
+            }
+        }
+
+        public void InsertHistory(ConnectionRecord connectionRecord)
         {
             for (int i = 0; i < Histories.Count;)
             {
@@ -136,14 +175,14 @@ namespace FileManager.Static
             SaveConfig();
         }
 
-        public static void Star(ConnectionRecord connectionRecord)
+        public void Star(ConnectionRecord connectionRecord)
         {
             connectionRecord.Star();
             Stars.Insert(0, connectionRecord.Copy());
             SaveConfig();
         }
 
-        public static void UnStar(ConnectionRecord connectionRecord)
+        public void UnStar(ConnectionRecord connectionRecord)
         {
             for (int i = 0; i < Stars.Count;)
             {
@@ -168,12 +207,8 @@ namespace FileManager.Static
         }
 
 
-        public static void LoadConfig()
+        public void LoadConfig()
         {
-            _log_path = System.IO.Path.GetDirectoryName(
-                System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName
-                );
-
             if (!File.Exists(ConfigPath))
             {
                 string appdata = Environment.GetEnvironmentVariable("APPDATA");
@@ -234,7 +269,7 @@ namespace FileManager.Static
             }
         }
 
-        public static void SaveConfig()
+        public void SaveConfig()
         {
             /// Create xml config
             XElement root = new XElement("FileManagerConfig");
@@ -267,7 +302,6 @@ namespace FileManager.Static
             settings.SetElementValue("SocketSendTimeout", SocketSendTimeout.ToString());
             settings.SetElementValue("SocketReceiveTimeout", SocketReceiveTimeout.ToString());
 
-            settings.SetElementValue("UseLegacyFileInfo", UseLegacyFileInfo.ToString());
 
             root.Add(settings);
             root.Save(ConfigPath);

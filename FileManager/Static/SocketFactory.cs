@@ -123,8 +123,8 @@ namespace FileManager.Static
             SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
             /// 建立通信隧道
             //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-            client.ConnectWithTimeout(Config.BuildConnectionTimeout);
-            client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
+            client.ConnectWithTimeout(Config.Instance.BuildConnectionTimeout);
+            client.SetTimeout(Config.Instance.SocketSendTimeout, Config.Instance.SocketReceiveTimeout);
             if (route.IsNextNodeProxy)
             {
                 /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
@@ -160,7 +160,7 @@ namespace FileManager.Static
                     SessionRequest request = new SessionRequest()
                     {
                         Type = SessionRequest.BytesType.KeyBytes,
-                        Bytes = Config.KeyBytes,
+                        Bytes = Config.Instance.KeyBytes,
                     };
                     client.SendBytes(HB32Packet.SessionRequest, request.ToBytes());
                     client.ReceiveBytesWithHeaderFlag(HB32Packet.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);

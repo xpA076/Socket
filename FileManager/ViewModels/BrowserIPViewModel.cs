@@ -41,7 +41,7 @@ namespace FileManager.ViewModels
                 else
                 {
                     return string.Format("Connected IP - {0}{1}", server_address.IP.ToString(),
-                        (server_address.Port == Config.DefaultServerPort) ? "" : (":" + server_address.Port.ToString()));
+                        (server_address.Port == Config.Instance.DefaultServerPort) ? "" : (":" + server_address.Port.ToString()));
                 }
             }
         }

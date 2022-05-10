@@ -24,7 +24,7 @@ namespace FileManager.Models.TransferLib.Services
 
         private readonly int[] RetryInterval = new int[] { 5, 5, 10, 10, 20, 60, 300 };
 
-        private const int DefaultThreadLimit = 16;
+        private const int DefaultThreadLimit = 1;
 
         public int ThreadLimit { get; private set; }
 

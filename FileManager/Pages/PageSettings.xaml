@@ -199,7 +199,8 @@
                             Click="ButtonOpenConfigPath_Click"/>
                 </StackPanel>
 
-                <TextBlock Text="-- Debug --" Style="{StaticResource SplitLine}"/>
+                <!--
+                <TextBlock Text="- Debug -" Style="{StaticResource SplitLine}"/>
                 <StackPanel Style="{StaticResource ConfigLine}">
                     <TextBlock Text="Use legacy file info : " Style="{StaticResource TextPrefix}" />
                     <RadioButton x:Name="UseLegacyButtonSelectTrue" IsChecked="{Binding Path=UseLegacyFileInfo, Mode=OneWay}" Content="true" 
@@ -207,6 +208,7 @@
                     <RadioButton x:Name="UseLegacyButtonSelectFalse" IsChecked="{Binding Path=UseNewFileInfo, Mode=OneWay}" Content="false" 
                                  GroupName="ClickCloseButtonAction" Style="{StaticResource RadioButtonStyle}" Checked="UseLegacyButtonSelect_Checked"/>
                 </StackPanel>
+                -->
             </StackPanel>
         </ScrollViewer>
     </Grid>

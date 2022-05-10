@@ -116,7 +116,8 @@ namespace FileManager
         {
 
             // Load configurations
-            Config.LoadConfig();
+            Config.Instance.LoadConfig();
+            Logger.Client.InitClient();
 
             // todo
             string[] args = Environment.GetCommandLineArgs();
@@ -244,7 +245,7 @@ namespace FileManager
         }
         private void Topbar_RedCrossClick(object sender, EventArgs e)
         {
-            if (Config.ClickCloseToMinimize)
+            if (Config.Instance.ClickCloseToMinimize)
             {
                 this.Hide();
             }
@@ -272,14 +273,7 @@ namespace FileManager
         }
         private void SidebarTransfer_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
-            if (Config.UseLegacyFileInfo)
-            {
-                RedirectPage("TransferLegacy");
-            }
-            else
-            {
-                RedirectPage("Transfer");
-            }
+            RedirectPage("Transfer");
         }
         private void SidebarCode_MouseLeftDown(object sender, MouseButtonEventArgs e)
         {
@@ -318,9 +312,6 @@ namespace FileManager
                     block = this.SidebarBrowser;
                     break;
                 case "Transfer":
-                    block = this.SidebarTransfer;
-                    break;
-                case "TransferLegacy":
                     block = this.SidebarTransfer;
                     break;
                 case "Code":

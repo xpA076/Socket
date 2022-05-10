@@ -19,7 +19,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.ClickCloseToMinimize;
+                return Config.Instance.ClickCloseToMinimize;
             }
             set
             {
@@ -31,7 +31,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return !Config.ClickCloseToMinimize;
+                return !Config.Instance.ClickCloseToMinimize;
             }
             set
             {
@@ -43,7 +43,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return ConvertLengthToBytesString(Config.UpdateLengthThreshold);
+                return ConvertLengthToBytesString(Config.Instance.UpdateLengthThreshold);
             }
             set
             {
@@ -55,7 +55,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.UpdateTimeThreshold.ToString();
+                return Config.Instance.UpdateTimeThreshold.ToString();
             }
             set
             {
@@ -67,7 +67,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.DefaultServerPort.ToString();
+                return Config.Instance.DefaultServerPort.ToString();
             }
             set
             {
@@ -80,7 +80,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.SocketSendTimeout.ToString();
+                return Config.Instance.SocketSendTimeout.ToString();
             }
             set
             {
@@ -91,7 +91,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.SocketReceiveTimeout.ToString();
+                return Config.Instance.SocketReceiveTimeout.ToString();
             }
             set
             {
@@ -103,7 +103,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return ConvertLengthToBytesString(Config.SmallFileThreshold);
+                return ConvertLengthToBytesString(Config.Instance.SmallFileThreshold);
             }
             set
             {
@@ -115,7 +115,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.ThreadLimit.ToString();
+                return Config.Instance.ThreadLimit.ToString();
             }
             set
             {
@@ -127,7 +127,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.SaveRecordInterval.ToString();
+                return Config.Instance.SaveRecordInterval.ToString();
             }
             set
             {
@@ -139,7 +139,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.ConnectionMonitorRecordCount.ToString();
+                return Config.Instance.ConnectionMonitorRecordCount.ToString();
             }
             set
             {
@@ -151,7 +151,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.ConnectionMonitorRecordInterval.ToString();
+                return Config.Instance.ConnectionMonitorRecordInterval.ToString();
             }
             set
             {
@@ -159,29 +159,6 @@ namespace FileManager.ViewModels
             }
         }
 
-        public bool UseLegacyFileInfo
-        {
-            get
-            {
-                return Config.UseLegacyFileInfo;
-            }
-            set
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("UseLegacyFileInfo"));
-            }
-        }
-
-        public bool UseNewFileInfo
-        {
-            get
-            {
-                return !Config.UseLegacyFileInfo;
-            }
-            set
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("UseNewFileInfo"));
-            }
-        }
 
         public static readonly string[] suffixes = new string[] { "T", "G", "M", "K", "" };
 

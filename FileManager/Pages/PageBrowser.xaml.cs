@@ -313,7 +313,7 @@ namespace FileManager.Pages
             return Task.Run(() => {
                 try
                 {
-                    Logger.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
+                    LoggerStatic.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
                     DirectoryRequest request = new DirectoryRequest(RemoteDirectory);
                     HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
                     DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
@@ -331,7 +331,7 @@ namespace FileManager.Pages
                 catch (Exception ex)
                 {
                     string msg = "Requesting remote directory \"" + RemoteDirectory + "\" failure : " + ex.Message;
-                    Logger.Log(msg, LogLevel.Warn);
+                    LoggerStatic.Log(msg, LogLevel.Warn);
                     System.Windows.Forms.MessageBox.Show(msg);
                     return false;
                 }

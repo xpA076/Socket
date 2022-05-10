@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using FileManager.Events;
 using FileManager.Exceptions;
+using FileManager.Models;
 using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 using FileManager.SocketLib.SocketServer.Services;

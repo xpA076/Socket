@@ -130,7 +130,7 @@ namespace FileManager.Models.TransferLib.Services
                 {
                     /// 当前任务标记为失败
                     IsQueryHaveFailed = true;
-                    Logger.Log(ex.Message, LogLevel.Warn);
+                    LoggerStatic.Log(ex.Message, LogLevel.Warn);
                     Thread.Sleep(1000);
                     continue;
                 }

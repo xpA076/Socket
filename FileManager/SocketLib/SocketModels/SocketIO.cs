@@ -9,6 +9,7 @@ using System.IO;
 using System.Diagnostics;
 using FileManager.SocketLib.Enums;
 using FileManager.Events;
+using FileManager.Models;
 
 namespace FileManager.SocketLib
 {
@@ -88,40 +89,7 @@ namespace FileManager.SocketLib
             */
         }
 
-        /*
 
-        /// <summary>
-        /// Send socket 只发送包头
-        /// 只有 SendHeader() 会只发送包头
-        /// SendBytes() 至少会发一个空包
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        private static void SendHeader(Socket socket, HB32Header header)
-        {
-            SendHeader(socket, header, new byte[0]);
-        }
-
-
-        /// <summary>
-        /// Send socket 只发送包头
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="flag"></param>
-        /// <param name="i1"></param>
-        /// <param name="i2"></param>
-        /// <param name="i3"></param>
-        public static void SendHeader(Socket socket, SocketPacketFlag flag, int i1 = 0, int i2 = 0, int i3 = 0)
-        {
-            SendHeader(socket, new HB32Header
-            {
-                Flag = flag,
-                I1 = i1,
-                I2 = i2,
-                I3 = i3
-            });
-        }
-        */
 
 
         /// <summary>
@@ -212,70 +180,6 @@ namespace FileManager.SocketLib
 
         }
 
-        /*
-        /// <summary>
-        /// 发送 Socket 数据包, 过长的 byte流 会被拆成多个包发送
-        /// 包头的 PacketCount , ByteLength 等参数会视 bytes 长度被修改
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        /// <param name="bytes"></param>
-        public static void SendBytes(Socket socket, HB32Header header, byte[] bytes)
-        {
-            SendBytes(socket, header, bytes, new byte[0]);
-        }
-
-
-
-        /// <summary>
-        /// 发送 Socket 数据包, 字符串以 UTF-8 编码后发送
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header"></param>
-        /// <param name="str"></param>
-        public static void SendBytes(Socket socket, HB32Header header, string str)
-        {
-            SendBytes(socket, header, Encoding.UTF8.GetBytes(str));
-        }
-
-
-        
-        /// <summary>
-        /// 发送 Socket 数据包
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="flag"></param>
-        /// <param name="bytes"></param>
-        /// <param name="i1"></param>
-        /// <param name="i2"></param>
-        /// <param name="i3"></param>
-        public static void SendBytes(Socket socket, SocketPacketFlag flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
-        {
-            SendBytes(socket, new HB32Header
-            {
-                Flag = flag,
-                I1 = i1,
-                I2 = i2,
-                I3 = i3
-            }, bytes);
-        }
-
-        /// <summary>
-        /// 发送 Socket 数据包, 字符串以 UTF-8 编码后发送
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="flag"></param>
-        /// <param name="str"></param>
-        /// <param name="i1"></param>
-        /// <param name="i2"></param>
-        /// <param name="i3"></param>
-        public static void SendBytes(Socket socket, SocketPacketFlag flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
-        {
-            SendBytes(socket, flag, Encoding.UTF8.GetBytes(str), i1, i2, i3);
-        }
-        */
-
-
 
         /// <summary>
         /// Receive socket 只接收包头
@@ -293,23 +197,6 @@ namespace FileManager.SocketLib
             header = HB32Header.ReadFromBytes(bytes_header);
         }
 
-
-        /*
-        /// <summary>
-        /// 尽量不要用, 可以用 ReceiveBytes() 代替
-        /// Receive Socket 数据包, 在确定接收数据包只有一个时使用, 输出 包头 和 byte数组格式内容
-        /// 擅用后果自负
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="header">输出包头</param>
-        /// <param name="bytes_data"></param>
-        public static void ReceivePacket(Socket socket, out HB32Header header, out byte[] bytes_data)
-        {
-            ReceiveHeader(socket, out header);
-            bytes_data = new byte[HB32Encoding.DataSize];
-            ReceiveBuffer(socket, bytes_data);
-        }
-        */
 
         /// <summary>
         /// 接收 Socket 数据包, 在接收不定长byte流时使用, 过长byte流会分开接收并拼接成byte数组

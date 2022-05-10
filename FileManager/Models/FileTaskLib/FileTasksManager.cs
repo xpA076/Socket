@@ -76,8 +76,8 @@ namespace FileManager.Models
 
         public bool AllowUpdateUI()
         {
-            return (DateTime.Now - tic).TotalMilliseconds >= Config.UpdateTimeThreshold 
-                && TicTokBytes >= Config.UpdateLengthThreshold;
+            return (DateTime.Now - tic).TotalMilliseconds >= Config.Instance.UpdateTimeThreshold 
+                && TicTokBytes >= Config.Instance.UpdateLengthThreshold;
         }
 
 
@@ -403,7 +403,7 @@ namespace FileManager.Models
         /// </summary>
         private void TransferSingleTask(FileTask task)
         {
-            Logger.Log(string.Format("<FileTaskManager> call TransferSingleTask, {0, 20}{1}", "", task.ToString()), LogLevel.Debug);
+            LoggerStatic.Log(string.Format("<FileTaskManager> call TransferSingleTask, {0, 20}{1}", "", task.ToString()), LogLevel.Debug);
             if (task.Type == TransferTypeDeprecated.Download)
             {
                 task.Status = FileTaskStatus.Downloading;
@@ -412,7 +412,7 @@ namespace FileManager.Models
             {
                 task.Status = FileTaskStatus.Uploading;
             }
-            if (task.Length <= Config.SmallFileThreshold)
+            if (task.Length <= Config.Instance.SmallFileThreshold)
             {
                 TransferSingleTaskSmallFile(task, task.Type);
             }
@@ -504,7 +504,7 @@ namespace FileManager.Models
             }
             catch (Exception ex)
             {
-                Logger.Log("Transfer finished. But server FileStream not correctly closed. " + ex.Message, LogLevel.Warn);
+                LoggerStatic.Log("Transfer finished. But server FileStream not correctly closed. " + ex.Message, LogLevel.Warn);
             }
 
             /// 判断从子线程退出返回原因是否是 Pause
@@ -531,7 +531,7 @@ namespace FileManager.Models
                 TransferingPackets.Clear();
                 FinishedPackets.Clear();
             }
-            int threads_count = Config.ThreadLimit;
+            int threads_count = Config.Instance.ThreadLimit;
             TransferSubThreads = new Thread[threads_count];
             for (int i = 0; i < threads_count; ++i)
             {

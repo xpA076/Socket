@@ -24,6 +24,7 @@ using FileManager.Static;
 using FileManager.SocketLib.Enums;
 using FileManager.Events;
 using FileManager.ViewModels;
+using FileManager.Models;
 
 namespace FileManager.Pages
 {
@@ -38,7 +39,7 @@ namespace FileManager.Pages
         public PageServer()
         {
             InitializeComponent();
-            this.TextBoxPort.Text = Config.DefaultServerPort.ToString();
+            this.TextBoxPort.Text = Config.Instance.DefaultServerPort.ToString();
             RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
             this.TextBoxNull.DataContext = RichTextBoxView;
             ButtonStartListen_Click(null, null);
@@ -58,6 +59,7 @@ namespace FileManager.Pages
             server.Config.Load(Config.ServerConfigPath);
             server.SocketLog += Server_OnLog;
             server.CheckIdentity += CheckIdentity;
+            Logger.Server.InitServer();
             try
             {
                 int port = int.Parse(this.TextBoxPort.Text);
@@ -94,7 +96,7 @@ namespace FileManager.Pages
             {
                 //return;
             }
-            Logger.ServerLog(e.log, e.logLevel, e.time);
+            LoggerStatic.ServerLog(e.log, e.logLevel, e.time);
             this.RichTextBoxView.InvokeLog(e);
         }
 

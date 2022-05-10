@@ -167,7 +167,7 @@ namespace FileManager.Models
             }
             catch (Exception ex)
             {
-                Logger.Log("Cannot get FileStreamID, Exception : " + ex.Message);
+                LoggerStatic.Log("Cannot get FileStreamID, Exception : " + ex.Message);
                 System.Windows.Forms.MessageBox.Show(ex.Message);
                 FileStreamId = - 1;
             }

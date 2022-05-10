@@ -19,6 +19,11 @@ namespace FileManager.SocketLib
         /// </summary>
         public static readonly bool TransferEmptyBytes = false;
 
-        public static readonly bool UseLegacyHeader = false;
+        /// <summary>
+        /// 不知道为什么, UseLegacyHeader 为true的情况下, 非本机传输延迟只有几ms
+        /// 而为 false 情况下, 传输延迟约100ms
+        /// 本机传输不受这个影响 [22.05.10]
+        /// </summary>
+        public static readonly bool UseLegacyHeader = true;
     }
 }

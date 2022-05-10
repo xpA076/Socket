@@ -66,13 +66,13 @@ namespace FileManager.Pages
         {
             if (this.ClickCloseButtonActionMinimize.IsChecked == true)
             {
-                Config.ClickCloseToMinimize = true;
+                Config.Instance.ClickCloseToMinimize = true;
             }
             else
             {
-                Config.ClickCloseToMinimize = false;
+                Config.Instance.ClickCloseToMinimize = false;
             }
-            Config.SaveConfig();
+            Config.Instance.SaveConfig();
             // 这里设为 true 和 false没区别, 只要调用了SettingsView 的 Setter
             SettingsView.ClickCloseToMinimize = true; 
             SettingsView.ClickCloseToClose = true;
@@ -80,21 +80,6 @@ namespace FileManager.Pages
         }
 
 
-        public void UseLegacyButtonSelect_Checked(object sender, RoutedEventArgs e)
-        {
-            if (this.UseLegacyButtonSelectTrue.IsChecked == true)
-            {
-                Config.UseLegacyFileInfo = true;
-            }
-            else
-            {
-                Config.UseLegacyFileInfo = false;
-            }
-            Config.SaveConfig();
-            SettingsView.UseLegacyFileInfo = true;
-            SettingsView.UseNewFileInfo = true;
-            this.NullTextBox.Focus();
-        }
 
 
         public void TextBox_KeyDown(object sender, KeyEventArgs e)
@@ -133,8 +118,8 @@ namespace FileManager.Pages
             {
                 if (l > 0)
                 {
-                    Config.UpdateLengthThreshold = l;
-                    Config.SaveConfig();
+                    Config.Instance.UpdateLengthThreshold = l;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -152,8 +137,8 @@ namespace FileManager.Pages
             {
                 if (i > 50)
                 {
-                    Config.UpdateTimeThreshold = i;
-                    Config.SaveConfig();
+                    Config.Instance.UpdateTimeThreshold = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -172,8 +157,8 @@ namespace FileManager.Pages
             {
                 if (i >= 1 && i <= 65535)
                 {
-                    Config.DefaultServerPort = i;
-                    Config.SaveConfig();
+                    Config.Instance.DefaultServerPort = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -192,8 +177,8 @@ namespace FileManager.Pages
             {
                 if (i > 500)
                 {
-                    Config.SocketSendTimeout = i;
-                    Config.SaveConfig();
+                    Config.Instance.SocketSendTimeout = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -212,8 +197,8 @@ namespace FileManager.Pages
             {
                 if (i > 500)
                 {
-                    Config.SocketReceiveTimeout = i;
-                    Config.SaveConfig();
+                    Config.Instance.SocketReceiveTimeout = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -231,8 +216,8 @@ namespace FileManager.Pages
             {
                 if (l > 0)
                 {
-                    Config.SmallFileThreshold = l;
-                    Config.SaveConfig();
+                    Config.Instance.SmallFileThreshold = l;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -250,8 +235,8 @@ namespace FileManager.Pages
             {
                 if (i >= 1 && i <= 1024)
                 {
-                    Config.ThreadLimit = i;
-                    Config.SaveConfig();
+                    Config.Instance.ThreadLimit = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -269,8 +254,8 @@ namespace FileManager.Pages
             {
                 if (i > 50)
                 {
-                    Config.SaveRecordInterval = i;
-                    Config.SaveConfig();
+                    Config.Instance.SaveRecordInterval = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -288,8 +273,8 @@ namespace FileManager.Pages
             {
                 if (i > 0)
                 {
-                    Config.ConnectionMonitorRecordCount = i;
-                    Config.SaveConfig();
+                    Config.Instance.ConnectionMonitorRecordCount = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }
@@ -307,8 +292,8 @@ namespace FileManager.Pages
             {
                 if (i >= 20)
                 {
-                    Config.ConnectionMonitorRecordInterval = i;
-                    Config.SaveConfig();
+                    Config.Instance.ConnectionMonitorRecordInterval = i;
+                    Config.Instance.SaveConfig();
                     valid_flag = true;
                 }
             }

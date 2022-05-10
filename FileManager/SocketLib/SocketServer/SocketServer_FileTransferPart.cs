@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Exceptions.Server;
+using FileManager.Models;
 using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 using FileManager.SocketLib.SocketServer.Models;
@@ -25,6 +26,7 @@ namespace FileManager.SocketLib.SocketServer
                     throw new SocketAuthenticationException();
                 }
                 DownloadRequest request = DownloadRequest.FromBytes(bytes);
+                string info = string.Format("{0} - {1}", request.ViewPath, request.Begin / 4096);
                 FileResource resource;
                 /// 获取 FileResource
                 if (request.Type == DownloadRequest.RequestType.QueryByPath)

@@ -46,13 +46,13 @@ namespace FileManager.Models
         public void Init()
         {
             StatusRecords.Clear();
-            this.Interval = Config.ConnectionMonitorRecordInterval;
+            this.Interval = Config.Instance.ConnectionMonitorRecordInterval;
             StartTime = DateTime.Now;
         }
 
         private void AddRecord(bool status)
         {
-            if (StatusRecords.Count < Config.ConnectionMonitorRecordCount)
+            if (StatusRecords.Count < Config.Instance.ConnectionMonitorRecordCount)
             {
                 StatusRecords.Add(new HeartBeatConnectionStatusRecord
                 {
@@ -86,7 +86,7 @@ namespace FileManager.Models
             catch(ThreadAbortException ex)
             {
                 /// https://www.cnblogs.com/jackson0714/p/AbortThread.html
-                Logger.Log("HeartBeatConnection aborted : " + ex.Message, LogLevel.Info);
+                LoggerStatic.Log("HeartBeatConnection aborted : " + ex.Message, LogLevel.Info);
             }
             finally
             {

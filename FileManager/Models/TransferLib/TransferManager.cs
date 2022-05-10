@@ -1,10 +1,13 @@
 ﻿using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
+using FileManager.Static;
 using FileManager.ViewModels.PageTransfer;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FileManager.Models.TransferLib
@@ -87,12 +90,73 @@ namespace FileManager.Models.TransferLib
                 ViewModel.SetCurrentRoot(idx);
                 SingleManagers.Add(tm);
                 tm.InitTransfer();
+                if (!IsRecording)
+                {
+                    StartRecord();
+                }
             }
             else
             {
                 /// 全部传输完成, 可在此做后续处理
+                StopRecord();
+                DeleteRecord();
             }
         }
+
+        private bool IsRecording = false;
+
+        private readonly ManualResetEvent StopRecordSignal = new ManualResetEvent(false);
+        private readonly ManualResetEvent StopRecordFinishSignal = new ManualResetEvent(false);
+
+        private void StartRecord()
+        {
+            IsRecording = true;
+            StopRecordSignal.Reset();
+            StopRecordFinishSignal.Reset();
+            Task.Run(() => { RecordCycle(); });
+        }
+
+
+        private void StopRecord()
+        {
+            StopRecordSignal.Set();
+            StopRecordFinishSignal.WaitOne();
+        }
+
+
+        private void DeleteRecord()
+        {
+            File.Delete(Config.RecordPath);
+        }
+
+
+        private void RecordCycle()
+        {
+            while (true)
+            {
+                if (StopRecordSignal.WaitOne(Config.Instance.SaveRecordInterval))
+                {
+                    SaveRecord();
+                    IsRecording = false;
+                    StopRecordFinishSignal.Set();
+                    break;
+                }
+                else
+                {
+                    SaveRecord();
+                }
+            }
+        }
+
+
+        private void SaveRecord()
+        {
+            using(FileStream fs = new FileStream(Config.RecordPath, FileMode.OpenOrCreate))
+            {
+
+            }
+        }
+
 
 
     }
