@@ -21,14 +21,14 @@ namespace FileManager.SocketLib
 
         public SocketSender(Socket socket, bool isWithProxy)
         {
-            this.client = socket;
+            this.socket = socket;
             this.IsRequireProxyHeader = isWithProxy;
         }
 
 
         public SocketResponder ConvertToResponder()
         {
-            SocketResponder responder = new SocketResponder(this.client);
+            SocketResponder responder = new SocketResponder(this.socket);
             return responder;
         }
 
@@ -38,8 +38,8 @@ namespace FileManager.SocketLib
         {
             try
             {
-                SendHeader(HB32Packet.DisconnectRequest);
-                client.Close();
+                SendHeader(PacketType.DisconnectRequest);
+                socket.Close();
             }
             catch { }
         }

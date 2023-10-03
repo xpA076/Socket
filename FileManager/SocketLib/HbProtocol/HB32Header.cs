@@ -14,9 +14,9 @@ namespace FileManager.SocketLib
     /// </summary>
     public class HB32Header
     {
-        public HB32Packet Flag
+        public PacketType Flag
         {
-            get { return (HB32Packet)GetInt(0); }
+            get { return (PacketType)GetInt(0); }
             set { WriteInt(0, (int)value); }
         }
         public int I1
@@ -34,6 +34,9 @@ namespace FileManager.SocketLib
             get { return GetInt(12); }
             set { WriteInt(12, value); }
         }
+        /// <summary>
+        /// Packet counts(all) in Legacy header
+        /// </summary>
         public int Default4
         {
             get { return GetInt(16); }
@@ -67,7 +70,7 @@ namespace FileManager.SocketLib
             Array.Copy(bytes, _bytes, 32);
         }
 
-        public HB32Header(HB32Packet flag)
+        public HB32Header(PacketType flag)
         {
             Flag = flag;
         }

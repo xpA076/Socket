@@ -88,7 +88,7 @@ namespace FileManager.Pages
 
         public void AddTransferTask(TransferInfoRoot rootInfo)
         {
-            TransferManager.AddTransferTask(rootInfo);
+            this.TransferManager.AddTransferTask(rootInfo);
         }
 
         private void ListViewTransferItem_DoubleClick(object sender, MouseButtonEventArgs e)

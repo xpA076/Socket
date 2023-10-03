@@ -39,9 +39,8 @@ namespace FileManager.Models.Serializable
         }
 
 
-        public static ReleaseFileResponse FromBytes(byte[] bytes)
+        public static ReleaseFileResponse FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             ReleaseFileResponse obj = new ReleaseFileResponse();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

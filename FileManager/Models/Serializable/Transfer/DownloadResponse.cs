@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace FileManager.Models.Serializable
 {
-    public class UploadResponse : ISocketSerializable
+    public class DownloadResponse : ISocketSerializable
     {
         public enum ResponseType : int
         {
-            SuccessResponse, 
-            ResponseException
+            BytesResponse,
+            ResponseException,
         }
 
         public ResponseType Type { get; set; }
@@ -35,34 +35,29 @@ namespace FileManager.Models.Serializable
             }
         }
 
-        private UploadResponse()
+        private DownloadResponse()
         {
 
         }
 
+        public DownloadResponse(byte[] bytes)
+        {
+            this.Type = ResponseType.BytesResponse;
+            this.Bytes = bytes;
+        }
 
-        public UploadResponse(string err_msg)
+        public DownloadResponse(string err_msg)
         {
             this.Type = ResponseType.ResponseException;
             this.Bytes = Encoding.UTF8.GetBytes(err_msg);
         }
 
-        public static UploadResponse BuildSuccessResponse()
+        public static DownloadResponse FromBytes(byte[] bytes, int idx = 0)
         {
-            UploadResponse obj = new UploadResponse();
-            obj.Type = ResponseType.SuccessResponse;
-            obj.Bytes = new byte[0];
-            return obj;
-        }
-
-        public static UploadResponse FromBytes(byte[] bytes)
-        {
-            int idx = 0;
-            UploadResponse response = new UploadResponse();
+            DownloadResponse response = new DownloadResponse();
             response.BuildFromBytes(bytes, ref idx);
             return response;
         }
-
 
         public byte[] ToBytes()
         {
@@ -77,6 +72,5 @@ namespace FileManager.Models.Serializable
             this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
             this.Bytes = BytesParser.GetBytes(bytes, ref idx);
         }
-
     }
 }

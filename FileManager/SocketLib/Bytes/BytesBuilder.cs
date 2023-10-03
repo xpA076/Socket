@@ -109,6 +109,11 @@ namespace FileManager.SocketLib
             }
         }
 
+        public void Concatenate(byte[] bytes)
+        {
+            this.AppendBytes(bytes);
+        }
+
 
         /// <summary>
         /// 供所有 public 的 Append() 方法调用

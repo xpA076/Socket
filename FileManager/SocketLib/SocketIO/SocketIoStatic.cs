@@ -29,7 +29,7 @@ namespace FileManager.SocketLib
         public static void ReceiveBuffer(Socket socket, byte[] buffer, int size = -1, int offset = 0)
         {
             if (buffer.Length == 0) { return; }
-            int _size = (size == -1) ? buffer.Length : size;
+            int _size = (size < 0) ? buffer.Length : size;
             int zeroReceiveCount = 0;
             int rec = 0;    // 函数内累计接收字节数
             int _rec;       // 单个 Socket.Receive 调用接收字节数
@@ -117,7 +117,8 @@ namespace FileManager.SocketLib
                     byte[] header_bytes;
                     if (offset == 0)
                     {
-                        header_bytes = header.GetBytes(proxyHeaderBytes);
+                        //header_bytes = header.GetBytes(proxyHeaderBytes);
+                        header_bytes = header.GetBytes();
                     }
                     else
                     {
@@ -149,7 +150,7 @@ namespace FileManager.SocketLib
             else
             {
                 //header.Default4 = Math.Max((bytes.Length - 1) / (HB32Encoding.DataSize) + 1, 1);
-                socket.Send(proxyHeaderBytes);
+                //socket.Send(proxyHeaderBytes);
                 if (bytes.Length == 0)
                 {
                     header.TotalByteLength = 0;

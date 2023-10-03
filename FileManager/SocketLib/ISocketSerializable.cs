@@ -8,7 +8,6 @@ namespace FileManager.SocketLib
 {
     public interface ISocketSerializable
     {
-
         byte[] ToBytes();
 
         void BuildFromBytes(byte[] bytes, ref int idx);

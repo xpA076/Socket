@@ -29,9 +29,8 @@ namespace FileManager.Models.Serializable
             ServerPath = server_path;
         }
 
-        public static DirectoryRequest FromBytes(byte[] bytes)
+        public static DirectoryRequest FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             DirectoryRequest obj = new DirectoryRequest();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

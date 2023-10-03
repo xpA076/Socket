@@ -4,16 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Security.Cryptography;
 using System.Net;
 
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
+using FileManager.SocketLib.HbProtocol;
 using FileManager.Models;
 using System.Net.Sockets;
 using FileManager.SocketLib.Models;
 using FileManager.Models.Serializable;
 using FileManager.Exceptions;
 using FileManager.Exceptions.Server;
+using FileManager.Models.Serializable.Crypto;
+
 
 namespace FileManager.Static
 {
@@ -128,9 +132,12 @@ namespace FileManager.Static
             if (route.IsNextNodeProxy)
             {
                 /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                client.SendBytes(HB32Packet.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
-                client.ReceiveBytesWithHeaderFlag(HB32Packet.ProxyResponse);
+                client.SendBytes(PacketType.ProxyRouteRequest, route.GetBytes(node_start_index: 1));
+                client.ReceiveBytesWithHeaderFlag(PacketType.ProxyResponse);
             }
+            ExchangeKeys(client);
+            //return client;
+
             for (int i = 0; i < 2; ++i)
             {
                 if (BuildSessionOnce(client))
@@ -140,6 +147,31 @@ namespace FileManager.Static
             }
             /// 建立 Session 失败
             throw new SocketSessionException();
+        }
+
+
+        /// <summary>
+        /// 建立通信隧道后交换密钥
+        /// </summary>
+        /// <param name="client"></param>
+        private void ExchangeKeys(SocketClient client)
+        {
+            using (ECDiffieHellmanCng ec_client = new ECDiffieHellmanCng())
+            {
+                ec_client.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+                ec_client.HashAlgorithm = CngAlgorithm.Sha256;
+                byte[] publicKey = ec_client.PublicKey.ToByteArray();
+                KeyExchangeRequest request = new KeyExchangeRequest
+                {
+                    PublicKey = publicKey
+                };
+                client.SendBytes(request.ToBytes(), encryptText: false);
+                byte[] recv_bytes = client.ReceiveBytes();
+                KeyExchangeResponse response = KeyExchangeResponse.FromBytes(recv_bytes);
+                CngKey serverKey = CngKey.Import(response.PublicKey, CngKeyBlobFormat.EccPublicBlob);
+                byte[] sharedKey = ec_client.DeriveKeyMaterial(serverKey);
+                client.SetSymmetricKeys(sharedKey);
+            }
         }
 
 
@@ -162,9 +194,11 @@ namespace FileManager.Static
                         Type = SessionRequest.BytesType.KeyBytes,
                         Bytes = Config.Instance.KeyBytes,
                     };
-                    client.SendBytes(HB32Packet.SessionRequest, request.ToBytes());
-                    client.ReceiveBytesWithHeaderFlag(HB32Packet.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
-                    SessionResponse response = SessionResponse.FromBytes(recv_bytes);
+                    byte[] bs = this.Request(client, request);
+                    SessionResponse response = SessionResponse.FromBytes(bs, 4);
+                    //client.SendBytes(PacketType.SessionRequest, request.ToBytes());
+                    //client.ReceiveBytesWithHeaderFlag(PacketType.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
+                    //SessionResponse response = SessionResponse.FromBytes(recv_bytes);
                     SessionBytes = new byte[SessionBytesInfo.BytesLength];
                     Array.Copy(response.Bytes, SessionBytes, SessionBytesInfo.BytesLength);
                     return true;
@@ -177,9 +211,11 @@ namespace FileManager.Static
                         Type = SessionRequest.BytesType.SessionBytes,
                         Bytes = this.SessionBytes,
                     };
-                    client.SendBytes(HB32Packet.SessionRequest, request.ToBytes());
-                    client.ReceiveBytesWithHeaderFlag(HB32Packet.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
-                    SessionResponse response = SessionResponse.FromBytes(recv_bytes);
+                    byte[] bs = this.Request(client, request);
+                    SessionResponse response = SessionResponse.FromBytes(bs, 4);
+                    //client.SendBytes(PacketType.SessionRequest, request.ToBytes());
+                    //client.ReceiveBytesWithHeaderFlag(PacketType.SessionResponse, out HB32Header hb_header, out byte[] recv_bytes);
+                    //SessionResponse response = SessionResponse.FromBytes(recv_bytes);
                     if (response.Type == SessionResponse.ResponseType.NoModify)
                     {
                         return true;
@@ -263,19 +299,70 @@ namespace FileManager.Static
         }
 
 
-        private HB32Response Request(HB32Packet flag, string str, int i1 = 0, int i2 = 0, int i3 = 0)
+        public byte[] Request(SocketClient client, ISocketSerializable request)
         {
-            return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, Encoding.UTF8.GetBytes(str));
+            BytesBuilder bb = new BytesBuilder();
+            PacketType aim_type = PacketType.None;
+            switch (request.GetType().Name)
+            {
+                case "SessionRequest":
+                    bb.Append((int)PacketType.SessionRequest);
+                    aim_type = PacketType.SessionResponse;
+                    break;
+                case "DirectoryRequest":
+                    bb.Append((int)PacketType.DirectoryRequest);
+                    aim_type = PacketType.DirectoryResponse;
+                    break;
+                case "DownloadRequest":
+                    bb.Append((int)PacketType.DownloadRequest);
+                    aim_type = PacketType.DownloadResponse;
+                    break;
+                case "UploadRequest":
+                    bb.Append((int)PacketType.UploadRequest);
+                    aim_type = PacketType.UploadResponse;
+                    break;
+                case "ReleaseFileRequest":
+                    bb.Append((int)PacketType.ReleaseFileRequest);
+                    aim_type = PacketType.ReleaseFileResponse;
+                    break;
+                case "HeartBeatRequest":
+                    bb.Append((int)PacketType.HeartBeatRequest);
+                    aim_type = PacketType.HeartBeatResponse;
+                    break;
+            }
+            bb.Concatenate(request.ToBytes());
+            byte[] bs = this.RequestIO(client, bb.GetBytes());
+            int idx = 0;
+            PacketType get_type = (PacketType)BytesParser.GetInt(bs, ref idx);
+            if (aim_type != get_type)
+            {
+                throw new SocketTypeException(aim_type, get_type);
+            }
+            return bs;
         }
 
 
-        public HB32Response Request(HB32Packet flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
+        public byte[] Request(ISocketSerializable request)
+        {
+            SocketClient client = GenerateConnectedSocketClient();
+            return this.Request(client, request);
+        }
+
+
+        private byte[] RequestIO(SocketClient client, byte[] request_bytes)
+        {
+            client.SendBytes(request_bytes);
+            return client.ReceiveBytes();
+        }
+
+
+        public HB32Response Request(PacketType flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
         {
             return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, bytes);
         }
 
 
-        public HB32Response Request(HB32Header header, byte[] bytes)
+        private HB32Response Request(HB32Header header, byte[] bytes)
         {
             lock (ClientLock)
             {
@@ -293,22 +380,7 @@ namespace FileManager.Static
             }
         }
 
-        public static HB32Response Request(SocketClient client, HB32Packet flag, byte[] bytes)
-        {
-            client.SendBytes(new HB32Header { Flag = flag }, bytes);
-            client.ReceiveBytes(out HB32Header h, out byte[] bs);
-            return new HB32Response(h, bs);
-        }
 
-
-        public HB32Response RequestWithHeaderFlag(HB32Packet requiredFlag, HB32Header header, byte[] bytes)
-        {
-            SocketClient client = GenerateConnectedSocketClient();
-            client.SendBytes(header, bytes);
-            client.ReceiveBytesWithHeaderFlag(requiredFlag, out HB32Header h, out byte[] bs);
-            client.Close();
-            return new HB32Response(h, bs);
-        }
 
 
     }

@@ -23,9 +23,8 @@ namespace FileManager.Models.Serializable
 
         public byte[] Bytes { get; set; } = new byte[0];
 
-        public static SessionRequest FromBytes(byte[] bytes)
+        public static SessionRequest FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             SessionRequest obj = new SessionRequest();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

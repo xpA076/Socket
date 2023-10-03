@@ -14,6 +14,14 @@ using System.Diagnostics;
 
 namespace FileManager.SocketLib
 {
+    /// <summary>
+    /// todo
+    /// 2023.09.14 由于 SocketIO.SendBytes()/ReceiveBytes() 重写
+    /// 原Header前含 2bytes 的ProxyHeader 目前移至 HB32Header内
+    /// SocketProxy类需要重写
+    /// todo todo
+    /// </summary>
+
     public class SocketProxy : SocketServerBase
     {
         private class ReversedServerInfo
@@ -67,7 +75,7 @@ namespace FileManager.SocketLib
             try
             {
                 responder.ReceiveBytes(out HB32Header route_header, out byte[] route_bytes);
-                if (route_header.Flag == HB32Packet.ProxyRouteRequest)
+                if (route_header.Flag == PacketType.ProxyRouteRequest)
                 {
                     /// Forward connection proxy (from client-side)
                     sender = ForwardConnectionProxy(responder, route_header, route_bytes);
@@ -75,7 +83,7 @@ namespace FileManager.SocketLib
                     CommunicationProxy(sender, responder);
                     
                 }
-                else if (route_header.Flag == HB32Packet.ReversedProxyConnectionRequest)
+                else if (route_header.Flag == PacketType.ReversedProxyConnectionRequest)
                 {
                     /// 从 Reversed Server 端出发的反方向代理隧道, 由长连接中反向代理端提供的信号触发 Reversed Server 连接
                     /// 若当前节点为反向代理路径终点, 则触发 NewConnectionWaitHandle 事件
@@ -84,7 +92,7 @@ namespace FileManager.SocketLib
                     /// Communication proxy
 
                 }
-                else if (route_header.Flag == HB32Packet.ReversedProxyLongConnectionRequest)
+                else if (route_header.Flag == PacketType.ReversedProxyLongConnectionRequest)
                 {
                     /// Reversed-server long connection socket
 
@@ -129,7 +137,7 @@ namespace FileManager.SocketLib
                     next_header.I1++;
                     sender.SendBytes(next_header, route.GetBytes(node_start_index: 1));
                     sender.ReceiveBytes(out HB32Header respond_header, out byte[] respond_bytes);
-                    if ((respond_header.Flag | HB32Packet.ExceptionFlag) == 0)
+                    if ((respond_header.Flag | PacketType.ExceptionFlag) == 0)
                     {
                         responder.SendHeader(respond_header);
                     }
@@ -142,7 +150,7 @@ namespace FileManager.SocketLib
                 else
                 {
                     HB32Header err_header = header.Copy();
-                    err_header.Flag = (HB32Packet)(((int)err_header.Flag & 0xFFFF00) | 0x90);
+                    err_header.Flag = (PacketType)(((int)err_header.Flag & 0xFFFF00) | 0x90);
                     responder.SendBytes(err_header, err_msg);
                 }
                 return sender;
@@ -165,13 +173,13 @@ namespace FileManager.SocketLib
                 if (string.IsNullOrEmpty(err_msg))
                 {
                     HB32Header resp_header = header.Copy();
-                    resp_header.Flag = (HB32Packet)(((int)resp_header.Flag & 0xFFFF00) | 0x10);
+                    resp_header.Flag = (PacketType)(((int)resp_header.Flag & 0xFFFF00) | 0x10);
                     responder.SendHeader(resp_header);
                 }
                 else
                 {
                     HB32Header err_header = header.Copy();
-                    err_header.Flag = (HB32Packet)(((int)err_header.Flag & 0xFFFF00) | 0x90);
+                    err_header.Flag = (PacketType)(((int)err_header.Flag & 0xFFFF00) | 0x90);
                     responder.SendBytes(err_header, err_msg);
                 }
                 return sender;
@@ -286,11 +294,11 @@ namespace FileManager.SocketLib
                             responder.ReceiveBytes(out HB32Header query_header, out byte[] _);
                             if (ew.WaitOne(10000))
                             {
-                                responder.SendHeader(HB32Packet.ReversedProxyResponse, i1: 1);
+                                responder.SendHeader(PacketType.ReversedProxyResponse, i1: 1);
                             }
                             else
                             {
-                                responder.SendHeader(HB32Packet.ReversedProxyResponse, i1: 0);
+                                responder.SendHeader(PacketType.ReversedProxyResponse, i1: 0);
                             }
                         }
                     }
@@ -330,12 +338,12 @@ namespace FileManager.SocketLib
             HB32Header resp_header = header.Copy();
             if (allow_flag)
             {
-                resp_header.Flag = HB32Packet.ReversedProxyResponse;
+                resp_header.Flag = PacketType.ReversedProxyResponse;
                 responder.SendHeader(resp_header);
             }
             else
             {
-                resp_header.Flag = HB32Packet.ReversedProxyException;
+                resp_header.Flag = PacketType.ReversedProxyException;
                 responder.SendBytes(resp_header, "Reversed server name already exist");
             }
             return allow_flag;
@@ -362,7 +370,7 @@ namespace FileManager.SocketLib
                         case ProxyHeader.SendHeader:
                             responder.ReceiveBytesWithoutProxyHeader(out recv_header, out byte[] _);
                             sender.SendHeader(recv_header);
-                            if (recv_header.Flag == HB32Packet.DisconnectRequest)
+                            if (recv_header.Flag == PacketType.DisconnectRequest)
                             {
                                 DisposeClient(sender, responder);
                                 return;

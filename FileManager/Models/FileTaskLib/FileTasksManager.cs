@@ -143,8 +143,8 @@ namespace FileManager.Models
         {
             try
             {
-                var resp = SocketFactory.Instance.Request(HB32Packet.DirectorySizeRequest, Encoding.UTF8.GetBytes(task.RemotePath));
-                SocketEndPoint.CheckFlag(HB32Packet.DirectorySizeResponse, resp);
+                var resp = SocketFactory.Instance.Request(PacketType.DirectorySizeRequest, Encoding.UTF8.GetBytes(task.RemotePath));
+                SocketEndPoint.CheckFlag(PacketType.DirectorySizeResponse, resp);
                 return long.Parse(Encoding.UTF8.GetString(resp.Bytes));
             }
             catch (Exception)
@@ -280,8 +280,8 @@ namespace FileManager.Models
             try
             {
                 SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(task, 1);
-                client.SendBytes(HB32Packet.DirectoryRequest, task.RemotePath);
-                client.ReceiveBytesWithHeaderFlag(HB32Packet.DirectoryResponse, out byte[] recv_bytes);
+                client.SendBytes(PacketType.DirectoryRequest, task.RemotePath);
+                client.ReceiveBytesWithHeaderFlag(PacketType.DirectoryResponse, out byte[] recv_bytes);
                 files = SocketFileInfo.BytesToList(recv_bytes);
                 client.Close();
             }
@@ -321,8 +321,8 @@ namespace FileManager.Models
                 SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(task, 1);
                 int pt = 0;
                 byte[] headerBytes = BytesConverter.WriteString(new byte[4], task.RemotePath, ref pt);
-                client.SendBytes(HB32Packet.CreateDirectoryRequest, headerBytes);
-                client.ReceiveBytesWithHeaderFlag(HB32Packet.CreateDirectoryAllowed, out byte[] recvBytes);
+                client.SendBytes(PacketType.CreateDirectoryRequest, headerBytes);
+                client.ReceiveBytesWithHeaderFlag(PacketType.CreateDirectoryAllowed, out byte[] recvBytes);
                 client.Close();
             }
             catch (Exception)
@@ -436,14 +436,14 @@ namespace FileManager.Models
                     byte[] bytes = new byte[headerBytes.Length + contentBytes.Length];
                     Array.Copy(headerBytes, 0, bytes, 0, headerBytes.Length);
                     Array.Copy(contentBytes, 0, bytes, headerBytes.Length, contentBytes.Length);
-                    client.SendBytes(HB32Packet.UploadRequest, bytes);
-                    client.ReceiveBytesWithHeaderFlag(HB32Packet.UploadResponse, out byte[] recvBytes);
+                    client.SendBytes(PacketType.UploadRequest, bytes);
+                    client.ReceiveBytesWithHeaderFlag(PacketType.UploadResponse, out byte[] recvBytes);
                     client.Close();
                 }
                 else
                 {
-                    client.SendBytes(HB32Packet.DownloadRequest, task.RemotePath);
-                    client.ReceiveBytesWithHeaderFlag(HB32Packet.DownloadAllowed, out byte[] bytes);
+                    client.SendBytes(PacketType.DownloadRequest, task.RemotePath);
+                    client.ReceiveBytesWithHeaderFlag(PacketType.DownloadAllowed, out byte[] bytes);
                     client.Close();
                     File.WriteAllBytes(task.LocalPath, bytes);
                 }
@@ -494,11 +494,11 @@ namespace FileManager.Models
                 SocketClient sc = SocketFactory.Instance.GenerateConnectedSocketClient(dispatcher.Task.Route, 1);
                 if (task.Type == TransferTypeDeprecated.Upload)
                 {
-                    sc.SendBytes(HB32Packet.UploadPacketRequest, new byte[1], dispatcher.FileStreamId, -1);
+                    sc.SendBytes(PacketType.UploadPacketRequest, new byte[1], dispatcher.FileStreamId, -1);
                 }
                 else
                 {
-                    sc.SendHeader(HB32Packet.DownloadPacketRequest, dispatcher.FileStreamId, -1);
+                    sc.SendHeader(PacketType.DownloadPacketRequest, dispatcher.FileStreamId, -1);
                 }
                 sc.Close();
             }
@@ -613,16 +613,16 @@ namespace FileManager.Models
                         /// 等待其它线程释放 obj_lock_request_fsid 后, 可通过 fsid 请求packet
                         lock (dispatcher.FsidLock)
                         {
-                            client.SendHeader(HB32Packet.DownloadPacketRequest, dispatcher.FileStreamId, packet);
+                            client.SendHeader(PacketType.DownloadPacketRequest, dispatcher.FileStreamId, packet);
                         }
                     }
                     else
                     {
                         /// 正常请求packet
-                        client.SendHeader(HB32Packet.DownloadPacketRequest, dispatcher.FileStreamId, packet);
+                        client.SendHeader(PacketType.DownloadPacketRequest, dispatcher.FileStreamId, packet);
                     }
                     /// 接收 server 响应
-                    client.ReceiveBytesWithHeaderFlag(HB32Packet.DownloadPacketResponse, out recv_header, out recv_bytes);
+                    client.ReceiveBytesWithHeaderFlag(PacketType.DownloadPacketResponse, out recv_header, out recv_bytes);
                 }
                 /// DownloadDenied 异常处理
                 catch (SocketFlagException ex)

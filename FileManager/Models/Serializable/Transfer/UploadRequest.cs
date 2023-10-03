@@ -25,9 +25,8 @@ namespace FileManager.Models.Serializable
         public byte[] Bytes { get; set; }
 
 
-        public static UploadRequest FromBytes(byte[] bytes)
+        public static UploadRequest FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             UploadRequest obj = new UploadRequest();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

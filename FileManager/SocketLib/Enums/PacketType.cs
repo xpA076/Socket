@@ -6,12 +6,17 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib.Enums
 {
-    public enum HB32Packet : int
+    public enum PacketType : int
     {
         None = 0x0,
         Null = 0x0001,
 
         ExceptionFlag = 0x0080,
+
+
+        KeyExchange = 0xFFAB,
+        KeyEncrypted = 0xFFAC,
+
 
         /// Mode 0xA3 : Proxy
         /// 
@@ -97,15 +102,16 @@ namespace FileManager.SocketLib.Enums
         DeleteAllowed,
         DeleteDenied,
 
+        /// Mode 0x06 : Release file
+        ReleaseFileRequest = 0x0601,
+        ReleaseFileResponse = 0x0610,
 
-        /// Mode 0x06 : Status report
-        StatusReport = 0x0601,
-        StatusQuery = 0x0602,
+
+        /// Mode 0x07 : HeartBeat
+        HeartBeatRequest = 0x0701,
+        HeartBeatResponse = 0x0710,
 
 
-        /// Mode 0x07 : Release file
-        ReleaseFileRequest = 0x0701,
-        ReleaseFileResponse = 0x0710,
 
 
         /// Mode 0x10 : Transfer
@@ -118,6 +124,9 @@ namespace FileManager.SocketLib.Enums
         FileResponse = 0x1110,
         FileException = 0x1190,
 
+        /// Mode 0x30 : Current handle for customized packet
+        CustomizedPacketRequest = 0x3001,
+        CustomizedPacketResponse = 0x3010,
 
 
         RemoteRunRequest,

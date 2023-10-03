@@ -104,8 +104,10 @@ namespace FileManager.Models.TransferLib.Services
                     {
                         /// Download 任务
                         DirectoryRequest request = new DirectoryRequest(CurrentDirectoryInfo.RemotePath);
-                        HB32Response hb_resp = SocketFactory.Instance.Request(HB32Packet.DirectoryRequest, request.ToBytes());
-                        DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
+                        byte[] bs = SocketFactory.Instance.Request(request);
+                        DirectoryResponse response = DirectoryResponse.FromBytes(bs, 4);
+                        //HB32Response hb_resp = SocketFactory.Instance.Request(PacketType.DirectoryRequest, request.ToBytes());
+                        //DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
                         if (response.Type != DirectoryResponse.ResponseType.ListResponse)
                         {
                             throw new SocketTypeException(response.ExceptionMessage);
@@ -115,7 +117,7 @@ namespace FileManager.Models.TransferLib.Services
                     else
                     {
                         /// Upload 任务
-                        List<SocketFileInfo> list = GetLocalDirectoryInfo(CurrentDirectoryInfo.LocalPath);
+                        List<SocketFileInfo> list = this.GetLocalDirectoryInfo(CurrentDirectoryInfo.LocalPath);
                         CurrentDirectoryInfo.BuildChildrenFrom(list);
                     }
                     /// 回溯并完成父节点, 直至父节点包含未完成子节点

@@ -13,11 +13,11 @@ using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 using FileManager.SocketLib.SocketServer.Models;
 
-namespace FileManager.SocketLib.SocketServer
+namespace FileManager.SocketLib.SocketServer.Main
 {
     public partial class SocketServer : SocketServerBase
     {
-        private void ResponseDownloadFile(SocketResponder responder, byte[] bytes, SocketSession session)
+        private void ResponseDownloadFile(SocketResponder responder, DownloadRequest request, SocketSession session)
         {
             try
             {
@@ -25,7 +25,6 @@ namespace FileManager.SocketLib.SocketServer
                 {
                     throw new SocketAuthenticationException();
                 }
-                DownloadRequest request = DownloadRequest.FromBytes(bytes);
                 string info = string.Format("{0} - {1}", request.ViewPath, request.Begin / 4096);
                 FileResource resource;
                 /// 获取 FileResource
@@ -40,25 +39,25 @@ namespace FileManager.SocketLib.SocketServer
                 }
                 byte[] read_bytes = resource.ReadSpan(request.Begin, request.Length);
                 DownloadResponse response = new DownloadResponse(read_bytes);
-                responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
+                this.Response(responder, response);
             }
             catch (SocketAuthenticationException)
             {
                 string err_msg = "Authentication exception";
                 DownloadResponse response = new DownloadResponse(err_msg);
-                responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
+                this.Response(responder, response);
             }
             catch (ServerInternalException ex)
             {
                 string err_msg = "Download response exception from server: " + ex.Message;
                 DownloadResponse response = new DownloadResponse(err_msg);
-                responder.SendBytes(HB32Packet.DownloadResponse, response.ToBytes());
+                this.Response(responder, response);
             }
 
         }
 
 
-        private void ResponseUploadFile(SocketResponder responder, byte[] bytes, SocketSession session)
+        private void ResponseUploadFile(SocketResponder responder, UploadRequest request, SocketSession session)
         {
             try
             {
@@ -66,7 +65,6 @@ namespace FileManager.SocketLib.SocketServer
                 {
                     throw new SocketAuthenticationException();
                 }
-                UploadRequest request = UploadRequest.FromBytes(bytes);
                 FileResource resource;
                 if (request.Type == UploadRequest.RequestType.ByPath)
                 {
@@ -79,28 +77,27 @@ namespace FileManager.SocketLib.SocketServer
                 }
                 resource.WriteSpan(request.Begin, request.Bytes, request.Bytes.Length);
                 UploadResponse response = UploadResponse.BuildSuccessResponse();
-                responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
+                this.Response(responder, response);
             }
             catch (SocketAuthenticationException)
             {
                 string err_msg = "Authentication exception";
                 UploadResponse response = new UploadResponse(err_msg);
-                responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
+                this.Response(responder, response);
             }
             catch (ServerInternalException ex)
             {
                 string err_msg = "Upload response exception from server: " + ex.Message;
                 UploadResponse response = new UploadResponse(err_msg);
-                responder.SendBytes(HB32Packet.UploadResponse, response.ToBytes());
+                this.Response(responder, response);
             }
         }
 
 
-        private void ReleaseFile(SocketResponder responder, byte[] bytes, SocketSession session)
+        private void ReleaseFile(SocketResponder responder, ReleaseFileRequest request, SocketSession session)
         {
             try
             {
-                ReleaseFileRequest request = ReleaseFileRequest.FromBytes(bytes);
                 if (request.Type == ReleaseFileRequest.RequestType.Default)
                 {
                     string server_path = PathTranslator.ToTruePath(request.ViewPath, session);
@@ -113,7 +110,7 @@ namespace FileManager.SocketLib.SocketServer
                         FileResourceManager.ReleaseResource(server_path, FileAccess.Write, session);
                     }
                     ReleaseFileResponse response = ReleaseFileResponse.BuildSuccessResponse();
-                    responder.SendBytes(HB32Packet.ReleaseFileResponse, response.ToBytes());
+                    this.Response(responder, response);
                 }
                 else
                 {
@@ -124,7 +121,7 @@ namespace FileManager.SocketLib.SocketServer
             {
                 string err_msg = "Upload response exception from server: " + ex.Message;
                 ReleaseFileResponse response = ReleaseFileResponse.BuildFailedResponse(err_msg);
-                responder.SendBytes(HB32Packet.ReleaseFileResponse, response.ToBytes());
+                this.Response(responder, response);
             }
         }
 
@@ -197,11 +194,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(HB32Packet.UploadResponse, new byte[1]);
+                responder.SendBytes(PacketType.UploadResponse, new byte[1]);
             }
             else
             {
-                responder.SendBytes(HB32Packet.UploadDenied, err_msg);
+                responder.SendBytes(PacketType.UploadDenied, err_msg);
             }
         }
 
@@ -216,10 +213,10 @@ namespace FileManager.SocketLib.SocketServer
         {
             switch (header.Flag)
             {
-                case HB32Packet.UploadPacketRequest:
+                case PacketType.UploadPacketRequest:
                     ResponseUploadPacket(responder, header, bytes);
                     break;
-                case HB32Packet.DownloadPacketRequest:
+                case PacketType.DownloadPacketRequest:
                     ResponseDownloadPacket(responder, header);
                     break;
             }
@@ -282,11 +279,11 @@ namespace FileManager.SocketLib.SocketServer
 
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(HB32Packet.DownloadPacketResponse, responseBytes);
+                responder.SendBytes(PacketType.DownloadPacketResponse, responseBytes);
             }
             else
             {
-                responder.SendBytes(HB32Packet.DownloadDenied, err_msg, i1: i1);
+                responder.SendBytes(PacketType.DownloadDenied, err_msg, i1: i1);
             }
         }
 
@@ -336,11 +333,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendHeader(HB32Packet.UploadPacketResponse);
+                responder.SendHeader(PacketType.UploadPacketResponse);
             }
             else
             {
-                responder.SendHeader(HB32Packet.UploadDenied, i1: i1);
+                responder.SendHeader(PacketType.UploadDenied, i1: i1);
             }
         }
 
@@ -356,7 +353,7 @@ namespace FileManager.SocketLib.SocketServer
         private void ResponseFileStreamId(SocketResponder responder, HB32Header header, byte[] bytes)
         {
             string err_msg = "";
-            HB32Packet mask = header.Flag & (HB32Packet)(1 << 8);
+            PacketType mask = header.Flag & (PacketType)(1 << 8);
             int fsid = -1;
             try
             {
@@ -388,11 +385,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(HB32Packet.DownloadAllowed | mask, fsid.ToString());
+                responder.SendBytes(PacketType.DownloadAllowed | mask, fsid.ToString());
             }
             else
             {
-                responder.SendBytes(HB32Packet.DownloadDenied | mask, err_msg);
+                responder.SendBytes(PacketType.DownloadDenied | mask, err_msg);
             }
         }
 

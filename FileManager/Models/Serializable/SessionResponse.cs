@@ -36,9 +36,8 @@ namespace FileManager.Models.Serializable
             }
         }
 
-        public static SessionResponse FromBytes(byte[] bytes)
+        public static SessionResponse FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             SessionResponse obj = new SessionResponse();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

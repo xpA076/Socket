@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace FileManager.SocketLib.SocketServer
 {
     /// <summary>
-    /// Server 端的 Session 实例, 同一个 Client 端的所有 TCP 连接对应同一个Session
+    /// Server 端的 Session 实例
     /// 重点实现 SetSession() 和 GetSession() 方法
     /// </summary>
     public class SocketSession

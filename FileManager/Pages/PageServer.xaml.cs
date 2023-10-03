@@ -25,6 +25,7 @@ using FileManager.SocketLib.Enums;
 using FileManager.Events;
 using FileManager.ViewModels;
 using FileManager.Models;
+using FileManager.SocketLib.SocketServer.Main;
 
 namespace FileManager.Pages
 {

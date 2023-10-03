@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.SocketLib.SocketServer
+namespace FileManager.SocketLib.SocketServer.Main
 {
     public partial class SocketServer : SocketServerBase
     {
@@ -20,9 +20,8 @@ namespace FileManager.SocketLib.SocketServer
         /// </summary>
         /// <param name="responder"></param>
         /// <returns> server 端新建立的或查找到的 session 对象, 不成功返回 null </returns>
-        private SocketSession ResponseSession(SocketResponder responder, byte[] bytes)
+        private SocketSession ResponseSession(SocketResponder responder, SessionRequest request)
         {
-            SessionRequest request = SessionRequest.FromBytes(bytes);
             if (request.Type == SessionRequest.BytesType.KeyBytes)
             {
                 SessionsLock.EnterWriteLock();
@@ -35,7 +34,8 @@ namespace FileManager.SocketLib.SocketServer
                         Type = SessionResponse.ResponseType.NewSessionBytes,
                         Bytes = ss.BytesInfo.ToBytes()
                     };
-                    responder.SendBytes(HB32Packet.SessionResponse, response.ToBytes());
+                    //responder.SendBytes(PacketType.SessionResponse, response.ToBytes());
+                    this.Response(responder, response);
                     return ss;
                 }
                 finally
@@ -60,7 +60,8 @@ namespace FileManager.SocketLib.SocketServer
                                 Type = SessionResponse.ResponseType.NoModify,
                                 Bytes = new byte[0]
                             };
-                            responder.SendBytes(HB32Packet.SessionResponse, response.ToBytes());
+                            //responder.SendBytes(PacketType.SessionResponse, response.ToBytes());
+                            this.Response(responder, response);
                             return ss;
                         }
                         else
@@ -82,7 +83,8 @@ namespace FileManager.SocketLib.SocketServer
                         Type = SessionResponse.ResponseType.SessionException,
                         Bytes = Encoding.UTF8.GetBytes(ex.Message)
                     };
-                    responder.SendBytes(HB32Packet.SessionResponse, response.ToBytes());
+                    //responder.SendBytes(PacketType.SessionResponse, response.ToBytes());
+                    this.Response(responder, response);
                     return null;
                 }
                 finally

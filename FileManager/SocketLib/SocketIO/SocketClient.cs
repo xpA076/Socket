@@ -56,15 +56,15 @@ namespace FileManager.SocketLib
         public void AsyncConnect(int SendTimeout, int ReceiveTimeout)
         {
             IPEndPoint ipe = new IPEndPoint(HostAddress.Address.IP, HostAddress.Address.Port);
-            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.SendTimeout = SendTimeout;
-            client.ReceiveTimeout = ReceiveTimeout;
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.SendTimeout = SendTimeout;
+            socket.ReceiveTimeout = ReceiveTimeout;
             /// BeginConnect为异步代码, 无法捕捉异常, 所以只能写成这种方式
-            client.BeginConnect(ipe, asyncResult =>
+            socket.BeginConnect(ipe, asyncResult =>
             {
                 try
                 {
-                    client.EndConnect(asyncResult);
+                    socket.EndConnect(asyncResult);
                     SocketAsyncCallback?.Invoke(this, EventArgs.Empty);
                 }
                 catch (Exception ex)
@@ -95,8 +95,8 @@ namespace FileManager.SocketLib
         {
             try
             {
-                SendHeader(HB32Packet.DisconnectRequest);
-                client.Close();
+                //SendHeader(PacketType.DisconnectRequest);
+                socket.Close();
             }
             catch { }
         }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using FileManager.Exceptions;
 using FileManager.Exceptions.Server;
 
-namespace FileManager.SocketLib.SocketServer
+namespace FileManager.SocketLib.SocketServer.Main
 {
     public partial class SocketServer : SocketServerBase
     {
@@ -28,11 +28,10 @@ namespace FileManager.SocketLib.SocketServer
         /// </summary>
         /// <param name="responder"></param>
         /// <param name="bytes"></param>
-        private void ResponseDirectory(SocketResponder responder, byte[] bytes, SocketSession session)
+        private void ResponseDirectory(SocketResponder responder, DirectoryRequest request, SocketSession session)
         {
             try
             {
-                DirectoryRequest request = DirectoryRequest.FromBytes(bytes);
                 if (request.Type == DirectoryRequest.RequestType.Query)
                 {
                     /// 获取目录下的 SocketFileInfo 列表
@@ -42,7 +41,7 @@ namespace FileManager.SocketLib.SocketServer
                     }
                     List<SocketFileInfo> fileClasses = GetDirectoryAndFiles(request.ServerPath);
                     DirectoryResponse response = new DirectoryResponse(fileClasses);
-                    responder.SendBytes(HB32Packet.DirectoryResponse, response.ToBytes());
+                    this.Response(responder, response);
                 }
                 else if (request.Type == DirectoryRequest.RequestType.CreateDirectory)
                 {
@@ -62,13 +61,13 @@ namespace FileManager.SocketLib.SocketServer
             {
                 string err_msg = "Authentication exception";
                 DirectoryResponse response = new DirectoryResponse(err_msg);
-                responder.SendBytes(HB32Packet.DirectoryResponse, response.ToBytes());
+                this.Response(responder, response);
             }
             catch (ServerInternalException ex)
             {
                 string err_msg = "Directory response exception from server: " + ex.Message;
                 DirectoryResponse response = new DirectoryResponse(err_msg);
-                responder.SendBytes(HB32Packet.DirectoryResponse, response.ToBytes());
+                this.Response(responder, response);
             }
         }
 
@@ -240,11 +239,11 @@ namespace FileManager.SocketLib.SocketServer
             }
             if (string.IsNullOrEmpty(err_msg))
             {
-                responder.SendBytes(HB32Packet.CreateDirectoryAllowed, new byte[1]);
+                responder.SendBytes(PacketType.CreateDirectoryAllowed, new byte[1]);
             }
             else
             {
-                responder.SendBytes(HB32Packet.CreateDirectoryDenied, err_msg);
+                responder.SendBytes(PacketType.CreateDirectoryDenied, err_msg);
             }
         }
         

@@ -14,7 +14,7 @@ namespace FileManager.Exceptions
     /// </summary>
     public class SocketFlagException : Exception
     {
-        public HB32Packet RequiredFlag { get; set; } = HB32Packet.None;
+        public PacketType RequiredFlag { get; set; } = PacketType.None;
         public HB32Header Header { get; set; } = null;
         public byte[] Bytes { get; set; } = new byte[0];
 
@@ -45,7 +45,7 @@ namespace FileManager.Exceptions
             Bytes = bytes;
         }
 
-        public SocketFlagException(HB32Packet required_flag, HB32Response resp)
+        public SocketFlagException(PacketType required_flag, HB32Response resp)
         {
             RequiredFlag = required_flag;
             Header = resp.Header;
@@ -53,7 +53,7 @@ namespace FileManager.Exceptions
         }
 
 
-        public SocketFlagException(HB32Packet required_flag, HB32Header header, byte[] bytes)
+        public SocketFlagException(PacketType required_flag, HB32Header header, byte[] bytes)
         {
             RequiredFlag = required_flag;
             Header = header;

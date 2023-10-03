@@ -1,6 +1,7 @@
 ﻿using FileManager.Events.UI;
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
+using FileManager.Models.Serializable.HeartBeat;
 using FileManager.Models.TransferLib.Enums;
 using FileManager.Models.TransferLib.Info;
 using FileManager.SocketLib;
@@ -296,8 +297,10 @@ namespace FileManager.Models.TransferLib.Services
             /// 向 server 端请求内容
             try
             {
-                HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.HB32Packet.DownloadRequest, request.ToBytes());
-                response = DownloadResponse.FromBytes(resp.Bytes);
+                //HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.PacketType.DownloadRequest, request.ToBytes());
+                //response = DownloadResponse.FromBytes(resp.Bytes);
+                byte[] bs = SocketFactory.Instance.Request(client, request);
+                response = DownloadResponse.FromBytes(bs, 4);
             }
             catch
             {
@@ -326,7 +329,7 @@ namespace FileManager.Models.TransferLib.Services
         /// <returns></returns>
         private long UploadSinglePacket(long packet, ref SocketClient client)
         {
-            BuildValidSocketClient(ref client);
+             BuildValidSocketClient(ref client);
 
             /// 确定相关参数
             UploadRequest request = new UploadRequest();
@@ -343,8 +346,10 @@ namespace FileManager.Models.TransferLib.Services
             /// 网络请求
             try
             {
-                HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.HB32Packet.UploadRequest, request.ToBytes());
-                response = UploadResponse.FromBytes(resp.Bytes);
+                //HB32Response resp = SocketFactory.Request(client, SocketLib.Enums.PacketType.UploadRequest, request.ToBytes());
+                //response = UploadResponse.FromBytes(resp.Bytes);
+                byte[] bs = SocketFactory.Instance.Request(client, request);
+                response = UploadResponse.FromBytes(bs, 4);
             }
             catch
             {
@@ -399,8 +404,10 @@ namespace FileManager.Models.TransferLib.Services
                     From = type == TransferType.Download ? ReleaseFileRequest.ReleaseFrom.Download : ReleaseFileRequest.ReleaseFrom.Upload,
                     ViewPath = path
                 };
-                HB32Response resp = SocketFactory.Instance.Request(SocketLib.Enums.HB32Packet.ReleaseFileRequest, request.ToBytes());
-                ReleaseFileResponse response = ReleaseFileResponse.FromBytes(resp.Bytes);
+                byte[] bs = SocketFactory.Instance.Request(request);
+                ReleaseFileResponse response = ReleaseFileResponse.FromBytes(bs, 4);
+                //HB32Response resp = SocketFactory.Instance.Request(SocketLib.Enums.PacketType.ReleaseFileRequest, request.ToBytes());
+                //ReleaseFileResponse response = ReleaseFileResponse.FromBytes(resp.Bytes);
             }
             catch { }
         }
@@ -433,7 +440,10 @@ namespace FileManager.Models.TransferLib.Services
                 }
                 try
                 {
-                    SocketFactory.Instance.Request(SocketLib.Enums.HB32Packet.Null, new byte[1]);
+                    HeartBeatRequest request = new HeartBeatRequest();
+                    byte[] bs = SocketFactory.Instance.Request(request);
+                    HeartBeatResponse response = HeartBeatResponse.FromBytes(bs, 4);
+                    //SocketFactory.Instance.Request(SocketLib.Enums.PacketType.Null, new byte[1]);
                     ConnectionAvailableSignal.Set();
                     break;
                 }
@@ -463,7 +473,7 @@ namespace FileManager.Models.TransferLib.Services
             }
             else
             {
-                count = 16;
+                count = 4;
             }
             return Math.Min(count, ThreadLimit);
         }

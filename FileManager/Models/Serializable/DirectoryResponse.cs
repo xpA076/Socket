@@ -62,9 +62,8 @@ namespace FileManager.Models.Serializable
         }
 
 
-        public static DirectoryResponse FromBytes(byte[] bytes)
+        public static DirectoryResponse FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             DirectoryResponse obj = new DirectoryResponse();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

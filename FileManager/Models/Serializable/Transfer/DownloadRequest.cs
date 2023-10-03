@@ -24,9 +24,8 @@ namespace FileManager.Models.Serializable
         public long Length { get; set; }
 
 
-        public static DownloadRequest FromBytes(byte[] bytes)
+        public static DownloadRequest FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             DownloadRequest obj = new DownloadRequest();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;

@@ -155,12 +155,12 @@ namespace FileManager.Models
         /// <returns></returns>
         public void RequestFileStreamId()
         {
-            HB32Packet mask = (HB32Packet)((Task.Type == TransferTypeDeprecated.Upload ? 1 : 0) << 8);
+            PacketType mask = (PacketType)((Task.Type == TransferTypeDeprecated.Upload ? 1 : 0) << 8);
             try
             {
                 SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(Task, 1);
-                client.SendBytes(HB32Packet.DownloadFileStreamIdRequest | mask, Task.RemotePath);
-                client.ReceiveBytesWithHeaderFlag(HB32Packet.DownloadAllowed ^ mask, out byte[] bytes);
+                client.SendBytes(PacketType.DownloadFileStreamIdRequest | mask, Task.RemotePath);
+                client.ReceiveBytesWithHeaderFlag(PacketType.DownloadAllowed ^ mask, out byte[] bytes);
                 client.Close();
                 string response = Encoding.UTF8.GetString(bytes);
                 FileStreamId = int.Parse(response);
