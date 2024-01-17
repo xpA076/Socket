@@ -193,7 +193,7 @@ namespace FileManager.Pages
                 {
                     Info = this.TextBoxIP.Text
                 });
-                this.parent.StartConnectionMonitor();
+                //this.parent.StartConnectionMonitor();
                 this.parent.RedirectPage("Browser");
                 System.Threading.Thread.Sleep(100);
                 this.parent.SubPageBrowser.ResetRemoteDirectory();

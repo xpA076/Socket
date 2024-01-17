@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace FileManager.SocketLib
 {
-    public interface ISocketSerializable
+    public interface ISocketSerializable : IBytesSerializable
     {
-        byte[] ToBytes();
 
-        void BuildFromBytes(byte[] bytes, ref int idx);
     }
 }

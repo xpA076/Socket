@@ -20,7 +20,7 @@ namespace FileManager.SocketLib.SocketServer.Main
             SocketResponder responder = responderObject as SocketResponder;
             responder.SetTimeout(Config.SocketSendTimeOut, Config.SocketReceiveTimeOut);
             SocketSession session = null;
-            this.ServerExchangeKeys(responder, out session);
+            //this.ServerExchangeKeys(responder, out session);
 
             /// Server 数据响应主循环
             int error_count = 0;
@@ -35,6 +35,11 @@ namespace FileManager.SocketLib.SocketServer.Main
                     {
                         case PacketType.Null:
                             throw new Exception("PacketType null");
+
+                        case PacketType.KeyExchangeRequest:
+                            KeyExchangeRequest keyExchangeRequest = KeyExchangeRequest.FromBytes(bytes, idx);
+                            ResponseKeyExchange(responder, keyExchangeRequest);
+                            break;
 
                         case PacketType.SessionRequest:
                             SessionRequest sessionRequest = SessionRequest.FromBytes(bytes, idx);
@@ -64,6 +69,12 @@ namespace FileManager.SocketLib.SocketServer.Main
                         case PacketType.HeartBeatRequest:
                             HeartBeatRequest heartBeatRequest = HeartBeatRequest.FromBytes(bytes, idx);
                             ResponseHeartBeat(responder, heartBeatRequest);
+                            break;
+
+                        case PacketType.CustomizedPacketRequest:
+                            byte[] bs = new byte[bytes.Length - 4];
+                            Array.Copy(bytes, 4, bs, 0, bs.Length);
+                            ResponseCustomizedPacket(responder, bs);
                             break;
 
                         case PacketType.DisconnectRequest:
@@ -117,6 +128,25 @@ namespace FileManager.SocketLib.SocketServer.Main
             Log("Connection closed.", LogLevel.Warn);
         }
 
+
+
+        private void ResponseKeyExchange(SocketResponder responder, KeyExchangeRequest request)
+        {
+            KeyExchangeResponse response = new KeyExchangeResponse();
+            using (ECDiffieHellmanCng ec_server = new ECDiffieHellmanCng())
+            {
+                ec_server.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+                ec_server.HashAlgorithm = CngAlgorithm.Sha256;
+                CngKey clientKey = CngKey.Import(request.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
+                byte[] sharedKey = ec_server.DeriveKeyMaterial(clientKey);
+                responder.SetSymmetricKeys(sharedKey);
+                response.EcdhPublicKey = ec_server.PublicKey.ToByteArray();
+            }
+            this.Response(responder, response, encryptText: false);
+        }
+
+
+
         private void ServerExchangeKeys(SocketResponder responder, out SocketSession session)
         {
             /// Check identity
@@ -129,12 +159,12 @@ namespace FileManager.SocketLib.SocketServer.Main
                 ec_server.HashAlgorithm = CngAlgorithm.Sha256;
                 byte[] recv_bytes = responder.ReceiveBytes();
                 KeyExchangeRequest request = KeyExchangeRequest.FromBytes(recv_bytes);
-                CngKey clientKey = CngKey.Import(request.PublicKey, CngKeyBlobFormat.EccPublicBlob);
+                CngKey clientKey = CngKey.Import(request.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
                 byte[] sharedKey = ec_server.DeriveKeyMaterial(clientKey);
                 responder.SetSymmetricKeys(sharedKey);
                 KeyExchangeResponse response = new KeyExchangeResponse()
                 {
-                    PublicKey = ec_server.PublicKey.ToByteArray()
+                    EcdhPublicKey = ec_server.PublicKey.ToByteArray()
                 };
                 responder.SendBytes(response.ToBytes(), encryptText: false);
             }

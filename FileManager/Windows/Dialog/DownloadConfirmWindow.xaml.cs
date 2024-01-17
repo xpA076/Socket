@@ -15,7 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace FileManager.Windows
+namespace FileManager.Windows.Dialog
 {
     /// <summary>
     /// DownloadConfirmWindow.xaml 的交互逻辑

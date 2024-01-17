@@ -180,6 +180,9 @@
     <Compile Include="SocketLib\SocketServer\SocketSession.cs" />
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />
+    <Compile Include="Utils\Storage\ClientConfigStorage.cs" />
+    <Compile Include="Utils\Storage\ClientKeyStorage.cs" />
+    <Compile Include="Utils\Storage\StoragePathMapper.cs" />
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
     <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStatusViewModel.cs" />
@@ -188,13 +191,16 @@
     <Compile Include="ViewModels\PageTransfer\ListViewTransferItem.cs" />
     <Compile Include="ViewModels\ServerRichTextBoxViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
-    <Compile Include="Windows\DownloadConfirmWindow.xaml.cs">
+    <Compile Include="Windows\Dialog\DownloadConfirmWindow.xaml.cs">
       <DependentUpon>DownloadConfirmWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Windows\PathSetWindow.xaml.cs">
+    <Compile Include="Windows\FileManagerFormWindow.xaml.cs">
+      <DependentUpon>FileManagerFormWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\Dialog\PathSetWindow.xaml.cs">
       <DependentUpon>PathSetWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Windows\UploadSelectWindow.xaml.cs">
+    <Compile Include="Windows\Dialog\UploadSelectWindow.xaml.cs">
       <DependentUpon>UploadSelectWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="IconFontStyle.xaml">
@@ -243,15 +249,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Windows\DownloadConfirmWindow.xaml">
+    <Page Include="Windows\Dialog\DownloadConfirmWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Windows\PathSetWindow.xaml">
+    <Page Include="Windows\FileManagerFormWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Windows\UploadSelectWindow.xaml">
+    <Page Include="Windows\Dialog\PathSetWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\Dialog\UploadSelectWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -318,6 +328,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Utils\Bytes\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

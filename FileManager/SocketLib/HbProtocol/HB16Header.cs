@@ -25,14 +25,14 @@ namespace FileManager.SocketLib.HbProtocol
                 return (((UInt32)this.Proxy1) << 24) +
                     (((UInt32)this.Proxy2) << 16) +
                     (((UInt32)this.Header1) << 8) +
-                    ((UInt32)this.Header2);
+                    (((UInt32)this.Header2) << 0);
             }
             set
             {
                 this.Proxy1 = (byte)((value >> 24) & 0xFF);
                 this.Proxy2 = (byte)((value >> 16) & 0xFF);
                 this.Header1 = (byte)((value >> 8) & 0xFF);
-                this.Header2 = (byte)(value & 0xFF);
+                this.Header2 = (byte)((value >> 0) & 0xFF);
             }
         }
 

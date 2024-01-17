@@ -16,15 +16,11 @@ def main():
     time.sleep(1)
     s = socket.socket()
     s.connect(('192.168.50.178', 12138))
-    s.send(b'\x00\x00' +
+    s.send(b'\x00\x00\xFF\xAB' +
+           b'\x0E\x00\x00\x00' +
+           b'\x00\x00\x00\x00' +
+           b'\x0E\x00\x00\x00' +
            b'\x01\x30\x00\x00' +
-           b'\x00\x00\x00\x00' +
-           b'\x00\x00\x00\x00' +
-           b'\x00\x00\x00\x00' +
-           b'\x01\x00\x00\x00' +
-           b'\x0A\x00\x00\x00' +
-           b'\x0A\x00\x00\x00' +
-           b'\x0A\x00\x00\x00' +
            b'music_next')
     print('ok')
 

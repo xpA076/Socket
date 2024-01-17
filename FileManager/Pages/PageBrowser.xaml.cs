@@ -21,6 +21,7 @@ using FileManager.Models.TransferLib;
 using FileManager.ViewModels;
 using FileManager.Static;
 using FileManager.Windows;
+using FileManager.Windows.Dialog;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
 using FileManager.Exceptions;

@@ -14,7 +14,7 @@ using System.Windows.Shapes;
 
 using FileManager.Events;
 
-namespace FileManager.Windows
+namespace FileManager.Windows.Dialog
 {
     /// <summary>
     /// PathSetWindow.xaml 的交互逻辑

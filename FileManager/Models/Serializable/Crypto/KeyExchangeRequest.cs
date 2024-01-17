@@ -9,11 +9,10 @@ namespace FileManager.Models.Serializable.Crypto
 {
     public class KeyExchangeRequest : ISocketSerializable
     {
-        public byte[] PublicKey { get; set; }
+        public byte[] EcdhPublicKey { get; set; }
 
-        public static KeyExchangeRequest FromBytes(byte[] bytes)
+        public static KeyExchangeRequest FromBytes(byte[] bytes, int idx = 0)
         {
-            int idx = 0;
             KeyExchangeRequest obj = new KeyExchangeRequest();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;
@@ -21,13 +20,13 @@ namespace FileManager.Models.Serializable.Crypto
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            this.PublicKey = BytesParser.GetBytes(bytes, ref idx);
+            this.EcdhPublicKey = BytesParser.GetBytes(bytes, ref idx);
         }
 
         public byte[] ToBytes()
         {
             BytesBuilder bb = new BytesBuilder();
-            bb.Append(PublicKey);
+            bb.Append(EcdhPublicKey);
             return bb.GetBytes();
         }
     }

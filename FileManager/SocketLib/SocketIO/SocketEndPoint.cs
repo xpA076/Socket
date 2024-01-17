@@ -153,11 +153,11 @@ namespace FileManager.SocketLib
                         enc.EncryptedBytes = cipherText.ToArray();
                     }
                 }
-                SendBytesIO(0x0000FFAC, enc.ToBytes(), truncateLength);
+                SendBytesIO((UInt32)PacketType.TextEncrypted, enc.ToBytes(), truncateLength);
             }
             else
             {
-                SendBytesIO(0x0000FFAB, bytes, truncateLength);
+                SendBytesIO((UInt32)PacketType.TextPlain, bytes, truncateLength);
             }
             
         }
@@ -169,8 +169,8 @@ namespace FileManager.SocketLib
         public byte[] ReceiveBytes()
         {
             ReceiveBytesIO(out byte[] bytes, out UInt32 u32h);
-            if ((u32h & 0xFF) == 0xAB) { return bytes; }
-            if ((u32h & 0xFF) != 0xAC) { throw new Exception("Invalid header in receive bytes"); }
+            if (u32h == (UInt32)PacketType.TextPlain) { return bytes; }
+            if (u32h != (UInt32)PacketType.TextEncrypted) { throw new Exception("Invalid header in receive bytes"); }
             if (this.AesKeys == null) { throw new Exception("Need decrpypt before AES key setup"); }
             /// Decrpyt bytes
             AesEncryptedBytes enc = AesEncryptedBytes.FromBytes(bytes);

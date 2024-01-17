@@ -14,8 +14,8 @@ namespace FileManager.SocketLib.Enums
         ExceptionFlag = 0x0080,
 
 
-        KeyExchange = 0xFFAB,
-        KeyEncrypted = 0xFFAC,
+        TextPlain = 0xFFAB,
+        TextEncrypted = 0xFFAC,
 
 
         /// Mode 0xA3 : Proxy
@@ -33,11 +33,10 @@ namespace FileManager.SocketLib.Enums
         ReversedProxyResponse = 0xA410,
         ReversedProxyException = 0xA490,
 
-        /// Mode 0xAC : Authentication
+        /// Mode 0xAC : Key Exchange
         /// 
-        AuthenticationRequest = 0xAC01,
-        AuthenticationResponse = 0xAC10,
-        AuthenticationException = 0xAC90,
+        KeyExchangeRequest = 0xAC01,
+        KeyExchangeResponse = 0xAC10,
 
         /// <summary>
         /// Mode 0x20 : Session

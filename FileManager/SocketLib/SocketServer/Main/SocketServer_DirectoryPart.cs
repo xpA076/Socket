@@ -21,10 +21,6 @@ namespace FileManager.SocketLib.SocketServer.Main
 
         /// <summary>
         /// 响应对方的 Directory 列表查询, 文件夹不存在或权限异常返回message字符串处理
-        /// 参数 bytes 为接收byte流的内容信息
-        /// client : SocketPacketFlag.DirectoryRequest + path bytes(UTF-8)
-        /// server : SocketPacketFlag.DirectoryResponse + List<SocketFileInfo> -> bytes
-        ///     or : SocketPacketFlag.DirectoryException + err_msg
         /// </summary>
         /// <param name="responder"></param>
         /// <param name="bytes"></param>

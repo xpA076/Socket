@@ -163,12 +163,13 @@ namespace FileManager.Static
                 byte[] publicKey = ec_client.PublicKey.ToByteArray();
                 KeyExchangeRequest request = new KeyExchangeRequest
                 {
-                    PublicKey = publicKey
+                    EcdhPublicKey = publicKey
                 };
-                client.SendBytes(request.ToBytes(), encryptText: false);
-                byte[] recv_bytes = client.ReceiveBytes();
-                KeyExchangeResponse response = KeyExchangeResponse.FromBytes(recv_bytes);
-                CngKey serverKey = CngKey.Import(response.PublicKey, CngKeyBlobFormat.EccPublicBlob);
+                byte[] recv_bytes = this.Request(client, request, encryptText: false);
+                //client.SendBytes(request.ToBytes(), encryptText: false);
+                //byte[] recv_bytes = client.ReceiveBytes();
+                KeyExchangeResponse response = KeyExchangeResponse.FromBytes(recv_bytes, 4);
+                CngKey serverKey = CngKey.Import(response.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
                 byte[] sharedKey = ec_client.DeriveKeyMaterial(serverKey);
                 client.SetSymmetricKeys(sharedKey);
             }
@@ -299,12 +300,16 @@ namespace FileManager.Static
         }
 
 
-        public byte[] Request(SocketClient client, ISocketSerializable request)
+        public byte[] Request(SocketClient client, ISocketSerializable request, bool encryptText = true)
         {
             BytesBuilder bb = new BytesBuilder();
             PacketType aim_type = PacketType.None;
             switch (request.GetType().Name)
             {
+                case "KeyExchangeRequest":
+                    bb.Append((int)PacketType.KeyExchangeRequest);
+                    aim_type = PacketType.KeyExchangeResponse;
+                    break;
                 case "SessionRequest":
                     bb.Append((int)PacketType.SessionRequest);
                     aim_type = PacketType.SessionResponse;
@@ -331,7 +336,7 @@ namespace FileManager.Static
                     break;
             }
             bb.Concatenate(request.ToBytes());
-            byte[] bs = this.RequestIO(client, bb.GetBytes());
+            byte[] bs = this.RequestIO(client, bb.GetBytes(), encryptText);
             int idx = 0;
             PacketType get_type = (PacketType)BytesParser.GetInt(bs, ref idx);
             if (aim_type != get_type)
@@ -349,9 +354,9 @@ namespace FileManager.Static
         }
 
 
-        private byte[] RequestIO(SocketClient client, byte[] request_bytes)
+        private byte[] RequestIO(SocketClient client, byte[] request_bytes, bool encryptText = true)
         {
-            client.SendBytes(request_bytes);
+            client.SendBytes(request_bytes, encryptText: encryptText);
             return client.ReceiveBytes();
         }
 

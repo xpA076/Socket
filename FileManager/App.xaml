@@ -2,8 +2,11 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:FileManager"
+             
              StartupUri="FileManagerMainWindow.xaml"
              Startup="Application_Startup">
+            <!--StartupUri="FileManagerMainWindow.xaml"-->
+    <!--StartupUri="Windows/FileManagerFormWindow.xaml"-->
     <Application.Resources>
         <ResourceDictionary>
             <Style x:Key="PageButton" TargetType="Button">
