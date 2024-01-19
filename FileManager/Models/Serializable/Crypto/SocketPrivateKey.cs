@@ -1,27 +1,33 @@
 ﻿using FileManager.SocketLib;
+using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FileManager.Models.Serializable.Crypto
 {
     public class SocketPrivateKey : IBytesSerializable
     {
-        public SocketCertificate Certificate { get; set; }
+        public SocketCertificate Certificate { get; set; } = new SocketCertificate();
 
         public byte[] PrivateKey { get; set; }
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            throw new NotImplementedException();
+            this.Certificate.BuildFromBytes(bytes, ref idx);
+            this.PrivateKey = BytesParser.GetBytes(bytes, ref idx);
         }
 
         public byte[] ToBytes()
         {
-            throw new NotImplementedException();
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(Certificate.ToBytes());
+            bb.Append(PrivateKey);
+            return bb.GetBytes();
         }
     }
 }

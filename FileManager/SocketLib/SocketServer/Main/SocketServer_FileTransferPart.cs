@@ -12,6 +12,7 @@ using FileManager.Models;
 using FileManager.Models.Serializable;
 using FileManager.SocketLib.Enums;
 using FileManager.SocketLib.SocketServer.Models;
+using FileManager.Utils.Bytes;
 
 namespace FileManager.SocketLib.SocketServer.Main
 {

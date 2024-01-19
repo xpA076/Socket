@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.SocketLib
+namespace FileManager.Utils.Bytes
 {
     /// <summary>
     /// 这个争取不用

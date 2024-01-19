@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using FileManager.SocketLib;
 using FileManager.Models.Serializable;
 using FileManager.Models.TransferLib.Enums;
+using FileManager.Utils.Bytes;
 
 namespace FileManager.Models.TransferLib.Info
 {

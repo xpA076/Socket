@@ -2,6 +2,7 @@
 using FileManager.Models.Serializable.Crypto;
 using FileManager.Models.Serializable.HeartBeat;
 using FileManager.SocketLib.Enums;
+using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;
 using System.Linq;

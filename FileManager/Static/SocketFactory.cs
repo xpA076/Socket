@@ -17,7 +17,7 @@ using FileManager.Models.Serializable;
 using FileManager.Exceptions;
 using FileManager.Exceptions.Server;
 using FileManager.Models.Serializable.Crypto;
-
+using FileManager.Utils.Bytes;
 
 namespace FileManager.Static
 {

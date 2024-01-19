@@ -8,6 +8,7 @@ using FileManager.Models.TransferLib.Enums;
 using FileManager.Models.TransferLib.Services;
 using FileManager.SocketLib;
 using FileManager.SocketLib.Enums;
+using FileManager.Utils.Bytes;
 
 namespace FileManager.Models.TransferLib.Info
 {

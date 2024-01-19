@@ -14,6 +14,7 @@ using FileManager.SocketLib.Enums;
 using FileManager.Events;
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
+using FileManager.Utils.Bytes;
 
 namespace FileManager.Models
 {

@@ -94,11 +94,15 @@
     <Compile Include="Models\ConnectionRecord.cs" />
     <Compile Include="Models\FileTaskLib\FileTaskDispatcher.cs" />
     <Compile Include="Models\Serializable\Crypto\AesEncryptedBytes.cs" />
+    <Compile Include="Models\Serializable\Crypto\SocketCertificate.cs" />
     <Compile Include="Models\Serializable\Crypto\KeyExchangeRequest.cs" />
     <Compile Include="Models\Serializable\Crypto\KeyExchangeResponse.cs" />
+    <Compile Include="Models\Serializable\Crypto\SocketPrivateKey.cs" />
     <Compile Include="Models\Serializable\HeartBeat\HeartBeatRequest.cs" />
     <Compile Include="Models\Serializable\HeartBeat\HeartBeatResponse.cs" />
     <Compile Include="SocketLib\HbProtocol\HB16Header.cs" />
+    <Compile Include="SocketLib\IBytesSerializable.cs" />
+    <Compile Include="SocketLib\Services\CertificateService.cs" />
     <Compile Include="SocketLib\SocketServer\Main\ReceiveData_HB16.cs" />
     <Compile Include="SocketLib\SocketServer\Main\ReceiveData_HB32.cs" />
     <Compile Include="SocketLib\SocketServer\Main\SocketServer_CustomizedPacketPart.cs" />
@@ -140,9 +144,9 @@
     <Compile Include="Pages\PageSettings.xaml.cs">
       <DependentUpon>PageSettings.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SocketLib\Bytes\BytesBuilder.cs" />
-    <Compile Include="SocketLib\Bytes\BytesConverter.cs" />
-    <Compile Include="SocketLib\Bytes\BytesParser.cs" />
+    <Compile Include="Utils\Bytes\BytesBuilder.cs" />
+    <Compile Include="Utils\Bytes\BytesConverter.cs" />
+    <Compile Include="Utils\Bytes\BytesParser.cs" />
     <Compile Include="SocketLib\Enums\LogLevel.cs" />
     <Compile Include="SocketLib\Enums\ProxyHeader.cs" />
     <Compile Include="SocketLib\Enums\SocketIdentity.cs" />
@@ -181,7 +185,7 @@
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />
     <Compile Include="Utils\Storage\ClientConfigStorage.cs" />
-    <Compile Include="Utils\Storage\ClientKeyStorage.cs" />
+    <Compile Include="Utils\Storage\KeyStorage.cs" />
     <Compile Include="Utils\Storage\StoragePathMapper.cs" />
     <Compile Include="ViewModels\BrowserIPViewModel.cs" />
     <Compile Include="ViewModels\ConfirmWindowViewModel.cs" />
@@ -329,8 +333,6 @@
   <ItemGroup>
     <Resource Include="TODO.txt" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Utils\Bytes\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

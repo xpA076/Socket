@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using FileManager.SocketLib.Enums;
+using FileManager.Utils.Bytes;
 
 namespace FileManager.SocketLib
 {

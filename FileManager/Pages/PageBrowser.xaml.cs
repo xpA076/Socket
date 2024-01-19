@@ -28,6 +28,8 @@ using FileManager.Exceptions;
 using FileManager.Models.Serializable;
 using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Enums;
+using FileManager.SocketLib.Services;
+using FileManager.Models.Serializable.Crypto;
 
 namespace FileManager.Pages
 {
@@ -277,8 +279,17 @@ namespace FileManager.Pages
 
         public void ButtonCreate_Click(object sender, RoutedEventArgs e)
         {
+            /*
+            CertificateService cs = CertificateService.Instance;
+            SocketPrivateKey key = new SocketPrivateKey();
+            cs.GenerateKey(ref key);
+            bool v = cs.Verify(key.Certificate.PublicKey, key.Certificate.Signature, key.Certificate);
+            key.Certificate.Signature[0] = 3;
+            bool v1 = cs.Verify(key.Certificate.PublicKey, key.Certificate.Signature, key.Certificate);
+            key.Certificate.Signature[0] = 5;
+            bool v2 = cs.Verify(key.Certificate.PublicKey, key.Certificate.Signature, key.Certificate);
+            */
             System.Windows.MessageBox.Show("Create not implemented");
-            //this.parent.StopConnectionMonitor();
         }
 
         public void ButtonDelete_Click(object sender, RoutedEventArgs e)
