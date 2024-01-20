@@ -11,8 +11,6 @@ using FileManager.Models.Serializable;
 using FileManager.Models.TransferLib.Enums;
 using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
 using FileManager.Static;
 using FileManager.ViewModels.PageTransfer;
 

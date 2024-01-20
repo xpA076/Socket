@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
+using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.SocketLib.HbProtocol;
+using FileManager.Models.SocketLib.Models;
 using FileManager.Static;
 
 namespace FileManager.Models

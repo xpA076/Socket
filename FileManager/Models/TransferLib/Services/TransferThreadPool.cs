@@ -2,9 +2,10 @@
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
 using FileManager.Models.Serializable.HeartBeat;
+using FileManager.Models.SocketLib.Models;
+using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Models.TransferLib.Enums;
 using FileManager.Models.TransferLib.Info;
-using FileManager.SocketLib;
 using FileManager.Static;
 using System;
 using System.Collections.Generic;

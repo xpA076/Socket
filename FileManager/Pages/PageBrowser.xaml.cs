@@ -22,14 +22,14 @@ using FileManager.ViewModels;
 using FileManager.Static;
 using FileManager.Windows;
 using FileManager.Windows.Dialog;
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
 using FileManager.Exceptions;
 using FileManager.Models.Serializable;
 using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Enums;
-using FileManager.SocketLib.Services;
 using FileManager.Models.Serializable.Crypto;
+using FileManager.Utils.Storage;
+using FileManager.Models.SocketLib.Models;
+using FileManager.Models.SocketLib.Enums;
 
 namespace FileManager.Pages
 {
@@ -279,6 +279,9 @@ namespace FileManager.Pages
 
         public void ButtonCreate_Click(object sender, RoutedEventArgs e)
         {
+            KeyStorage ks = KeyStorage.Instance;
+            StoragePathMapper sp = StoragePathMapper.Instance;
+            string s = sp.ClientPrivateKeyPath;
             /*
             CertificateService cs = CertificateService.Instance;
             SocketPrivateKey key = new SocketPrivateKey();

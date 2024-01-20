@@ -1,5 +1,4 @@
 ﻿using FileManager.Models.TransferLib.Enums;
-using FileManager.SocketLib;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;

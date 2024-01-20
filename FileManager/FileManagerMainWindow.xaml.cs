@@ -20,10 +20,10 @@ using System.Windows.Shapes;
 
 using FileManager.Pages;
 using FileManager.Static;
-using FileManager.SocketLib;
 using FileManager.Models;
 using FileManager.ViewModels;
 using System.Net.Sockets;
+using FileManager.Models.SocketLib.Models;
 
 namespace FileManager
 {

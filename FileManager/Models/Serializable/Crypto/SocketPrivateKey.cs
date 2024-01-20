@@ -1,4 +1,4 @@
-﻿using FileManager.SocketLib;
+﻿using FileManager.Models.SocketLib;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;

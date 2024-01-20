@@ -1,5 +1,6 @@
-﻿using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
+﻿using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.SocketLib.HbProtocol;
+using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Static;
 using System;
 using System.Collections.Generic;

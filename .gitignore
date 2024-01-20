@@ -13,6 +13,7 @@
 /SocketLib/bin
 /StatusReporter/obj
 /StatusReporter/bin
+/storage
 
 *.log
 /temp

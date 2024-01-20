@@ -1,4 +1,4 @@
-﻿using FileManager.SocketLib.Enums;
+﻿using FileManager.Models.SocketLib.Enums;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

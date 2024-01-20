@@ -18,14 +18,12 @@ using System.ComponentModel;
 using System.Net.Sockets;
 using System.IO;
 
-using FileManager.SocketLib;
-using FileManager.SocketLib.SocketServer;
 using FileManager.Static;
-using FileManager.SocketLib.Enums;
 using FileManager.Events;
 using FileManager.ViewModels;
 using FileManager.Models;
-using FileManager.SocketLib.SocketServer.Main;
+using FileManager.Models.SocketLib.SocketServer.Main;
+using FileManager.Models.SocketLib.Enums;
 
 namespace FileManager.Pages
 {

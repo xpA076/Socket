@@ -1,4 +1,4 @@
-﻿using FileManager.SocketLib;
+﻿using FileManager.Models.SocketLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,7 +94,7 @@ namespace FileManager.Utils.Bytes
         }
 
 
-        public void Append<T>(List<T> value) where T : ISocketSerializable
+        public void AppendList<T>(List<T> value) where T : ISocketSerializable
         {
             if (value == null)
             {

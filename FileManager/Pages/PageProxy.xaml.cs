@@ -17,9 +17,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using FileManager.Events;
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
-using FileManager.SocketLib.SocketServer;
+using FileManager.Models.SocketLib;
+using FileManager.Models.SocketLib.Enums;
 using FileManager.Static;
 using FileManager.ViewModels;
 

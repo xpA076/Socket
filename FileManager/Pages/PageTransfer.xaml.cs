@@ -1,7 +1,6 @@
 ﻿using FileManager.Models;
 using FileManager.Models.TransferLib;
 using FileManager.ViewModels;
-using FileManager.SocketLib;
 using FileManager.Events;
 using FileManager.ViewModels.PageTransfer;
 

@@ -7,17 +7,19 @@ using System.Threading;
 using System.Security.Cryptography;
 using System.Net;
 
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
-using FileManager.SocketLib.HbProtocol;
 using FileManager.Models;
 using System.Net.Sockets;
-using FileManager.SocketLib.Models;
 using FileManager.Models.Serializable;
 using FileManager.Exceptions;
 using FileManager.Exceptions.Server;
 using FileManager.Models.Serializable.Crypto;
 using FileManager.Utils.Bytes;
+using FileManager.Models.SocketLib.SocketIO;
+using FileManager.Models.SocketLib;
+using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.SocketLib.HbProtocol;
+using FileManager.Models.SocketLib.Models;
+using FileManager.Events;
 
 namespace FileManager.Static
 {

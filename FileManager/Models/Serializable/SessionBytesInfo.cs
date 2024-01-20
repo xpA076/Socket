@@ -1,5 +1,5 @@
-﻿using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
+﻿using FileManager.Models.SocketLib;
+using FileManager.Models.SocketLib.Enums;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;

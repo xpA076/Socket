@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using FileManager.SocketLib;
+using FileManager.Models.SocketLib;
 using FileManager.Utils.Bytes;
 
 namespace FileManager.Models.Serializable

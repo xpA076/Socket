@@ -80,6 +80,7 @@
     <Compile Include="Converters\ConnectionStatusToForeColorConverter.cs" />
     <Compile Include="Events\CheckPathEventArgs.cs" />
     <Compile Include="Events\DisposeEventArgs.cs" />
+    <Compile Include="Events\SocketAsyncExceptionEventArgs.cs" />
     <Compile Include="Events\SocketIdentityCheckEventArgs.cs" />
     <Compile Include="Events\SocketLogEventArgs.cs" />
     <Compile Include="Events\UI\FinishBytesEventArgs.cs" />
@@ -100,13 +101,13 @@
     <Compile Include="Models\Serializable\Crypto\SocketPrivateKey.cs" />
     <Compile Include="Models\Serializable\HeartBeat\HeartBeatRequest.cs" />
     <Compile Include="Models\Serializable\HeartBeat\HeartBeatResponse.cs" />
-    <Compile Include="SocketLib\HbProtocol\HB16Header.cs" />
-    <Compile Include="SocketLib\IBytesSerializable.cs" />
-    <Compile Include="SocketLib\Services\CertificateService.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\ReceiveData_HB16.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\ReceiveData_HB32.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\SocketServer_CustomizedPacketPart.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\SocketServer_ResponsePart.cs" />
+    <Compile Include="Models\SocketLib\HbProtocol\HB16Header.cs" />
+    <Compile Include="Models\SocketLib\IBytesSerializable.cs" />
+    <Compile Include="Models\SocketLib\Services\CertificateService.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\ReceiveData_HB16.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\ReceiveData_HB32.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\SocketServer_CustomizedPacketPart.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\SocketServer_ResponsePart.cs" />
     <Compile Include="Static\Logger.cs" />
     <Compile Include="Models\Serializable\DirectoryRequest.cs" />
     <Compile Include="Models\Serializable\DirectoryResponse.cs" />
@@ -122,7 +123,7 @@
     <Compile Include="Models\TransferLib\Services\TransferThreadPool.cs" />
     <Compile Include="Models\TransferLib\Enums\TransferType.cs" />
     <Compile Include="Models\TransferLib\TransferManager.cs" />
-    <Compile Include="SocketLib\ISocketSerializable.cs" />
+    <Compile Include="Models\SocketLib\ISocketSerializable.cs" />
     <Compile Include="Models\Serializable\SessionRequest.cs" />
     <Compile Include="Models\Serializable\SessionResponse.cs" />
     <Compile Include="Models\TransferLib\Info\TransferInfoDirectory.cs" />
@@ -147,41 +148,41 @@
     <Compile Include="Utils\Bytes\BytesBuilder.cs" />
     <Compile Include="Utils\Bytes\BytesConverter.cs" />
     <Compile Include="Utils\Bytes\BytesParser.cs" />
-    <Compile Include="SocketLib\Enums\LogLevel.cs" />
-    <Compile Include="SocketLib\Enums\ProxyHeader.cs" />
-    <Compile Include="SocketLib\Enums\SocketIdentity.cs" />
-    <Compile Include="SocketLib\Enums\PacketType.cs" />
-    <Compile Include="SocketLib\Enums\TransferTypeDeprecated.cs" />
-    <Compile Include="SocketLib\HbProtocol\HB32Encoding.cs" />
-    <Compile Include="SocketLib\HbProtocol\HB32Header.cs" />
-    <Compile Include="SocketLib\HbProtocol\HB32Response.cs" />
-    <Compile Include="SocketLib\Models\ConnectionRoute.cs" />
-    <Compile Include="SocketLib\Models\FilterRule.cs" />
-    <Compile Include="SocketLib\Models\RouteNode.cs" />
+    <Compile Include="Models\SocketLib\Enums\LogLevel.cs" />
+    <Compile Include="Models\SocketLib\Enums\ProxyHeader.cs" />
+    <Compile Include="Models\SocketLib\Enums\SocketIdentity.cs" />
+    <Compile Include="Models\SocketLib\Enums\PacketType.cs" />
+    <Compile Include="Models\SocketLib\Enums\TransferTypeDeprecated.cs" />
+    <Compile Include="Models\SocketLib\HbProtocol\HB32Encoding.cs" />
+    <Compile Include="Models\SocketLib\HbProtocol\HB32Header.cs" />
+    <Compile Include="Models\SocketLib\HbProtocol\HB32Response.cs" />
+    <Compile Include="Models\SocketLib\Models\ConnectionRoute.cs" />
+    <Compile Include="Models\SocketLib\Models\FilterRule.cs" />
+    <Compile Include="Models\SocketLib\Models\RouteNode.cs" />
     <Compile Include="Models\Serializable\SessionBytesInfo.cs" />
     <Compile Include="Models\Serializable\SocketFileInfo.cs" />
-    <Compile Include="SocketLib\Models\TCPAddress.cs" />
-    <Compile Include="SocketLib\SocketIO\SocketClient.cs" />
-    <Compile Include="SocketLib\SocketIO\SocketEndPoint.cs" />
-    <Compile Include="SocketLib\SocketIO\SocketIoStatic.cs" />
-    <Compile Include="SocketLib\SocketIO\SocketLongConnectionMaintainer.cs" />
-    <Compile Include="SocketLib\SocketProxy\SocketProxy.cs" />
-    <Compile Include="SocketLib\SocketProxy\SocketProxyConfig.cs" />
-    <Compile Include="SocketLib\SocketIO\SocketResponder.cs" />
-    <Compile Include="SocketLib\SocketIO\SocketSender.cs" />
-    <Compile Include="SocketLib\SocketServer\Models\FileResource.cs" />
-    <Compile Include="SocketLib\SocketServer\Services\FileResourceManager.cs" />
-    <Compile Include="SocketLib\SocketServer\Services\PathTranslator.cs" />
-    <Compile Include="SocketLib\SocketServer\Services\TimeoutCollector.cs" />
-    <Compile Include="SocketLib\SocketServer\SocketReversedServer.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\SocketServer.cs" />
-    <Compile Include="SocketLib\SocketServer\SocketServerBase.cs" />
-    <Compile Include="SocketLib\SocketServer\SocketServerConfig.cs" />
-    <Compile Include="SocketLib\Models\SocketServerFileStreamInfo.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\SocketServer_DirectoryPart.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\SocketServer_FileTransferPart.cs" />
-    <Compile Include="SocketLib\SocketServer\Main\SocketServer_SessionPart.cs" />
-    <Compile Include="SocketLib\SocketServer\SocketSession.cs" />
+    <Compile Include="Models\SocketLib\Models\TCPAddress.cs" />
+    <Compile Include="Models\SocketLib\SocketIO\SocketClient.cs" />
+    <Compile Include="Models\SocketLib\SocketIO\SocketEndPoint.cs" />
+    <Compile Include="Models\SocketLib\SocketIO\SocketIoStatic.cs" />
+    <Compile Include="Models\SocketLib\SocketIO\SocketLongConnectionMaintainer.cs" />
+    <Compile Include="Models\SocketLib\SocketProxy\SocketProxy.cs" />
+    <Compile Include="Models\SocketLib\SocketProxy\SocketProxyConfig.cs" />
+    <Compile Include="Models\SocketLib\SocketIO\SocketResponder.cs" />
+    <Compile Include="Models\SocketLib\SocketIO\SocketSender.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Models\FileResource.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Services\FileResourceManager.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Services\PathTranslator.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Services\TimeoutCollector.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\SocketReversedServer.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\SocketServer.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\SocketServerBase.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\SocketServerConfig.cs" />
+    <Compile Include="Models\SocketLib\Models\SocketServerFileStreamInfo.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\SocketServer_DirectoryPart.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\SocketServer_FileTransferPart.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\Main\SocketServer_SessionPart.cs" />
+    <Compile Include="Models\SocketLib\SocketServer\SocketSession.cs" />
     <Compile Include="Static\CommandInfo.cs" />
     <Compile Include="Static\SocketFactory.cs" />
     <Compile Include="Utils\Storage\ClientConfigStorage.cs" />
@@ -329,9 +330,6 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,6 +1,4 @@
 ﻿using FileManager.Exceptions;
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
 using FileManager.Static;
 using FileManager.ViewModels;
 using FileManager.Models.Serializable;
@@ -13,6 +11,7 @@ using System.Threading.Tasks;
 using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Enums;
 using System.IO;
+using FileManager.Models.SocketLib.Enums;
 
 namespace FileManager.Models.TransferLib.Services
 {

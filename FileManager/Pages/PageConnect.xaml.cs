@@ -16,13 +16,13 @@ using System.Threading;
 using System.Net;
 using System.Collections.ObjectModel;
 
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
 using FileManager.Windows;
 using FileManager.Models;
 using FileManager.Static;
-
-
+using FileManager.Models.SocketLib.SocketIO;
+using FileManager.Events;
+using FileManager.Models.SocketLib.Models;
+using FileManager.Models.SocketLib.Enums;
 
 namespace FileManager.Pages
 {

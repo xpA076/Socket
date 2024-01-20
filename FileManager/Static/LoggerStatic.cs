@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FileManager.Models.SocketLib.Enums;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,8 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
 
 namespace FileManager.Static
 {

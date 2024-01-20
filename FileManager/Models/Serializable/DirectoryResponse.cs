@@ -1,5 +1,5 @@
 ﻿using FileManager.Exceptions;
-using FileManager.SocketLib;
+using FileManager.Models.SocketLib;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;
@@ -81,7 +81,7 @@ namespace FileManager.Models.Serializable
         {
             BytesBuilder bb = new BytesBuilder();
             bb.Append((int)Type);
-            bb.Append<SocketFileInfo>(FileInfos);
+            bb.AppendList<SocketFileInfo>(FileInfos);
             bb.Append(AdditionalBytes);
             return bb.GetBytes();
         }

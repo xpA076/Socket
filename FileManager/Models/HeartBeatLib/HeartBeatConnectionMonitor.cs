@@ -6,8 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Events;
-using FileManager.SocketLib;
-using FileManager.SocketLib.Enums;
+using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Static;
 
 
