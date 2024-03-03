@@ -1,5 +1,6 @@
 ﻿using FileManager.Models.Serializable.Crypto;
 using FileManager.Utils.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,18 +13,31 @@ namespace FileManager.Models.SocketLib.Services
 {
     internal class CertificateService
     {
-        private static readonly CertificateService _instance = new CertificateService();
+        private readonly KeyStorage KeyStorage = Program.Provider.GetService<KeyStorage>();
 
-        public static CertificateService Instance { get { return _instance; } }
-
-        private CertificateService()
+        public CertificateService()
         {
 
         }
 
-        private readonly KeyStorage KeyStorage = KeyStorage.Instance;
+        public SocketCertificate ClientCertificate
+        {
+            get
+            {
+                return KeyStorage.ClientCertificate;
+            }
+        }
 
-        public bool IsTrustedCertificate(SocketCertificate certificate)
+        public SocketCertificate ServerCertificate
+        {
+            get
+            {
+                return KeyStorage.ServerCertificate;
+            }
+        }
+
+
+        public bool IsTrustedServerCertificate(SocketCertificate certificate)
         {
             if (!VerifyCertificate(certificate)) return false;
 
@@ -31,12 +45,31 @@ namespace FileManager.Models.SocketLib.Services
             return true;
         }
 
+        public bool IsTrustedClientCertificate(SocketCertificate certificate)
+        {
+            if (!VerifyCertificate(certificate)) return false;
+
+
+            return true;
+        }
+
+
+        public byte[] ClientSign(byte[] bytes)
+        {
+            return Sign(bytes, KeyStorage.ClientPrivateKey);
+        }
+
+        public byte[] ServerSign(byte[] bytes)
+        {
+            return Sign(bytes, KeyStorage.ServerPrivateKey);
+        }
+
         public bool VerifyCertificate(SocketCertificate certificate)
         {
             return Verify(certificate.InfoToBytes(), certificate.Signature, certificate);
         }
 
-        public byte[] Sign(byte[] bytes, SocketPrivateKey privateKey)
+        public static byte[] Sign(byte[] bytes, SocketPrivateKey privateKey)
         {
             using (ECDsaCng dsa = new ECDsaCng(CngKey.Import(privateKey.PrivateKey, CngKeyBlobFormat.EccPrivateBlob)))
             {
@@ -45,7 +78,7 @@ namespace FileManager.Models.SocketLib.Services
             }
         }
 
-        public bool Verify(byte[] bytes, byte[] signature, SocketCertificate certificate)
+        public static bool Verify(byte[] bytes, byte[] signature, SocketCertificate certificate)
         {
             using(ECDsaCng dsa = new ECDsaCng(CngKey.Import(certificate.PublicKey, CngKeyBlobFormat.EccPublicBlob))) 
             {
@@ -53,7 +86,7 @@ namespace FileManager.Models.SocketLib.Services
             }
         }
 
-        public SocketPrivateKey GenerateTemporaryKey()
+        public static SocketPrivateKey GenerateTemporaryKeyPair()
         {
             SocketPrivateKey privateKey = new SocketPrivateKey();
             privateKey.Certificate.StartTime = DateTime.Now;
@@ -62,7 +95,7 @@ namespace FileManager.Models.SocketLib.Services
             return privateKey;
         }
 
-        private void GenerateKey(ref SocketPrivateKey privateKey) 
+        private static void GenerateKey(ref SocketPrivateKey privateKey) 
         { 
             using(ECDsaCng dsa =  new ECDsaCng()) 
             {
@@ -70,7 +103,7 @@ namespace FileManager.Models.SocketLib.Services
                 privateKey.Certificate.PublicKey = dsa.Key.Export(CngKeyBlobFormat.EccPublicBlob);
                 privateKey.PrivateKey = dsa.Key.Export(CngKeyBlobFormat.EccPrivateBlob);
                 /// Sign public key
-                privateKey.Certificate.Signature = this.Sign(privateKey.Certificate.InfoToBytes(), privateKey);
+                privateKey.Certificate.Signature = CertificateService.Sign(privateKey.Certificate.InfoToBytes(), privateKey);
             }
         }
     }

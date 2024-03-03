@@ -279,9 +279,6 @@ namespace FileManager.Pages
 
         public void ButtonCreate_Click(object sender, RoutedEventArgs e)
         {
-            KeyStorage ks = KeyStorage.Instance;
-            StoragePathMapper sp = StoragePathMapper.Instance;
-            string s = sp.ClientPrivateKeyPath;
             /*
             CertificateService cs = CertificateService.Instance;
             SocketPrivateKey key = new SocketPrivateKey();

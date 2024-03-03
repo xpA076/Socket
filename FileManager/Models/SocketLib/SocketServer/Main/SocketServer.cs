@@ -13,8 +13,10 @@ using FileManager.Exceptions;
 using FileManager.Models;
 using FileManager.Models.Serializable;
 using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.SocketLib.Services;
 using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Models.SocketLib.SocketServer.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FileManager.Models.SocketLib.SocketServer.Main
 {
@@ -28,6 +30,8 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         private readonly FileResourceManager FileResourceManager = new FileResourceManager();
 
         private readonly PathTranslator PathTranslator = new PathTranslator();
+
+        private readonly CertificateService CertificateService = Program.Provider.GetService<CertificateService>();
 
         //protected SocketServer() { }
 

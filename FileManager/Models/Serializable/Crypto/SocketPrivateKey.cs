@@ -18,7 +18,7 @@ namespace FileManager.Models.Serializable.Crypto
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            this.Certificate.BuildFromBytes(bytes, ref idx);
+            this.Certificate = SocketCertificate.FromBytes(BytesParser.GetBytes(bytes, ref idx));
             this.PrivateKey = BytesParser.GetBytes(bytes, ref idx);
         }
 

@@ -135,15 +135,30 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         private void ResponseKeyExchange(SocketResponder responder, KeyExchangeRequest request)
         {
             KeyExchangeResponse response = new KeyExchangeResponse();
-            using (ECDiffieHellmanCng ec_server = new ECDiffieHellmanCng())
+            if (CertificateService.IsTrustedClientCertificate(request.Certificate))
             {
-                ec_server.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-                ec_server.HashAlgorithm = CngAlgorithm.Sha256;
-                CngKey clientKey = CngKey.Import(request.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
-                byte[] sharedKey = ec_server.DeriveKeyMaterial(clientKey);
-                responder.SetSymmetricKeys(sharedKey);
-                response.EcdhPublicKey = ec_server.PublicKey.ToByteArray();
+                using (ECDiffieHellmanCng ec_server = new ECDiffieHellmanCng())
+                {
+                    ec_server.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+                    ec_server.HashAlgorithm = CngAlgorithm.Sha256;
+
+                    /// Derive shared key
+                    CngKey clientKey = CngKey.Import(request.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
+                    byte[] sharedKey = ec_server.DeriveKeyMaterial(clientKey);
+                    responder.SetSymmetricKeys(sharedKey);
+
+                    /// Build response
+                    response.RequestCertificateValid = true;
+                    response.Certificate = CertificateService.ServerCertificate;
+                    response.EcdhPublicKey = ec_server.PublicKey.ToByteArray();
+                    response.Signature = CertificateService.ServerSign(response.EcdhPublicKey);
+                }
             }
+            else
+            {
+                response.RequestCertificateValid = false;
+            }
+
             this.Response(responder, response, encryptText: false);
         }
 

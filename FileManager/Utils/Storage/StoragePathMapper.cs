@@ -79,12 +79,21 @@ namespace FileManager.Utils.Storage
             }
         }
 
-        public string TrustedCertificatePath
+        public string TrustedClientCertificatePath
         {
             get
             {
-                return Path.Combine(this.ProgramDataPath, "trusted_cert.fms");
+                return Path.Combine(this.ProgramDataPath, "trusted_client_cert.fms");
             }
         }
+
+        public string TrustedServerCertificatePath
+        {
+            get
+            {
+                return Path.Combine(this.ProgramDataPath, "trusted_server_cert.fms");
+            }
+        }
+
     }
 }

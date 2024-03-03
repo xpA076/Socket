@@ -40,6 +40,13 @@ namespace FileManager.Models.Serializable.Crypto
             return bb.GetBytes();
         }
 
+        public static SocketCertificate FromBytes(byte[] bytes, int idx = 0)
+        {
+            SocketCertificate obj = new SocketCertificate();
+            obj.BuildFromBytes(bytes, ref idx);
+            return obj;
+        }
+
         public byte[] InfoToBytes()
         {
             BytesBuilder bb = new BytesBuilder();
