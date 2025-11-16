@@ -12,6 +12,10 @@ namespace FileManager.Models.Serializable.Crypto
     {
         public int Version { get; set; } = 1;
 
+        public string Publisher { get; set; } = "";
+
+        public string Owner { get; set; } = "";
+
         public DateTime StartTime { get; set; }
 
         public DateTime ExpireTime { get; set; }
@@ -23,6 +27,8 @@ namespace FileManager.Models.Serializable.Crypto
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
             this.Version = BytesParser.GetInt(bytes, ref idx);
+            this.Publisher = BytesParser.GetString(bytes, ref idx);
+            this.Owner = BytesParser.GetString(bytes, ref idx);
             this.StartTime = BytesParser.GetDateTime(bytes, ref idx);
             this.ExpireTime = BytesParser.GetDateTime(bytes, ref idx);
             this.PublicKey = BytesParser.GetBytes(bytes, ref idx);
@@ -33,6 +39,8 @@ namespace FileManager.Models.Serializable.Crypto
         {
             BytesBuilder bb = new BytesBuilder();
             bb.Append(Version);
+            bb.Append(Publisher);
+            bb.Append(Owner);
             bb.Append(StartTime);
             bb.Append(ExpireTime);
             bb.Append(PublicKey);
@@ -51,6 +59,8 @@ namespace FileManager.Models.Serializable.Crypto
         {
             BytesBuilder bb = new BytesBuilder();
             bb.Append(Version);
+            bb.Append(Publisher);
+            bb.Append(Owner);
             bb.Append(StartTime);
             bb.Append(ExpireTime);
             bb.Append(PublicKey);

@@ -7,11 +7,15 @@ using System.Threading.Tasks;
 
 using FileManager.Static;
 using FileManager.Models.SocketLib.Models;
+using FileManager.Models.Config;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FileManager.ViewModels
 {
     public class BrowserIPViewModel : INotifyPropertyChanged
     {
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private TCPAddress server_address = new TCPAddress();
@@ -41,7 +45,7 @@ namespace FileManager.ViewModels
                 else
                 {
                     return string.Format("Connected IP - {0}{1}", server_address.IP.ToString(),
-                        (server_address.Port == Config.Instance.DefaultServerPort) ? "" : (":" + server_address.Port.ToString()));
+                        (server_address.Port == configService.DefaultServerPort) ? "" : (":" + server_address.Port.ToString()));
                 }
             }
         }

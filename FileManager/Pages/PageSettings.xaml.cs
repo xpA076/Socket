@@ -12,9 +12,13 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
-using FileManager.Static;
+using FileManager.Models.Config;
 using FileManager.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Button = System.Windows.Controls.Button;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MessageBox = System.Windows.MessageBox;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace FileManager.Pages
 {
@@ -23,6 +27,8 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageSettings : Page
     {
+        private readonly ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         private readonly SettingsViewModel SettingsView = new SettingsViewModel();
 
         private Dictionary<string, RoutedEventHandler> ButtonEvents = new Dictionary<string, RoutedEventHandler>();
@@ -66,19 +72,17 @@ namespace FileManager.Pages
         {
             if (this.ClickCloseButtonActionMinimize.IsChecked == true)
             {
-                Config.Instance.ClickCloseToMinimize = true;
+                configService.ClickCloseToMinimize = true;
             }
             else
             {
-                Config.Instance.ClickCloseToMinimize = false;
+                configService.ClickCloseToMinimize = false;
             }
-            Config.Instance.SaveConfig();
             // 这里设为 true 和 false没区别, 只要调用了SettingsView 的 Setter
             SettingsView.ClickCloseToMinimize = true; 
             SettingsView.ClickCloseToClose = true;
             this.NullTextBox.Focus(); 
         }
-
 
 
 
@@ -118,8 +122,7 @@ namespace FileManager.Pages
             {
                 if (l > 0)
                 {
-                    Config.Instance.UpdateLengthThreshold = l;
-                    Config.Instance.SaveConfig();
+                    configService.UpdateLengthThreshold = l;
                     valid_flag = true;
                 }
             }
@@ -137,8 +140,7 @@ namespace FileManager.Pages
             {
                 if (i > 50)
                 {
-                    Config.Instance.UpdateTimeThreshold = i;
-                    Config.Instance.SaveConfig();
+                    configService.UpdateTimeThreshold = i;
                     valid_flag = true;
                 }
             }
@@ -157,8 +159,7 @@ namespace FileManager.Pages
             {
                 if (i >= 1 && i <= 65535)
                 {
-                    Config.Instance.DefaultServerPort = i;
-                    Config.Instance.SaveConfig();
+                    configService.DefaultServerPort = i;
                     valid_flag = true;
                 }
             }
@@ -177,8 +178,7 @@ namespace FileManager.Pages
             {
                 if (i > 500)
                 {
-                    Config.Instance.SocketSendTimeout = i;
-                    Config.Instance.SaveConfig();
+                    configService.SocketSendTimeout = i;
                     valid_flag = true;
                 }
             }
@@ -197,8 +197,7 @@ namespace FileManager.Pages
             {
                 if (i > 500)
                 {
-                    Config.Instance.SocketReceiveTimeout = i;
-                    Config.Instance.SaveConfig();
+                    configService.SocketReceiveTimeout = i;
                     valid_flag = true;
                 }
             }
@@ -216,8 +215,7 @@ namespace FileManager.Pages
             {
                 if (l > 0)
                 {
-                    Config.Instance.SmallFileThreshold = l;
-                    Config.Instance.SaveConfig();
+                    configService.SmallFileThreshold = l;
                     valid_flag = true;
                 }
             }
@@ -235,8 +233,7 @@ namespace FileManager.Pages
             {
                 if (i >= 1 && i <= 1024)
                 {
-                    Config.Instance.ThreadLimit = i;
-                    Config.Instance.SaveConfig();
+                    configService.ThreadLimit = i;
                     valid_flag = true;
                 }
             }
@@ -254,8 +251,7 @@ namespace FileManager.Pages
             {
                 if (i > 50)
                 {
-                    Config.Instance.SaveRecordInterval = i;
-                    Config.Instance.SaveConfig();
+                    configService.SaveRecordInterval = i;
                     valid_flag = true;
                 }
             }
@@ -273,8 +269,7 @@ namespace FileManager.Pages
             {
                 if (i > 0)
                 {
-                    Config.Instance.ConnectionMonitorRecordCount = i;
-                    Config.Instance.SaveConfig();
+                    configService.ConnectionMonitorRecordCount = i;
                     valid_flag = true;
                 }
             }
@@ -292,8 +287,7 @@ namespace FileManager.Pages
             {
                 if (i >= 20)
                 {
-                    Config.Instance.ConnectionMonitorRecordInterval = i;
-                    Config.Instance.SaveConfig();
+                    configService.ConnectionMonitorRecordInterval = i;
                     valid_flag = true;
                 }
             }
@@ -314,7 +308,7 @@ namespace FileManager.Pages
             p.StartInfo.RedirectStandardError = true;
             p.StartInfo.CreateNoWindow = true;
             p.Start();
-            p.StandardInput.WriteLine("C:\\Windows\\explorer.exe " + Config.ConfigDir + "&exit");
+            p.StandardInput.WriteLine("C:\\Windows\\explorer.exe " + configService.ConfigDir + "&exit");
             p.StandardInput.AutoFlush = true;
             p.WaitForExit();
             p.Close();

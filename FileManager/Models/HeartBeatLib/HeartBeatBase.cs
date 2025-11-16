@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
 using FileManager.Static;
 
-namespace FileManager.Models
+namespace FileManager.Models.HeartBeatLib
 {
     public abstract class HeartBeatBase
     {

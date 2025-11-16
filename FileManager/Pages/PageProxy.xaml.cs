@@ -17,10 +17,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using FileManager.Events;
+using FileManager.Models.Config;
+using FileManager.Models.Log;
 using FileManager.Models.SocketLib;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Static;
 using FileManager.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Color = System.Windows.Media.Color;
 
 namespace FileManager.Pages
 {
@@ -29,13 +33,17 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageProxy : Page
     {
+        private LogService logService = Program.Provider.GetService<LogService>();
+
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         private ServerRichTextBoxViewModel RichTextBoxView = new ServerRichTextBoxViewModel();
 
 
         public PageProxy()
         {
             InitializeComponent();
-            this.TextBoxPort.Text = Config.Instance.DefaultProxyPort.ToString();
+            this.TextBoxPort.Text = configService.DefaultProxyPort.ToString();
             RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
             this.TextBoxNull.DataContext = RichTextBoxView;
             //ButtonStartProxy_Click(null, null);
@@ -43,23 +51,7 @@ namespace FileManager.Pages
 
         private void ButtonStartProxy_Click(object sender, RoutedEventArgs e)
         {
-            this.ButtonStartProxy.Visibility = Visibility.Hidden;
-            IPAddress host = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip =>
-                ip.AddressFamily == AddressFamily.InterNetwork && !ip.ToString().StartsWith("172")).FirstOrDefault();
-            SocketProxy proxy = new SocketProxy(host);
-            proxy.SocketLog += Proxy_OnLog;
-            try
-            {
-                int port = int.Parse(this.TextBoxPort.Text);
-                proxy.InitializeServer(port);
-                proxy.StartListening();
-            }
-            catch (Exception ex)
-            {
-                proxy.Close();
-                //MessageBox.Show("Server window start listening error: " + ex.Message);
-                Proxy_OnLog(this, new SocketLogEventArgs("Proxy window start listening error: " + ex.Message, LogLevel.Error));
-            }
+
 
         }
 
@@ -75,7 +67,7 @@ namespace FileManager.Pages
             {
                 //return;
             }
-            LoggerStatic.ServerLog(e.log, e.logLevel, e.time);
+            logService.ServerLog(e.log, e.logLevel, e.time);
             this.RichTextBoxView.InvokeLog(e);
         }
 

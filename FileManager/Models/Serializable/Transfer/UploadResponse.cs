@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.Serializable
+namespace FileManager.Models.Serializable.Transfer
 {
     public class UploadResponse : ISocketSerializable
     {
@@ -44,8 +44,8 @@ namespace FileManager.Models.Serializable
 
         public UploadResponse(string err_msg)
         {
-            this.Type = ResponseType.ResponseException;
-            this.Bytes = Encoding.UTF8.GetBytes(err_msg);
+            Type = ResponseType.ResponseException;
+            Bytes = Encoding.UTF8.GetBytes(err_msg);
         }
 
         public static UploadResponse BuildSuccessResponse()
@@ -74,8 +74,8 @@ namespace FileManager.Models.Serializable
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
-            this.Bytes = BytesParser.GetBytes(bytes, ref idx);
+            Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
+            Bytes = BytesParser.GetBytes(bytes, ref idx);
         }
 
     }

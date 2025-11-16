@@ -221,6 +221,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         /// <param name="bytes"></param>
         private void ResponseCreateDirectory(SocketResponder responder, byte[] bytes)
         {
+            /*
             string err_msg = "";
             try
             {
@@ -243,6 +244,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
             {
                 responder.SendBytes(PacketType.CreateDirectoryDenied, err_msg);
             }
+            */
         }
         
 

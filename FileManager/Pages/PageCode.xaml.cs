@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FileManager.Windows.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,25 @@ namespace FileManager.Pages
         public PageCode()
         {
             InitializeComponent();
+        }
+
+        private void Button1_Click(object sender, RoutedEventArgs e)
+        {
+            CertificateSetupWindow window = new CertificateSetupWindow();
+            if (window.ShowDialog() == true)
+            {
+                return;
+            }
+        }
+
+        private void Button2_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Button3_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

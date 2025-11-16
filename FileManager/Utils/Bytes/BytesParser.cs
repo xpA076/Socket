@@ -23,6 +23,13 @@ namespace FileManager.Utils.Bytes
             return l;
         }
 
+        public static uint GetUint(byte[] value, ref int startIndex)
+        {
+            uint l = BitConverter.ToUInt32(value, startIndex);
+            startIndex += 4;
+            return l;
+        }
+
 
         public static long GetLong(byte[] value, ref int startIndex)
         {

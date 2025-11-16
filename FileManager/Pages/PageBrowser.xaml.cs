@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -30,6 +29,8 @@ using FileManager.Models.Serializable.Crypto;
 using FileManager.Utils.Storage;
 using FileManager.Models.SocketLib.Models;
 using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.Log;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FileManager.Pages
 {
@@ -38,8 +39,10 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageBrowser : Page
     {
+        private LogService logService = Program.Provider.GetService<LogService>();
+
         private FileManagerMainWindow MainWindow { get; set; }
-        private OpenFileDialog fileDialog = new OpenFileDialog();
+        private Microsoft.Win32.OpenFileDialog fileDialog = new Microsoft.Win32.OpenFileDialog();
         //private UploadSelectWindow uploadSelectWindow = new UploadSelectWindow();
         private List<SocketFileInfo> fileClasses;
 
@@ -327,7 +330,7 @@ namespace FileManager.Pages
             return Task.Run(() => {
                 try
                 {
-                    LoggerStatic.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
+                    logService.Log("Requesting directory : " + RemoteDirectory, LogLevel.Info);
                     DirectoryRequest request = new DirectoryRequest(RemoteDirectory);
                     //HB32Response hb_resp = SocketFactory.Instance.Request(PacketType.DirectoryRequest, request.ToBytes());
                     //DirectoryResponse response = DirectoryResponse.FromBytes(hb_resp.Bytes);
@@ -347,7 +350,7 @@ namespace FileManager.Pages
                 catch (Exception ex)
                 {
                     string msg = "Requesting remote directory \"" + RemoteDirectory + "\" failure : " + ex.Message;
-                    LoggerStatic.Log(msg, LogLevel.Warn);
+                    logService.Log(msg, LogLevel.Warn);
                     System.Windows.Forms.MessageBox.Show(msg);
                     return false;
                 }

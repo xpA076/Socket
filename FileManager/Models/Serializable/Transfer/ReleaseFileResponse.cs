@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.Serializable
+namespace FileManager.Models.Serializable.Transfer
 {
     public class ReleaseFileResponse : ISocketSerializable
     {
@@ -58,8 +58,8 @@ namespace FileManager.Models.Serializable
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
-            this.Message = BytesParser.GetString(bytes, ref idx);
+            Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
+            Message = BytesParser.GetString(bytes, ref idx);
         }
 
     }

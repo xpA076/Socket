@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Exceptions.Server;
 using FileManager.Models;
-using FileManager.Models.Serializable;
+using FileManager.Models.Serializable.Transfer;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.HbProtocol;
 using FileManager.Models.SocketLib.Models;

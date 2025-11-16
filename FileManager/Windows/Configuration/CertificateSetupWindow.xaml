@@ -1,0 +1,33 @@
+﻿<Window x:Class="FileManager.Windows.Configuration.CertificateSetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileManager.Windows.Configuration"
+        mc:Ignorable="d"
+        Title="CertificateSetupWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="1" Grid.Column="2">
+            <StackPanel>
+                <Button x:Name="ButtonRefresh" Content="Refresh" Click="ButtonRefresh_Click"/>
+                <Button x:Name="ButtonAddTrustedServer" Content="AddTrustedServer" Click="ButtonAddTrustedServer_Click"/>
+                <Button x:Name="ButtonAddTrustedClient" Content="AddTrustedClient" Click="ButtonAddTrustedClient_Click"/>
+                <Button x:Name="ButtonRemove" Content="Remove" Click="ButtonRemove_Click"/>
+                <Button x:Name="ButtonSetServerCertificate" Content="SetServerCertificate" Click="ButtonSetServerCertificate_Click"/>
+                <Button x:Name="ButtonSetClientCertificate" Content="SetClientCertificate" Click="ButtonSetClientCertificate_Click"/>
+                <Button x:Name="ButtonGenerateCertificate" Content="GenerateCertificate" Click="ButtonGenerateCertificate_Click"/>
+            </StackPanel>
+        </Grid>
+        
+    </Grid>
+</Window>

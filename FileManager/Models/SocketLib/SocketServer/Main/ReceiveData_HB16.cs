@@ -1,6 +1,7 @@
 ﻿using FileManager.Models.Serializable;
 using FileManager.Models.Serializable.Crypto;
 using FileManager.Models.Serializable.HeartBeat;
+using FileManager.Models.Serializable.Transfer;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Utils.Bytes;
@@ -164,29 +165,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
 
 
 
-        private void ServerExchangeKeys(SocketResponder responder, out SocketSession session)
-        {
-            /// Check identity
-            session = CreateSession(null); // todo
 
-            /// Response key exchange
-            using(ECDiffieHellmanCng ec_server = new ECDiffieHellmanCng())
-            {
-                ec_server.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-                ec_server.HashAlgorithm = CngAlgorithm.Sha256;
-                byte[] recv_bytes = responder.ReceiveBytes();
-                KeyExchangeRequest request = KeyExchangeRequest.FromBytes(recv_bytes);
-                CngKey clientKey = CngKey.Import(request.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
-                byte[] sharedKey = ec_server.DeriveKeyMaterial(clientKey);
-                responder.SetSymmetricKeys(sharedKey);
-                KeyExchangeResponse response = new KeyExchangeResponse()
-                {
-                    EcdhPublicKey = ec_server.PublicKey.ToByteArray()
-                };
-                responder.SendBytes(response.ToBytes(), encryptText: false);
-            }
-
-        }
 
     }
 }

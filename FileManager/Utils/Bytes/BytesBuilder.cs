@@ -52,6 +52,11 @@ namespace FileManager.Utils.Bytes
             AppendBytes(BitConverter.GetBytes(value));
         }
 
+        public void Append(uint value)
+        {
+            AppendBytes(BitConverter.GetBytes(value));
+        }
+
         public void Append(long value)
         {
             AppendBytes(BitConverter.GetBytes(value));

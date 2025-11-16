@@ -2,6 +2,7 @@
 using FileManager.Models.SocketLib;
 using FileManager.Models.SocketLib.Services;
 using FileManager.Utils.Bytes;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +15,7 @@ namespace FileManager.Utils.Storage
 {
     public sealed class KeyStorage
     {
-        private readonly StoragePathMapper PathMapper = StoragePathMapper.Instance;
+        private readonly StoragePathMapper PathMapper = Program.Provider.GetService<StoragePathMapper>();
 
         private SocketPrivateKey _clientPrivateKey = new SocketPrivateKey();
 
@@ -24,48 +25,96 @@ namespace FileManager.Utils.Storage
 
         private List<SocketCertificate> _trustedServerCertificateList = new List<SocketCertificate>();
 
+        private string ClientPrivateKeyPath
+        {
+            get
+            {
+                return Path.Combine(PathMapper.CertificateDirectory, "client_prv_key.fms");
+            }
+        }
+
+        private string ClientCertificatePath
+        {
+            get
+            {
+                return Path.Combine(PathMapper.CertificateDirectory, "client_cert.fms");
+            }
+        }
+
+        private string ServerPrivateKeyPath
+        {
+            get
+            {
+                return Path.Combine(PathMapper.CertificateDirectory, "server_prv_key.fms");
+            }
+        }
+
+        private string ServerCertificatePath
+        {
+            get
+            {
+                return Path.Combine(PathMapper.CertificateDirectory, "server_cert.fms");
+            }
+        }
+
+        private string TrustedClientCertificatePath
+        {
+            get
+            {
+                return Path.Combine(PathMapper.CertificateDirectory, "trusted_client_cert.fms");
+            }
+        }
+
+        private string TrustedServerCertificatePath
+        {
+            get
+            {
+                return Path.Combine(PathMapper.CertificateDirectory, "trusted_server_cert.fms");
+            }
+        }
+
         public KeyStorage() 
         {
             /// Client certificate
-            if (File.Exists(PathMapper.ClientPrivateKeyPath))
+            if (File.Exists(this.ClientPrivateKeyPath))
             {
-                _clientPrivateKey = this.LoadKey(PathMapper.ClientPrivateKeyPath);
+                _clientPrivateKey = this.LoadKey(this.ClientPrivateKeyPath);
             }
             else
             {
                 _clientPrivateKey = CertificateService.GenerateTemporaryKeyPair();
-                SaveKey(_clientPrivateKey, PathMapper.ClientPrivateKeyPath);
-                SaveKey(_clientPrivateKey.Certificate, PathMapper.ClientCertificatePath);
+                SaveKey(_clientPrivateKey, this.ClientPrivateKeyPath);
+                SaveKey(_clientPrivateKey.Certificate, this.ClientCertificatePath);
             }
             /// Server certificate
-            if (File.Exists(PathMapper.ServerPrivateKeyPath))
+            if (File.Exists(this.ServerPrivateKeyPath))
             {
-                _serverPrivateKey = this.LoadKey(PathMapper.ServerPrivateKeyPath);
+                _serverPrivateKey = this.LoadKey(this.ServerPrivateKeyPath);
             }
             else
             {
                 _serverPrivateKey = CertificateService.GenerateTemporaryKeyPair();
-                SaveKey(_serverPrivateKey, PathMapper.ServerPrivateKeyPath);
-                SaveKey(_serverPrivateKey.Certificate, PathMapper.ServerCertificatePath);
+                SaveKey(_serverPrivateKey, this.ServerPrivateKeyPath);
+                SaveKey(_serverPrivateKey.Certificate, this.ServerCertificatePath);
             }
             /// Trusted client certificate
-            if (File.Exists(PathMapper.TrustedClientCertificatePath))
+            if (File.Exists(this.TrustedClientCertificatePath))
             {
-                _trustedClientCertificateList = LoadTrustedCertificate(PathMapper.TrustedClientCertificatePath);
+                _trustedClientCertificateList = LoadTrustedCertificate(this.TrustedClientCertificatePath);
             }
             else
             {
                 _trustedClientCertificateList = new List<SocketCertificate>();
-                SaveTrustedCertificate(this._trustedClientCertificateList, PathMapper.TrustedClientCertificatePath);
+                SaveTrustedCertificate(this._trustedClientCertificateList, this.TrustedClientCertificatePath);
             }
-            if (File.Exists(PathMapper.TrustedServerCertificatePath))
+            if (File.Exists(this.TrustedServerCertificatePath))
             {
-                _trustedServerCertificateList = LoadTrustedCertificate(PathMapper.TrustedServerCertificatePath);
+                _trustedServerCertificateList = LoadTrustedCertificate(this.TrustedServerCertificatePath);
             }
             else
             {
                 _trustedServerCertificateList = new List<SocketCertificate>();
-                SaveTrustedCertificate(this._trustedServerCertificateList, PathMapper.TrustedServerCertificatePath);
+                SaveTrustedCertificate(this._trustedServerCertificateList, this.TrustedServerCertificatePath);
             }
         }
 
@@ -78,8 +127,8 @@ namespace FileManager.Utils.Storage
             set 
             {
                 _clientPrivateKey = value;
-                SaveKey(_clientPrivateKey, PathMapper.ClientPrivateKeyPath);
-                SaveKey(_clientPrivateKey.Certificate, PathMapper.ClientCertificatePath);
+                SaveKey(_clientPrivateKey, this.ClientPrivateKeyPath);
+                SaveKey(_clientPrivateKey.Certificate, this.ClientCertificatePath);
             }
         }
 
@@ -100,8 +149,8 @@ namespace FileManager.Utils.Storage
             set
             {
                 _serverPrivateKey = value;
-                SaveKey(_serverPrivateKey, PathMapper.ServerPrivateKeyPath);
-                SaveKey(_serverPrivateKey.Certificate, PathMapper.ServerCertificatePath);
+                SaveKey(_serverPrivateKey, this.ServerPrivateKeyPath);
+                SaveKey(_serverPrivateKey.Certificate, this.ServerCertificatePath);
             }
         }
 

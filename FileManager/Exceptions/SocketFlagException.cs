@@ -39,18 +39,6 @@ namespace FileManager.Exceptions
         }
 
 
-        public SocketFlagException(HB32Header header, byte[] bytes)
-        {
-            Header = header;
-            Bytes = bytes;
-        }
-
-        public SocketFlagException(PacketType required_flag, HB32Response resp)
-        {
-            RequiredFlag = required_flag;
-            Header = resp.Header;
-            Bytes = resp.Bytes;
-        }
 
 
         public SocketFlagException(PacketType required_flag, HB32Header header, byte[] bytes)

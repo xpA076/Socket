@@ -6,12 +6,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Events;
+using FileManager.Models.Config;
+using FileManager.Models.Log;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Static;
+using Microsoft.Extensions.DependencyInjection;
 
-
-namespace FileManager.Models
+namespace FileManager.Models.HeartBeatLib
 {
     public class HeartBeatConnectionStatusRecord
     {
@@ -20,14 +22,18 @@ namespace FileManager.Models
 
         public void CopyFrom(HeartBeatConnectionStatusRecord src)
         {
-            this.Status = src.Status;
-            this.TimeStamp = src.TimeStamp;
+            Status = src.Status;
+            TimeStamp = src.TimeStamp;
         }
     }
 
 
     public class HeartBeatConnectionMonitor : HeartBeatBase
     {
+
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
+        private LogService logService = Program.Provider.GetService<LogService>();
 
         public event UpdateUIEventHandler HeartBeatUnitCallback = null;
 
@@ -46,13 +52,13 @@ namespace FileManager.Models
         public void Init()
         {
             StatusRecords.Clear();
-            this.Interval = Config.Instance.ConnectionMonitorRecordInterval;
+            Interval = configService.ConnectionMonitorRecordInterval;
             StartTime = DateTime.Now;
         }
 
         private void AddRecord(bool status)
         {
-            if (StatusRecords.Count < Config.Instance.ConnectionMonitorRecordCount)
+            if (StatusRecords.Count < configService.ConnectionMonitorRecordCount)
             {
                 StatusRecords.Add(new HeartBeatConnectionStatusRecord
                 {
@@ -86,7 +92,7 @@ namespace FileManager.Models
             catch(ThreadAbortException ex)
             {
                 /// https://www.cnblogs.com/jackson0714/p/AbortThread.html
-                LoggerStatic.Log("HeartBeatConnection aborted : " + ex.Message, LogLevel.Info);
+                logService.Log("HeartBeatConnection aborted : " + ex.Message, LogLevel.Info);
             }
             finally
             {
@@ -101,9 +107,9 @@ namespace FileManager.Models
         {
             try
             {
-                SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(1, Interval);
+                //SocketClient client = SocketFactory.Instance.GenerateConnectedSocketClient(1, Interval);
                 
-                client.Close();
+                //client.Close();
                 AddRecord(true);
             }
             catch (Exception)

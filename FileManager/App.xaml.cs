@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FileManager.Windows.TrayIcon;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -12,8 +13,11 @@ namespace FileManager
     /// <summary>
     /// App.xaml 的交互逻辑
     /// </summary>
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
+        private TrayIcon? _trayIcon;
+
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             if (e.Args.Length == 0)
@@ -25,22 +29,29 @@ namespace FileManager
                 //int a = 2;
             }
             return;
-            //CatchException();
-            //AppDomain.CurrentDomain.AssemblyResolve += OnResolveAssembly;
-            /*
-            AppDomain.CurrentDomain.AssemblyResolve += (_sender, _args) =>
-            {
-                //return null;
-                string projectName = Assembly.GetExecutingAssembly().GetName().Name.ToString();
-                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(projectName + ".SocketLib.dll"))
-                {
-                    byte[] b = new byte[stream.Length];
-                    stream.Read(b, 0, b.Length);
-                    return Assembly.Load(b);
-                }
-            };
-            */
+
         }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+            _trayIcon = new TrayIcon();
+            _trayIcon.Initialize();
+            //Current.MainWindow.Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+            ((Window)sender).Hide();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _trayIcon?.Dispose();
+            base.OnExit(e);
+        }
+
 
         private static Assembly OnResolveAssembly(object sender, ResolveEventArgs args)
         {

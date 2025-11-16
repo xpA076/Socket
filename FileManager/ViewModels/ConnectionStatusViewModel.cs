@@ -4,8 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using FileManager.Models;
+using FileManager.Models.HeartBeatLib;
 using FileManager.Static;
 
 namespace FileManager.ViewModels

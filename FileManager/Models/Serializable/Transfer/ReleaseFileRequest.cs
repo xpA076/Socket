@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.Serializable
+namespace FileManager.Models.Serializable.Transfer
 {
     public class ReleaseFileRequest : ISocketSerializable
     {
@@ -54,9 +54,9 @@ namespace FileManager.Models.Serializable
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            this.Type = (RequestType)BytesParser.GetInt(bytes, ref idx);
-            this.From = (ReleaseFrom)BytesParser.GetInt(bytes, ref idx);
-            this.ViewPath = BytesParser.GetString(bytes, ref idx);
+            Type = (RequestType)BytesParser.GetInt(bytes, ref idx);
+            From = (ReleaseFrom)BytesParser.GetInt(bytes, ref idx);
+            ViewPath = BytesParser.GetString(bytes, ref idx);
         }
 
     }

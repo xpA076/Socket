@@ -7,11 +7,16 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
 using FileManager.Static;
+using System.Configuration;
+using FileManager.Models.Config;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FileManager.ViewModels
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         public event PropertyChangedEventHandler PropertyChanged;
 
 
@@ -19,7 +24,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.ClickCloseToMinimize;
+                return configService.ClickCloseToMinimize;
             }
             set
             {
@@ -31,7 +36,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return !Config.Instance.ClickCloseToMinimize;
+                return !configService.ClickCloseToMinimize;
             }
             set
             {
@@ -43,7 +48,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return ConvertLengthToBytesString(Config.Instance.UpdateLengthThreshold);
+                return ConvertLengthToBytesString(configService.UpdateLengthThreshold);
             }
             set
             {
@@ -55,7 +60,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.UpdateTimeThreshold.ToString();
+                return configService.UpdateTimeThreshold.ToString();
             }
             set
             {
@@ -67,7 +72,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.DefaultServerPort.ToString();
+                return configService.DefaultServerPort.ToString();
             }
             set
             {
@@ -80,7 +85,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.SocketSendTimeout.ToString();
+                return configService.SocketSendTimeout.ToString();
             }
             set
             {
@@ -91,7 +96,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.SocketReceiveTimeout.ToString();
+                return configService.SocketReceiveTimeout.ToString();
             }
             set
             {
@@ -103,7 +108,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return ConvertLengthToBytesString(Config.Instance.SmallFileThreshold);
+                return ConvertLengthToBytesString(configService.SmallFileThreshold);
             }
             set
             {
@@ -115,7 +120,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.ThreadLimit.ToString();
+                return configService.ThreadLimit.ToString();
             }
             set
             {
@@ -127,7 +132,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.SaveRecordInterval.ToString();
+                return configService.SaveRecordInterval.ToString();
             }
             set
             {
@@ -139,7 +144,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.ConnectionMonitorRecordCount.ToString();
+                return configService.ConnectionMonitorRecordCount.ToString();
             }
             set
             {
@@ -151,7 +156,7 @@ namespace FileManager.ViewModels
         {
             get
             {
-                return Config.Instance.ConnectionMonitorRecordInterval.ToString();
+                return configService.ConnectionMonitorRecordInterval.ToString();
             }
             set
             {

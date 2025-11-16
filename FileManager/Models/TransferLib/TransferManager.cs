@@ -1,7 +1,9 @@
-﻿using FileManager.Models.TransferLib.Info;
+﻿using FileManager.Models.Config;
+using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
 using FileManager.Static;
 using FileManager.ViewModels.PageTransfer;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +16,8 @@ namespace FileManager.Models.TransferLib
 {
     public class TransferManager
     {
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         private TransferThreadPool TransferThreadPool = new TransferThreadPool();
 
         public readonly List<TransferInfoRoot> InfoRoots = new List<TransferInfoRoot>();
@@ -126,7 +130,7 @@ namespace FileManager.Models.TransferLib
 
         private void DeleteRecord()
         {
-            File.Delete(Config.RecordPath);
+            //File.Delete(FileManager.Static.Config.RecordPath);
         }
 
 
@@ -134,7 +138,7 @@ namespace FileManager.Models.TransferLib
         {
             while (true)
             {
-                if (StopRecordSignal.WaitOne(Config.Instance.SaveRecordInterval))
+                if (StopRecordSignal.WaitOne(configService.SaveRecordInterval))
                 {
                     SaveRecord();
                     IsRecording = false;
@@ -151,10 +155,7 @@ namespace FileManager.Models.TransferLib
 
         private void SaveRecord()
         {
-            using(FileStream fs = new FileStream(Config.RecordPath, FileMode.OpenOrCreate))
-            {
 
-            }
         }
 
 

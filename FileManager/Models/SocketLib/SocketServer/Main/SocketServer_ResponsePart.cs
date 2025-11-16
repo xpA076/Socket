@@ -40,7 +40,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
                     break;
             }
             bb.Concatenate(response.ToBytes());
-            responder.SendBytes(bb.GetBytes(), encryptText: encryptText);
+            //responder.SendBytes(bb.GetBytes(), encryptText: encryptText);
         }
     }
 }

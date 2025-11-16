@@ -12,11 +12,15 @@ using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Enums;
 using System.IO;
 using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.Log;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FileManager.Models.TransferLib.Services
 {
     public class TransferInfoRootQuerier
     {
+        private LogService logService = Program.Provider.GetService<LogService>();
+
         private readonly TransferInfoRoot RootInfo = null;
 
         private List<DownloadConfirmViewModel> DownloadConfirmViewModels = null;
@@ -131,7 +135,7 @@ namespace FileManager.Models.TransferLib.Services
                 {
                     /// 当前任务标记为失败
                     IsQueryHaveFailed = true;
-                    LoggerStatic.Log(ex.Message, LogLevel.Warn);
+                    logService.Log(ex.Message, LogLevel.Warn);
                     Thread.Sleep(1000);
                     continue;
                 }

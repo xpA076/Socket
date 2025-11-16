@@ -11,9 +11,9 @@ namespace FileManager.Models.Serializable.Crypto
 {
     public class AesEncryptedBytes : ISocketSerializable
     {
-        public byte[] IV { get; set; }
+        public byte[] IV { get; set; } = Array.Empty<byte>();
 
-        public byte[] EncryptedBytes { get; set; }
+        public byte[] EncryptedBytes { get; set; } = Array.Empty<byte>();
 
         public static AesEncryptedBytes FromBytes(byte[] bytes)
         {

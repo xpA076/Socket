@@ -13,6 +13,10 @@ using FileManager.Models.Serializable.Crypto;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.HbProtocol;
 using FileManager.Models.SocketLib.Models;
+using FileManager.Utils.Bytes;
+using Microsoft.VisualBasic;
+using System.Reflection.Metadata.Ecma335;
+
 
 namespace FileManager.Models.SocketLib.SocketIO
 {
@@ -20,32 +24,36 @@ namespace FileManager.Models.SocketLib.SocketIO
     /// Socket 连接中的 client / server 端, 有简单封装的 Connect / SendBytes / ReceiveBytes 方法
     /// </summary>
 
-    public class SocketEndPoint
+    public class SocketEndPoint : IDisposable
     {
-        protected Socket socket = null;
+        
 
-        protected bool EncryptFlag
+        private const int BufferSize = 64 * 1024;
+
+        private const uint MagicHeader = 0x0134DA75;
+
+        protected Socket? socket;
+
+        public bool Connected
         {
             get
             {
-                return AesKeys != null;
+                return this.socket.Connected;
             }
         }
-        protected byte[] AesKeys = null;
 
-        /// <summary>
-        /// 当前 SocketEndPoint 是否为向代理端主动通信的对象
-        /// 这种情况下数据通信需要额外添加代理包头
-        /// </summary>
-        public bool IsRequireProxyHeader { get; protected set; } = false;
+        public SocketEndPoint()
+        {
 
+        }
+
+        protected byte[]? AesKeys;
 
         public void SetTimeout(int send_timeout, int receive_timeout)
         {
             socket.SendTimeout = send_timeout;
             socket.ReceiveTimeout = receive_timeout;
         }
-
 
         public void SetSymmetricKeys(byte[] keys)
         {
@@ -60,23 +68,286 @@ namespace FileManager.Models.SocketLib.SocketIO
         {
             if (buffer.Length == 0) { return; }
             int _size = (size < 0) ? buffer.Length : size;
-            int zeroReceiveCount = 0;
-            int rec = 0;    // 函数内累计接收字节数
-            int _rec;       // 单个 Socket.Receive 调用接收字节数
-
-            _rec = socket.Receive(buffer, offset, _size, SocketFlags.None);
-            if (_rec == 0) { zeroReceiveCount++; }
-            rec += _rec;
-
+            int rec = 0;    /// 函数内累计接收字节数
+            int _rec;       /// 单个 Socket.Receive 调用接收字节数
             while (rec != _size)
             {
                 _rec = socket.Receive(buffer, offset + rec, _size - rec, SocketFlags.None);
-                if (_rec == 0) { zeroReceiveCount++; }
+                if (_rec == 0) throw new SocketConnectionException(SocketStatus.ZeroReceive);
                 rec += _rec;
-                if (zeroReceiveCount > 3) { throw new SocketConnectionException("Buffer receive error: cannot receive package"); }
-
             }
         }
+
+        private async Task ReceiveBufferAsync(byte[] buffer, int size = -1, int offset = 0)
+        {
+            if (buffer.Length == 0) { return; }
+            int _size = (size < 0) ? buffer.Length : size;
+            int rec = 0;    /// 函数内累计接收字节数
+            while (rec < _size)
+            {
+                int _rec = await socket.ReceiveAsync(new ArraySegment<byte>(buffer, rec, size - rec), SocketFlags.None);
+                if (_rec == 0) throw new SocketConnectionException(SocketStatus.ZeroReceive);
+                rec += _rec;
+            }
+        }
+
+
+        private async Task SendBytesIOAsync(byte[] bytes, bool encrypted = false)
+        {
+            /// Send Header
+            CRC32 crc32 = new CRC32();
+            uint result = crc32.Compute(bytes);
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(SocketEndPoint.MagicHeader);
+            bb.Append((uint)bytes.Length);
+            bb.Append(result);
+            bb.Append(encrypted);
+            bb.Append(new byte[3]);
+            await socket.SendAsync(new ArraySegment<byte>(bb.GetBytes()), SocketFlags.None);
+
+            /// Send content
+            int totalSent = 0;
+            int remaining = bytes.Length;
+            while (true)
+            {
+                /// send trunk
+                int chunkSize = Math.Min(BufferSize, remaining);
+                var segment = new ArraySegment<byte>(bytes, totalSent, chunkSize);
+                int sent = await socket.SendAsync(segment, SocketFlags.None);
+                if (sent == 0) throw new SocketConnectionException(SocketStatus.ZeroSend);
+                totalSent += sent;
+                remaining -= sent;
+                /// break
+                if (remaining == 0) break;
+                /// send magic header
+                sent = await socket.SendAsync(BitConverter.GetBytes(SocketEndPoint.MagicHeader), SocketFlags.None);
+                if (sent == 0) throw new SocketConnectionException(SocketStatus.ZeroSend);
+            }
+        }
+
+        private void SendBytesIO(byte[] bytes, bool encrypted = false)
+        {
+            /// Send Header
+            CRC32 crc32 = new CRC32();
+            uint result = crc32.Compute(bytes);
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(SocketEndPoint.MagicHeader);
+            bb.Append((uint)bytes.Length);
+            bb.Append(result);
+            bb.Append(encrypted);
+            bb.Append(new byte[3]);
+            socket.Send(new ArraySegment<byte>(bb.GetBytes()), SocketFlags.None);
+
+            /// Send content
+            int totalSent = 0;
+            int remaining = bytes.Length;
+            while (true)
+            {
+                /// send trunk
+                int chunkSize = Math.Min(BufferSize, remaining);
+                var segment = new ArraySegment<byte>(bytes, totalSent, chunkSize);
+                int sent = socket.Send(segment, SocketFlags.None);
+                if (sent == 0) throw new SocketConnectionException(SocketStatus.ZeroSend);
+                totalSent += sent;
+                remaining -= sent;
+                /// break
+                if (remaining == 0) break;
+                /// send magic header
+                sent = socket.Send(BitConverter.GetBytes(SocketEndPoint.MagicHeader), SocketFlags.None);
+                if (sent == 0) throw new SocketConnectionException(SocketStatus.ZeroSend);
+            }
+        }
+
+        private async Task<(byte[], bool)> ReceiveBytesIOAsync()
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                /// Receive header
+                byte[] header = new byte[16];
+                await this.ReceiveBufferAsync(header);
+                uint receiveMagicHeader = BitConverter.ToUInt32(header, 0);
+                int totalLength = (int)BitConverter.ToUInt32(header, 4);
+                uint checkSum = BitConverter.ToUInt32(header, 8);
+                bool encrypted = header[12] != 0;
+                if (receiveMagicHeader != SocketEndPoint.MagicHeader) throw new SocketConnectionException(SocketStatus.WrongMagicHeader);
+
+                /// Receive content
+                byte[] buffer = new byte[SocketEndPoint.BufferSize];
+                int totalReceived = 0;
+                while (true)
+                {
+                    /// receive content
+                    int toReceive = (int)Math.Min(buffer.Length, totalLength - totalReceived);
+                    int received = await socket.ReceiveAsync(new ArraySegment<byte>(buffer, 0, toReceive), SocketFlags.None);
+                    if (received == 0) throw new SocketConnectionException(SocketStatus.ZeroReceive);
+                    await ms.WriteAsync(buffer, 0, received);
+                    totalReceived += received;
+                    /// break
+                    if (totalReceived == totalLength) break;
+                    /// receive magic header after trunk
+                    byte[] recv = new byte[4];
+                    await ReceiveBufferAsync(recv);
+                    receiveMagicHeader = BitConverter.ToUInt32(recv, 0);
+                    if (receiveMagicHeader != SocketEndPoint.MagicHeader) throw new SocketConnectionException(SocketStatus.WrongMagicHeader);
+                }
+
+                /// Check sum
+                byte[] bytes = ms.ToArray();
+                CRC32 crc32 = new CRC32();
+                uint crc_result = crc32.Compute(bytes);
+                if (crc_result != checkSum) throw new SocketConnectionException(SocketStatus.WrongCheckSum);
+
+                /// return
+                return (bytes, encrypted);
+            }
+        }
+
+        private (byte[] bytes, bool encrypted) ReceiveBytesIO()
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                /// Receive header
+                byte[] header = new byte[16];
+                this.ReceiveBuffer(header);
+                uint receiveMagicHeader = BitConverter.ToUInt32(header, 0);
+                int totalLength = (int)BitConverter.ToUInt32(header, 4);
+                uint checkSum = BitConverter.ToUInt32(header, 8);
+                bool encrypted = header[12] != 0;
+                if (receiveMagicHeader != SocketEndPoint.MagicHeader) throw new SocketConnectionException(SocketStatus.WrongMagicHeader);
+
+                /// Receive content
+                byte[] buffer = new byte[SocketEndPoint.BufferSize];
+                int totalReceived = 0;
+                while (true)
+                {
+                    /// receive content
+                    int toReceive = (int)Math.Min(buffer.Length, totalLength - totalReceived);
+                    int received = socket.Receive(new ArraySegment<byte>(buffer, 0, toReceive), SocketFlags.None);
+                    if (received == 0) throw new SocketConnectionException(SocketStatus.ZeroReceive);
+                    ms.Write(buffer, 0, received);
+                    totalReceived += received;
+                    /// break
+                    if (totalReceived == totalLength) break;
+                    /// receive magic header after trunk
+                    byte[] recv = new byte[4];
+                    this.ReceiveBuffer(recv);
+                    receiveMagicHeader = BitConverter.ToUInt32(recv, 0);
+                    if (receiveMagicHeader != SocketEndPoint.MagicHeader) throw new SocketConnectionException(SocketStatus.WrongMagicHeader);
+                }
+
+                /// Check sum
+                byte[] bytes = ms.ToArray();
+                CRC32 crc32 = new CRC32();
+                uint crc_result = crc32.Compute(bytes);
+                if (crc_result != checkSum) throw new SocketConnectionException(SocketStatus.WrongCheckSum);
+
+                /// return
+                return (bytes, encrypted);
+            }
+        }
+
+        public async Task SendBytesAsync(byte[] bytes)
+        {
+            if (this.AesKeys != null)
+            {
+                AesEncryptedBytes enc = new AesEncryptedBytes();
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = this.AesKeys;
+                    enc.IV = aes.IV;
+                    using (MemoryStream cipherText = new MemoryStream())
+                    using (CryptoStream cs = new CryptoStream(cipherText, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        cs.Write(bytes, 0, bytes.Length);
+                        cs.Close();
+                        enc.EncryptedBytes = cipherText.ToArray();
+                    }
+                }
+                await SendBytesIOAsync(enc.ToBytes(), true);
+            }
+            else
+            {
+                await SendBytesIOAsync(bytes, false);
+            }
+        }
+
+        public void SendBytes(byte[] bytes)
+        {
+            if (this.AesKeys != null)
+            {
+                AesEncryptedBytes enc = new AesEncryptedBytes();
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = this.AesKeys;
+                    enc.IV = aes.IV;
+                    using (MemoryStream cipherText = new MemoryStream())
+                    using (CryptoStream cs = new CryptoStream(cipherText, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        cs.Write(bytes, 0, bytes.Length);
+                        cs.Close();
+                        enc.EncryptedBytes = cipherText.ToArray();
+                    }
+                }
+                SendBytesIO(enc.ToBytes(), true);
+            }
+            else
+            {
+                SendBytesIO(bytes, false);
+            }
+        }
+
+        public async Task<byte[]> ReceiveBytesAsync()
+        {
+            var (bytes, encrypted) = await ReceiveBytesIOAsync();
+            if (encrypted)
+            {
+                if (this.AesKeys == null) throw new SocketConnectionException(SocketStatus.DecryptExcepton, "Need decrpypt before AES key setup");
+                AesEncryptedBytes enc = AesEncryptedBytes.FromBytes(bytes);
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = this.AesKeys;
+                    aes.IV = enc.IV;
+                    using (MemoryStream plainText = new MemoryStream())
+                    using (CryptoStream cs = new CryptoStream(plainText, aes.CreateDecryptor(), CryptoStreamMode.Write))
+                    {
+                        cs.Write(enc.EncryptedBytes, 0, enc.EncryptedBytes.Length);
+                        cs.Close();
+                        return plainText.ToArray();
+                    }
+                }
+            }
+            else
+            {
+                return bytes;
+            }
+        }
+
+        public byte[] ReceiveBytes()
+        {
+            var (bytes, encrypted) = ReceiveBytesIO();
+            if (encrypted)
+            {
+                if (this.AesKeys == null) throw new SocketConnectionException(SocketStatus.DecryptExcepton, "Need decrpypt before AES key setup");
+                AesEncryptedBytes enc = AesEncryptedBytes.FromBytes(bytes);
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = this.AesKeys;
+                    aes.IV = enc.IV;
+                    using (MemoryStream plainText = new MemoryStream())
+                    using (CryptoStream cs = new CryptoStream(plainText, aes.CreateDecryptor(), CryptoStreamMode.Write))
+                    {
+                        cs.Write(enc.EncryptedBytes, 0, enc.EncryptedBytes.Length);
+                        cs.Close();
+                        return plainText.ToArray();
+                    }
+                }
+            }
+            else
+            {
+                return bytes;
+            }
+        }
+        /*
 
         private void SendBytesIO(UInt32 u32h, byte[] bytes, int truncateLength)
         {
@@ -188,7 +459,7 @@ namespace FileManager.Models.SocketLib.SocketIO
                 }
             }
         }
-
+        */
         #endregion
 
         #region Send / Receive
@@ -196,14 +467,8 @@ namespace FileManager.Models.SocketLib.SocketIO
 
         public void SendHeader(HB32Header header)
         {
-            if (IsRequireProxyHeader)
-            {
-                SocketIO.SendHeader(socket, header, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendHeader });
-            }
-            else
-            {
-                SocketIO.SendHeader(socket, header, new byte[2] { 0, 0 });
-            }
+            SocketIO.SendHeader(socket, header, new byte[2] { 0, 0 });
+
         }
 
 
@@ -220,30 +485,13 @@ namespace FileManager.Models.SocketLib.SocketIO
 
         public void SendBytes(HB32Header header, byte[] bytes, int packetLength)
         {
-            if (IsRequireProxyHeader)
-            {
-                SocketIO.SendBytes(socket, new byte[2] { SocketProxy.ProxyHeaderByte, (byte)ProxyHeader.SendBytes },
-                    header, bytes, packetLength);
-            }
-            else
-            {
-                SocketIO.SendBytes(socket, new byte[2] { 0, 0 },
-                    header, bytes, packetLength);
-            }
-
+            SocketIO.SendBytes(socket, new byte[2] { 0, 0 }, header, bytes, packetLength);
         }
 
         public void SendBytes(HB32Header header, byte[] bytes)
         {
             SendBytes(header, bytes, HB32Encoding.DataSize);
         }
-
-        public void SendBytes(HB32Header header, string str)
-        {
-            SendBytes(header, Encoding.UTF8.GetBytes(str));
-        }
-
-
 
 
         public void SendBytes(PacketType flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
@@ -263,36 +511,11 @@ namespace FileManager.Models.SocketLib.SocketIO
         }
 
 
-        public ProxyHeader ReceiveProxyHeader()
-        {
-            byte[] proxy_bytes = new byte[2];
-            SocketIO.ReceiveBuffer(socket, proxy_bytes);
-            if (proxy_bytes[0] == 0x01)
-            {
-                return (ProxyHeader)proxy_bytes[1];
-            }
-            return ProxyHeader.None;
-        }
-
 
         public void ReceiveBytes(out HB32Header header, out byte[] bytes)
         {
-            if (IsRequireProxyHeader)
-            {
-                socket.Send(new byte[2] { 0xA3, (byte)ProxyHeader.ReceiveBytes });
-            }
-            /// Receive 的数据仍有一个空的ProxyHeader, 应处理后再接收数据
-            /// 2023.09.14 重写 SocketIO.SendBytes()/ReceiveBytes() 不需要接收 Header前的 2bytes
-            //ReceiveProxyHeader();
-            SocketIO.ReceiveBytes(socket, out header, out bytes);
-        }
 
-        public byte[] ReceiveBuffer(int length)
-        {
-            byte[] bs = new byte[length];
-            SocketIO.ReceiveBuffer(socket, bs);
-            //throw new Exception("cannot use this method");
-            return bs;
+            SocketIO.ReceiveBytes(socket, out header, out bytes);
         }
 
 
@@ -311,27 +534,11 @@ namespace FileManager.Models.SocketLib.SocketIO
             ReceiveBytesWithHeaderFlag(flag, out _, out _);
         }
 
-        public void ReceiveBytesWithHeaderFlag(PacketType flag, out HB32Header header)
-        {
-            ReceiveBytesWithHeaderFlag(flag, out header, out _);
-        }
 
-
-        public void ReceiveBytesWithHeaderFlag(PacketType flag, out byte[] bytes)
-        {
-            ReceiveBytesWithHeaderFlag(flag, out _, out bytes);
-        }
-
-        public static void CheckFlag(PacketType required_flag, HB32Response response)
-        {
-            if (response.Header.Flag != required_flag)
-            {
-                throw new SocketFlagException(required_flag, response);
-            }
-        }
 
         #endregion
 
+        /*
 
         public void Connect(TCPAddress address)
         {
@@ -339,109 +546,35 @@ namespace FileManager.Models.SocketLib.SocketIO
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.Connect(ipe);
         }
+        */
 
 
-        private class ConnectTimeoutHandler
+
+
+        public void Shutdown()
         {
-            private readonly ManualResetEvent ConnectTimeoutObject = new ManualResetEvent(false);
-
-            public bool IsSuccess { get; set; } = false;
-
-            public Exception ConnectException { get; set; } = new Exception("null connect exception");
-
-
-            public void Set()
-            {
-                ConnectTimeoutObject.Set();
-            }
-
-            public void Reset()
-            {
-                ConnectTimeoutObject.Reset();
-            }
-
-            public bool WaitOne(int millisecondsTimeout, bool exitContext)
-            {
-                return ConnectTimeoutObject.WaitOne(millisecondsTimeout, exitContext);
-            }
-
-
+            this.socket.Shutdown(SocketShutdown.Both);
         }
 
-        private readonly ConnectTimeoutHandler cth = new ConnectTimeoutHandler();
-
-
-
-        public void ConnectWithTimeout(TCPAddress address, int timeout)
+        public void Dispose()
         {
-            cth.Reset();
-            IPEndPoint ipe = new IPEndPoint(address.IP, address.Port);
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.BeginConnect(ipe, asyncResult =>
-            {
-                try
-                {
-                    cth.IsSuccess = false;
-                    if (asyncResult.AsyncState is Socket s)
-                    {
-                        s.EndConnect(asyncResult);
-                        cth.IsSuccess = true;
-                    }
-                }
-                catch(Exception ex)
-                {
-                    cth.IsSuccess = false;
-                    cth.ConnectException = ex;
-                }
-                finally
-                {
-                    cth.Set();
-                }
-            }, socket);
-            if (cth.WaitOne(timeout, false))
-            {
-                if (cth.IsSuccess)
-                {
-                    return;
-                }
-                else
-                {
-                    throw cth.ConnectException;
-                }
-
-            }
-            else
-            {
-                socket.Close();
-                throw new TimeoutException("Connection timeout");
-            }
-
-        }
-
-
-
-        public void Connect(TCPAddress address, int send_timeout, int recv_timeout)
-        {
-            IPEndPoint ipe = new IPEndPoint(address.IP, address.Port);
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.SendTimeout = send_timeout;
-            socket.ReceiveTimeout = recv_timeout;
-            socket.Connect(ipe);
-        }
-
-        public virtual void Close()
-        {
-            CloseSocket();
-        }
-
-
-        public void CloseSocket()
-        {
+            if (socket == null) return;
             try
             {
-                socket.Close();
+                if (socket.Connected)
+                {
+                    socket.Shutdown(SocketShutdown.Both);
+                }
             }
-            catch { }
+            catch (SocketException)
+            {
+
+            }
+            finally
+            {
+                socket.Close();
+                socket.Dispose();
+            }
         }
     }
 }

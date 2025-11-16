@@ -9,6 +9,19 @@
       Title="PageCode">
 
     <Grid>
-        <TextBlock Text="Code" FontSize="20" Width="200" Height="100" Foreground="White"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <TextBlock Text="Code" FontSize="20" Width="200" Height="100" Foreground="White"/>
+        </Grid>
+        <Grid Grid.Row="1">
+            <StackPanel Orientation="Vertical">
+                <Button x:Name="Button1" Content="btn1" Style="{StaticResource PageButton}" Click="Button1_Click"/>
+                <Button x:Name="Button2" Content="btn2" Style="{StaticResource PageButton}" Click="Button2_Click"/>
+                <Button x:Name="Button3" Content="btn3" Style="{StaticResource PageButton}" Click="Button3_Click"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

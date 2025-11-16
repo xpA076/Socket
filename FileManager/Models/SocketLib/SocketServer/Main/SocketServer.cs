@@ -71,7 +71,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         {
             try
             {
-                responder.Close();
+                responder.Dispose();
             }
             catch (Exception) { }
             finally

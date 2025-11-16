@@ -1,7 +1,7 @@
 ﻿using FileManager.Events.UI;
 using FileManager.Exceptions;
-using FileManager.Models.Serializable;
 using FileManager.Models.Serializable.HeartBeat;
+using FileManager.Models.Serializable.Transfer;
 using FileManager.Models.SocketLib.Models;
 using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Models.TransferLib.Enums;
@@ -224,7 +224,7 @@ namespace FileManager.Models.TransferLib.Services
                 sub_signal.WaitOne();
                 if (IsTerminateThreads)
                 {
-                    client?.Close();
+                    //client?.Close();
                     main_signal.Set();
                     break;
                 }

@@ -91,11 +91,11 @@ namespace FileManager.Models.SocketLib.Services
             SocketPrivateKey privateKey = new SocketPrivateKey();
             privateKey.Certificate.StartTime = DateTime.Now;
             privateKey.Certificate.ExpireTime = DateTime.Now.AddDays(1);
-            GenerateKey(ref privateKey);
+            GeneratePrivateKey(ref privateKey);
             return privateKey;
         }
 
-        private static void GenerateKey(ref SocketPrivateKey privateKey) 
+        private static void GeneratePrivateKey(ref SocketPrivateKey privateKey) 
         { 
             using(ECDsaCng dsa =  new ECDsaCng()) 
             {

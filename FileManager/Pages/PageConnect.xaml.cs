@@ -23,6 +23,9 @@ using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Events;
 using FileManager.Models.SocketLib.Models;
 using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.Config;
+using Microsoft.Extensions.DependencyInjection;
+using FileManager.Models.Log;
 
 namespace FileManager.Pages
 {
@@ -31,6 +34,11 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageConnect : Page
     {
+
+        private LogService logService = Program.Provider.GetService<LogService>();
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+        private ClientConfigStorage clientConfig = Program.Provider.GetService<ClientConfigStorage>();
+
         private FileManagerMainWindow parent = null;
 
 
@@ -44,14 +52,14 @@ namespace FileManager.Pages
         {
             InitializeComponent();
             //this.ButtonConnect.PreviewMouseLeftButtonDown += new MouseButtonEventHandler(ButtonConnect_MouseLeftDown);
-            if (Config.Instance.Histories.Count > 0)
+            if (clientConfig.Histories.Count > 0)
             {
-                this.TextBoxIP.Text = Config.Instance.Histories[0].Info;
+                this.TextBoxIP.Text = clientConfig.Histories[0].Info;
                 //this.TextBoxProxy.Text = this.TextBoxIP.Text;
             }
             
-            this.ListViewHistory.ItemsSource = Config.Instance.Histories;
-            this.ListViewStar.ItemsSource = Config.Instance.Stars;
+            this.ListViewHistory.ItemsSource = clientConfig.Histories;
+            this.ListViewStar.ItemsSource = clientConfig.Stars;
             
         }
 
@@ -67,7 +75,7 @@ namespace FileManager.Pages
         {
             if (this.ListViewHistory.SelectedIndex >= 0)
             {
-                this.TextBoxIP.Text = Config.Instance.Histories[this.ListViewHistory.SelectedIndex].Info;
+                this.TextBoxIP.Text = clientConfig.Histories[this.ListViewHistory.SelectedIndex].Info;
             }
             
         }
@@ -76,7 +84,7 @@ namespace FileManager.Pages
         {
             if (this.ListViewStar.SelectedIndex >= 0)
             {
-                this.TextBoxIP.Text = Config.Instance.Stars[this.ListViewStar.SelectedIndex].Info;
+                this.TextBoxIP.Text = clientConfig.Stars[this.ListViewStar.SelectedIndex].Info;
             }
         }
 
@@ -105,12 +113,12 @@ namespace FileManager.Pages
             if (_lastFocusListView == "History")
             {
                 if (this.ListViewHistory.SelectedIndex < 0) return null;
-                return Config.Instance.Histories[this.ListViewHistory.SelectedIndex];
+                return clientConfig.Histories[this.ListViewHistory.SelectedIndex];
             }
             else if (_lastFocusListView == "Star")
             {
                 if (this.ListViewStar.SelectedIndex < 0) return null;
-                return Config.Instance.Stars[this.ListViewStar.SelectedIndex];
+                return clientConfig.Stars[this.ListViewStar.SelectedIndex];
             }
             return null;
         }
@@ -121,7 +129,7 @@ namespace FileManager.Pages
             if (_lastFocusListView == "") return;
             ConnectionRecord connectionRecord = GetSelectedItem();
             if (connectionRecord == null || connectionRecord.IsStarred) return;
-            Config.Instance.Star(connectionRecord);
+            clientConfig.Star(connectionRecord);
         }
 
         private void ButtonUnstar_Click(object sender, RoutedEventArgs e)
@@ -129,10 +137,10 @@ namespace FileManager.Pages
             if (_lastFocusListView == "") return;
             ConnectionRecord connectionRecord = GetSelectedItem();
             if (connectionRecord == null || !connectionRecord.IsStarred) return;
-            Config.Instance.UnStar(connectionRecord);
+            clientConfig.UnStar(connectionRecord);
         }
 
-        private void TextBoxIP_KeyDown(object sender, KeyEventArgs e)
+        private void TextBoxIP_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
@@ -140,7 +148,7 @@ namespace FileManager.Pages
             }
         }
 
-        private void TextBoxProxy_KeyDown(object sender, KeyEventArgs e)
+        private void TextBoxProxy_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             TextBoxIP_KeyDown(sender, e);
         }
@@ -152,19 +160,19 @@ namespace FileManager.Pages
             if (IsConnecting) { return; }
             try
             {
-                SocketFactory.Instance.CurrentRoute = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, Config.Instance.DefaultServerPort, Config.Instance.DefaultProxyPort);
+                SocketFactory.Instance.CurrentRoute = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, configService.DefaultServerPort, configService.DefaultProxyPort);
             }
             catch (Exception)
             {
                 SocketFactory.Instance.CurrentRoute = null;
-                MessageBox.Show("Invalid address syntax");
-                LoggerStatic.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
+                System.Windows.MessageBox.Show("Invalid address syntax");
+                logService.Log("Invalid address syntax : " + this.TextBoxIP.Text, LogLevel.Warn);
                 return;
             }
             try
             {
                 IsConnecting = true;
-                LoggerStatic.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
+                logService.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
                 //SocketIdentity identity = SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
                 SocketFactory.Instance.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
@@ -174,8 +182,8 @@ namespace FileManager.Pages
                 /// AsyncConnect 的异常在上面的 SocketAsyncExceptionCallback 中处理
                 /// 这里的代码应该不会执行
                 SocketFactory.Instance.CurrentRoute = null;
-                LoggerStatic.Log("[Not expected exception] Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
-                MessageBox.Show(ex.Message);
+                logService.Log("[Not expected exception] Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
+                System.Windows.MessageBox.Show(ex.Message);
                 IsConnecting = false;
             }
             /// 这里如果写 finally 的话, 会执行于异步代码 AsyncConnect 之前
@@ -188,8 +196,8 @@ namespace FileManager.Pages
             this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
             {
                 this.ButtonConnect.Content = "Connect";
-                LoggerStatic.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
-                Config.Instance.InsertHistory(new ConnectionRecord
+                logService.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
+                clientConfig.InsertHistory(new ConnectionRecord
                 {
                     Info = this.TextBoxIP.Text
                 });
@@ -210,7 +218,7 @@ namespace FileManager.Pages
             {
                 this.ButtonConnect.Content = "Connect";
             }));
-            MessageBox.Show("Build connection failed : " + e.ExceptionMessage);
+            System.Windows.MessageBox.Show("Build connection failed : " + e.ExceptionMessage);
             IsConnecting = false;
         }
 

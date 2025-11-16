@@ -22,11 +22,14 @@ using FileManager.Models.SocketLib.Models;
 using FileManager.Events;
 using FileManager.Models.SocketLib.Services;
 using Microsoft.Extensions.DependencyInjection;
+using FileManager.Models.Config;
 
 namespace FileManager.Static
 {
     public sealed class SocketFactory
     {
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         private SocketFactory()
         {
 
@@ -87,10 +90,7 @@ namespace FileManager.Static
             return GenerateConnectedSocketClient(CurrentRoute, maxTry, retryInterval);
         }
 
-        public SocketClient GenerateConnectedSocketClient(FileTask task, int maxTry = 1, int retryInterval = 3000)
-        {
-            return GenerateConnectedSocketClient(task.Route, maxTry, retryInterval);
-        }
+        
 
 
         /// <summary>
@@ -128,11 +128,11 @@ namespace FileManager.Static
 
         public SocketClient GenerateConnectedSocketClient(ConnectionRoute route)
         {
-            SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
+            SocketClient client = new SocketClient(null);
             /// 建立通信隧道
             //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-            client.ConnectWithTimeout(Config.Instance.BuildConnectionTimeout);
-            client.SetTimeout(Config.Instance.SocketSendTimeout, Config.Instance.SocketReceiveTimeout);
+            client.ConnectWithTimeout(configService.BuildConnectionTimeout);
+            client.SetTimeout(configService.SocketSendTimeout, configService.SocketReceiveTimeout);
             if (route.IsNextNodeProxy)
             {
                 /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
@@ -215,7 +215,7 @@ namespace FileManager.Static
                     SessionRequest request = new SessionRequest()
                     {
                         Type = SessionRequest.BytesType.KeyBytes,
-                        Bytes = Config.Instance.KeyBytes,
+                        Bytes = new byte[256],
                     };
                     byte[] bs = this.Request(client, request);
                     SessionResponse response = SessionResponse.FromBytes(bs, 4);
@@ -278,46 +278,13 @@ namespace FileManager.Static
                 try
                 {
                     SocketClient client = GenerateConnectedSocketClient();
-                    client.Close();
+                    //client.Close();
                     asyncCallback.Invoke(null, EventArgs.Empty);
                 }
                 catch (Exception ex)
                 {
                     exceptionCallback.Invoke(null, new SocketAsyncExceptionEventArgs(ex));
                 }
-                /*
-
-                try
-                {
-                    SocketIdentity identity = SocketIdentity.None;
-                    SocketClient client = new SocketClient(route.NextNode, route.IsNextNodeProxy);
-                    //client.Connect(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                    client.ConnectWithTimeout(Config.BuildConnectionTimeout);
-                    client.SetTimeout(Config.SocketSendTimeout, Config.SocketReceiveTimeout);
-                    if (route.IsNextNodeProxy)
-                    {
-                        /// 向代理服务器申请建立与服务端通信隧道, 并等待隧道建立完成
-                        client.SendBytes(SocketPacketFlag.ProxyRouteRequest, route.GetBytes(node_start_index: 1), i1: 0);
-                        client.ReceiveBytes(out HB32Header header, out byte[] bytes);
-                        if (header.Flag != SocketPacketFlag.ProxyResponse)
-                        {
-                            // todo 捕获异常方式有问题 : header.I1 为 SeverAddress 时会越界, 应该要改CurrentRoute.ProxyRoute 21.06.04
-                            throw new Exception(string.Format("Proxy exception at depth {0} : {1}. {2}",
-                                    header.I1, route.ProxyRoute[header.I1], Encoding.UTF8.GetString(bytes)));
-                        }
-                    }
-                    /// 获取 socket 权限
-                    client.SendBytes(SocketPacketFlag.SessionRequest, Config.KeyBytes);
-                    client.ReceiveBytesWithHeaderFlag(SocketPacketFlag.SessionResponse, out HB32Header auth_header);
-                    identity = (SocketIdentity)auth_header.I1;
-                    client.Close();
-                    asyncCallback.Invoke(null, EventArgs.Empty);
-                }
-                catch (Exception ex)
-                {
-                    exceptionCallback.Invoke(null, new SocketAsyncExceptionEventArgs(ex));
-                }
-                */
             });
         }
 
@@ -378,35 +345,9 @@ namespace FileManager.Static
 
         private byte[] RequestIO(SocketClient client, byte[] request_bytes, bool encryptText = true)
         {
-            client.SendBytes(request_bytes, encryptText: encryptText);
+            //client.SendBytes(request_bytes, encryptText: encryptText);
             return client.ReceiveBytes();
         }
-
-
-        public HB32Response Request(PacketType flag, byte[] bytes, int i1 = 0, int i2 = 0, int i3 = 0)
-        {
-            return Request(new HB32Header { Flag = flag, I1 = i1, I2 = i2, I3 = i3 }, bytes);
-        }
-
-
-        private HB32Response Request(HB32Header header, byte[] bytes)
-        {
-            lock (ClientLock)
-            {
-                try
-                {
-                    Client.SendBytes(header, bytes);
-                    Client.ReceiveBytes(out HB32Header h, out byte[] bs);
-                    return new HB32Response(h, bs);
-                }
-                catch (Exception ex)
-                {
-                    Client = null;
-                    throw ex;
-                }
-            }
-        }
-
 
 
 

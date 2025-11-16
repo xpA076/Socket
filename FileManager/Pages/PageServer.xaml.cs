@@ -24,6 +24,11 @@ using FileManager.ViewModels;
 using FileManager.Models;
 using FileManager.Models.SocketLib.SocketServer.Main;
 using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.Config;
+using Microsoft.Extensions.DependencyInjection;
+using FileManager.Utils.Storage;
+using FileManager.Models.Log;
+using Color = System.Windows.Media.Color;
 
 namespace FileManager.Pages
 {
@@ -32,13 +37,18 @@ namespace FileManager.Pages
     /// </summary>
     public partial class PageServer : Page
     {
+
+        private LogService logService = Program.Provider.GetService<LogService>();
+
+        private ConfigService configService = Program.Provider.GetService<ConfigService>();
+
         private ServerRichTextBoxViewModel RichTextBoxView = new ServerRichTextBoxViewModel();
 
 
         public PageServer()
         {
             InitializeComponent();
-            this.TextBoxPort.Text = Config.Instance.DefaultServerPort.ToString();
+            this.TextBoxPort.Text = configService.DefaultServerPort.ToString();
             RichTextBoxView.RichTextBoxUpdate += RichTextBoxLog_OnUpdate;
             this.TextBoxNull.DataContext = RichTextBoxView;
             //ButtonStartListen_Click(null, null);
@@ -51,14 +61,8 @@ namespace FileManager.Pages
             IPAddress host = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip =>
                 ip.AddressFamily == AddressFamily.InterNetwork && !ip.ToString().StartsWith("172")).FirstOrDefault();
             SocketServer server = new SocketServer(host);
-            if (!File.Exists(Config.ServerConfigPath))
-            {
-                server.Config.Create(Config.ServerConfigPath);
-            }
-            server.Config.Load(Config.ServerConfigPath);
             server.SocketLog += Server_OnLog;
             server.CheckIdentity += CheckIdentity;
-            Logger.Server.InitServer();
             try
             {
                 int port = int.Parse(this.TextBoxPort.Text);
@@ -95,7 +99,7 @@ namespace FileManager.Pages
             {
                 //return;
             }
-            LoggerStatic.ServerLog(e.log, e.logLevel, e.time);
+            logService.ServerLog(e.log, e.logLevel, e.time);
             this.RichTextBoxView.InvokeLog(e);
         }
 

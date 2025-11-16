@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,18 +10,14 @@ namespace FileManager.Utils.Storage
 {
     internal class StoragePathMapper
     {
-        private static readonly Lazy<StoragePathMapper> _instance = new Lazy<StoragePathMapper>(() => new StoragePathMapper());
-
-        public static StoragePathMapper Instance { get { return _instance.Value; } }
-
         private readonly bool IsDebug = true;
 
-        private StoragePathMapper()
+        public StoragePathMapper()
         {
             ;
         }
 
-        private string ProgramDataPath
+        private string ProgramDataDirectory
         {
             get
             {
@@ -38,60 +35,37 @@ namespace FileManager.Utils.Storage
             }
         }
 
+        public string LogDirectory
+        {
+            get
+            {
+                //return ConfigDir;
+                return this.ProgramDataDirectory;
+            }
+        }
 
         public string ConfigPath
         {
             get
             {
-                return "";
+                return Path.Combine(this.ProgramDataDirectory, "FileManager.config");
             }
         }
 
-        public string ClientPrivateKeyPath
+
+        public string ServerConfigPath
         {
             get
             {
-                return Path.Combine(this.ProgramDataPath, "client_prv_key.fms");
+                return Path.Combine(this.ProgramDataDirectory, "FileManagerServer.config");
             }
         }
 
-        public string ClientCertificatePath
+        public string CertificateDirectory
         {
             get
             {
-                return Path.Combine(this.ProgramDataPath, "client_cert.fms");
-            }
-        }
-
-        public string ServerPrivateKeyPath
-        {
-            get
-            {
-                return Path.Combine(this.ProgramDataPath, "server_prv_key.fms");
-            }
-        }
-
-        public string ServerCertificatePath
-        {
-            get
-            {
-                return Path.Combine(this.ProgramDataPath, "server_cert.fms");
-            }
-        }
-
-        public string TrustedClientCertificatePath
-        {
-            get
-            {
-                return Path.Combine(this.ProgramDataPath, "trusted_client_cert.fms");
-            }
-        }
-
-        public string TrustedServerCertificatePath
-        {
-            get
-            {
-                return Path.Combine(this.ProgramDataPath, "trusted_server_cert.fms");
+                return this.ProgramDataDirectory;
             }
         }
 
