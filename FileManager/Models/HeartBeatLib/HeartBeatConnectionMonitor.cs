@@ -6,10 +6,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FileManager.Events;
-using FileManager.Models.Config;
 using FileManager.Models.Log;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.SocketIO;
+using FileManager.Services.Config;
 using FileManager.Static;
 using Microsoft.Extensions.DependencyInjection;
 

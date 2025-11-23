@@ -1,4 +1,4 @@
-﻿using FileManager.Models.SocketLib;
+﻿using FileManager.Models.Serializable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,33 +44,38 @@ namespace FileManager.Utils.Bytes
 
         public void Append(bool value)
         {
-            AppendBytes(new byte[1] { value ? (byte)1 : (byte)0 });
+            ConcatenateBytes(new byte[1] { value ? (byte)1 : (byte)0 });
         }
 
         public void Append(int value)
         {
-            AppendBytes(BitConverter.GetBytes(value));
+            ConcatenateBytes(BitConverter.GetBytes(value));
         }
 
         public void Append(uint value)
         {
-            AppendBytes(BitConverter.GetBytes(value));
+            ConcatenateBytes(BitConverter.GetBytes(value));
         }
 
         public void Append(long value)
         {
-            AppendBytes(BitConverter.GetBytes(value));
+            ConcatenateBytes(BitConverter.GetBytes(value));
+        }
+
+        public void Append(Guid value)
+        {
+            ConcatenateBytes(value.ToByteArray());
         }
 
         public void Append(string value)
         {
             Append(Encoding.UTF8.GetByteCount(value));
-            AppendBytes(Encoding.UTF8.GetBytes(value));
+            ConcatenateBytes(Encoding.UTF8.GetBytes(value));
         }
 
         public void Append(DateTime value)
         {
-            AppendBytes(BitConverter.GetBytes(value.Ticks));
+            ConcatenateBytes(BitConverter.GetBytes(value.Ticks));
         }
 
         /// <summary>
@@ -85,7 +90,7 @@ namespace FileManager.Utils.Bytes
                 bytes[i] = (byte)(value[i] ? 1 : 0);
             }
             Append(bytes.Length);
-            AppendBytes(bytes);
+            ConcatenateBytes(bytes);
         }
 
         /// <summary>
@@ -95,7 +100,7 @@ namespace FileManager.Utils.Bytes
         public void Append(byte[] bytes)
         {
             Append(bytes.Length);
-            AppendBytes(bytes);
+            ConcatenateBytes(bytes);
         }
 
 
@@ -110,14 +115,14 @@ namespace FileManager.Utils.Bytes
                 Append(value.Count);
                 for (int i = 0; i < value.Count; ++i)
                 {
-                    AppendBytes(value[i].ToBytes());
+                    ConcatenateBytes(value[i].ToBytes());
                 }
             }
         }
 
         public void Concatenate(byte[] bytes)
         {
-            this.AppendBytes(bytes);
+            this.ConcatenateBytes(bytes);
         }
 
 
@@ -126,7 +131,7 @@ namespace FileManager.Utils.Bytes
         /// 直接进行 BytesBuilder 字节流的追加写入
         /// </summary>
         /// <param name="bytes"></param>
-        private void AppendBytes(byte[] bytes)
+        private void ConcatenateBytes(byte[] bytes)
         {
             if (bytes.Length == 0)
             {
@@ -139,9 +144,6 @@ namespace FileManager.Utils.Bytes
             Array.Copy(bytes, 0, _bytes, _length, bytes.Length);
             _length += bytes.Length;
         }
-
-
-
 
 
         private void Expand(int min_required_capacity)

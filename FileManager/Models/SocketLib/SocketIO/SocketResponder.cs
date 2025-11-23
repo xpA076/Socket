@@ -15,6 +15,8 @@ namespace FileManager.Models.SocketLib.SocketIO
     /// </summary>
     public class SocketResponder : SocketEndPoint
     {
+        public Guid CurrentGuid = Guid.Empty;
+
         public SocketResponder(Socket socket)
         {
             this.socket = socket;

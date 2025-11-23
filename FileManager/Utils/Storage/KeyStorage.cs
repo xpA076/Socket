@@ -1,6 +1,7 @@
-﻿using FileManager.Models.Serializable.Crypto;
+﻿using FileManager.Models.EncryptLib;
+using FileManager.Models.Serializable.Crypto;
 using FileManager.Models.SocketLib;
-using FileManager.Models.SocketLib.Services;
+using FileManager.Services.Certificate;
 using FileManager.Utils.Bytes;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -15,29 +16,14 @@ namespace FileManager.Utils.Storage
 {
     public sealed class KeyStorage
     {
-        private readonly StoragePathMapper PathMapper = Program.Provider.GetService<StoragePathMapper>();
+        private readonly StoragePathMapper PathMapper = Program.Provider.GetRequiredService<StoragePathMapper>();
 
-        private SocketPrivateKey _clientPrivateKey = new SocketPrivateKey();
-
-        private SocketPrivateKey _serverPrivateKey = new SocketPrivateKey();
-
-        private List<SocketCertificate> _trustedClientCertificateList = new List<SocketCertificate>();
-
-        private List<SocketCertificate> _trustedServerCertificateList = new List<SocketCertificate>();
 
         private string ClientPrivateKeyPath
         {
             get
             {
-                return Path.Combine(PathMapper.CertificateDirectory, "client_prv_key.fms");
-            }
-        }
-
-        private string ClientCertificatePath
-        {
-            get
-            {
-                return Path.Combine(PathMapper.CertificateDirectory, "client_cert.fms");
+                return Path.Combine(PathMapper.CertificateDirectory, "ClientPrivateKey.pem");
             }
         }
 
@@ -45,19 +31,11 @@ namespace FileManager.Utils.Storage
         {
             get
             {
-                return Path.Combine(PathMapper.CertificateDirectory, "server_prv_key.fms");
+                return Path.Combine(PathMapper.CertificateDirectory, "ServerPrivateKey.pem");
             }
         }
 
-        private string ServerCertificatePath
-        {
-            get
-            {
-                return Path.Combine(PathMapper.CertificateDirectory, "server_cert.fms");
-            }
-        }
-
-        private string TrustedClientCertificatePath
+        private string TrustedClientPath
         {
             get
             {
@@ -65,129 +43,60 @@ namespace FileManager.Utils.Storage
             }
         }
 
-        private string TrustedServerCertificatePath
+        public byte[] ClientPrivateKeyBytesPkcs8
         {
             get
             {
-                return Path.Combine(PathMapper.CertificateDirectory, "trusted_server_cert.fms");
+                return KeyStorage.LoadPrivateKeysPEM(ClientPrivateKeyPath);
+            }
+        }
+
+        public byte[] ServerPrivateKeyBytesPkcs8
+        {
+            get
+            {
+                return KeyStorage.LoadPrivateKeysPEM(ServerPrivateKeyPath);
             }
         }
 
         public KeyStorage() 
         {
-            /// Client certificate
-            if (File.Exists(this.ClientPrivateKeyPath))
+            /// Client private key
+            if (!File.Exists(this.ClientPrivateKeyPath))
             {
-                _clientPrivateKey = this.LoadKey(this.ClientPrivateKeyPath);
+                byte[] privateKeyBytes = EcdhManager.GeneratePrivateKeyBytesPkcs8();
+                KeyStorage.SavePrivateKeysPEM(privateKeyBytes, this.ClientPrivateKeyPath);
             }
-            else
+            if (!File.Exists(this.ServerPrivateKeyPath))
             {
-                _clientPrivateKey = CertificateService.GenerateTemporaryKeyPair();
-                SaveKey(_clientPrivateKey, this.ClientPrivateKeyPath);
-                SaveKey(_clientPrivateKey.Certificate, this.ClientCertificatePath);
+                byte[] privateKeyBytes = EcdhManager.GeneratePrivateKeyBytesPkcs8();
+                KeyStorage.SavePrivateKeysPEM(privateKeyBytes, this.ServerPrivateKeyPath);
             }
-            /// Server certificate
-            if (File.Exists(this.ServerPrivateKeyPath))
-            {
-                _serverPrivateKey = this.LoadKey(this.ServerPrivateKeyPath);
-            }
-            else
-            {
-                _serverPrivateKey = CertificateService.GenerateTemporaryKeyPair();
-                SaveKey(_serverPrivateKey, this.ServerPrivateKeyPath);
-                SaveKey(_serverPrivateKey.Certificate, this.ServerCertificatePath);
-            }
-            /// Trusted client certificate
-            if (File.Exists(this.TrustedClientCertificatePath))
-            {
-                _trustedClientCertificateList = LoadTrustedCertificate(this.TrustedClientCertificatePath);
-            }
-            else
-            {
-                _trustedClientCertificateList = new List<SocketCertificate>();
-                SaveTrustedCertificate(this._trustedClientCertificateList, this.TrustedClientCertificatePath);
-            }
-            if (File.Exists(this.TrustedServerCertificatePath))
-            {
-                _trustedServerCertificateList = LoadTrustedCertificate(this.TrustedServerCertificatePath);
-            }
-            else
-            {
-                _trustedServerCertificateList = new List<SocketCertificate>();
-                SaveTrustedCertificate(this._trustedServerCertificateList, this.TrustedServerCertificatePath);
-            }
+            /// todo : load trusted public keys
+
         }
 
-        public SocketPrivateKey ClientPrivateKey
+        private static void SavePrivateKeysPEM(byte[] private_key_bytes, string save_path)
         {
-            get
-            {
-                return _clientPrivateKey;
-            }
-            set 
-            {
-                _clientPrivateKey = value;
-                SaveKey(_clientPrivateKey, this.ClientPrivateKeyPath);
-                SaveKey(_clientPrivateKey.Certificate, this.ClientCertificatePath);
-            }
+            string privateKeyPem = 
+                "-----BEGIN PRIVATE KEY-----\n" +
+                Convert.ToBase64String(private_key_bytes, Base64FormattingOptions.InsertLineBreaks) +
+                "\n-----END PRIVATE KEY-----";
+            File.WriteAllText(save_path, privateKeyPem);
         }
 
-        public SocketCertificate ClientCertificate
+
+        private static byte[] LoadPrivateKeysPEM(string load_path)
         {
-            get
-            {
-                return _clientPrivateKey.Certificate;
-            }
+            string pem = File.ReadAllText(load_path);
+            string base64 = pem.Replace("-----BEGIN PRIVATE KEY-----", "")
+                .Replace("-----END PRIVATE KEY-----", "")
+                .Replace("\n", "")
+                .Trim();
+            byte[] privateKeyBytes = Convert.FromBase64String(base64);
+            return privateKeyBytes;
         }
 
-        public SocketPrivateKey ServerPrivateKey
-        {
-            get
-            {
-                return _serverPrivateKey;
-            }
-            set
-            {
-                _serverPrivateKey = value;
-                SaveKey(_serverPrivateKey, this.ServerPrivateKeyPath);
-                SaveKey(_serverPrivateKey.Certificate, this.ServerCertificatePath);
-            }
-        }
-
-        public SocketCertificate ServerCertificate
-        {
-            get
-            {
-                return _serverPrivateKey.Certificate;
-            }
-        }
-
-
-        private static void SaveKey(IBytesSerializable key, string path)
-        {
-            File.WriteAllBytes(path, key.ToBytes());
-        }
-
-        private SocketPrivateKey LoadKey(string path)
-        {
-            SocketPrivateKey key = new SocketPrivateKey();
-            int idx = 0;
-            key.BuildFromBytes(File.ReadAllBytes(path), ref idx);
-            return key;
-        }
-
-        private static void SaveTrustedCertificate(List<SocketCertificate> ls, string path)
-        {
-            BytesBuilder bb = new BytesBuilder();
-            bb.AppendList<SocketCertificate>(ls);
-            File.WriteAllBytes(path, bb.GetBytes()); ;
-        }
-
-        private List<SocketCertificate> LoadTrustedCertificate(string path)
-        {
-            int idx = 0;
-            return BytesParser.GetListSerializable<SocketCertificate>(File.ReadAllBytes(path), ref idx);
-        }
 
     }
 }

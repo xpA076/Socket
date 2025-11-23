@@ -1,4 +1,4 @@
-﻿using FileManager.Models.SocketLib;
+﻿using FileManager.Models.EncryptLib;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;
@@ -11,36 +11,38 @@ namespace FileManager.Models.Serializable.Crypto
 {
     public class KeyExchangeResponse : ISocketSerializable
     {
-        public bool RequestCertificateValid { get; set; } = true;
-
-        public SocketCertificate Certificate { get; set; } = new SocketCertificate();
-
-        public byte[] EcdhPublicKey { get; set; } = new byte[0];
-
-        public byte[] Signature { get; set; } = new byte[0];
-
-        public static KeyExchangeResponse FromBytes(byte[] bytes, int idx = 0)
+        public enum Status: int
         {
-            KeyExchangeResponse obj = new KeyExchangeResponse();
-            obj.BuildFromBytes(bytes, ref idx);
-            return obj;
+            Success,
+            UnauthedClient,
+            VerifyMessageFailed
         }
 
-        public void BuildFromBytes(byte[] bytes, ref int idx)
+        public required Status ResponseStatus {  get; set; }
+
+        public required KeyExchangeMessage Message { get; set; }
+
+        public static KeyExchangeResponse Build(ReadOnlySpan<byte> byteSpan)
         {
-            this.RequestCertificateValid = BytesParser.GetBool(bytes, ref idx);
-            this.Certificate = SocketCertificate.FromBytes(BytesParser.GetBytes(bytes, ref idx));
-            this.EcdhPublicKey = BytesParser.GetBytes(bytes, ref idx);
-            this.Signature = BytesParser.GetBytes(bytes, ref idx);
+            int idx = 0;
+            Status status = (Status)BytesParser.GetInt(byteSpan.Slice(0, 4).ToArray(), ref idx);
+            KeyExchangeMessage message = KeyExchangeMessage.Build(byteSpan.Slice(4));
+            return new KeyExchangeResponse 
+            {
+                ResponseStatus = status, 
+                Message = message
+            };
         }
 
         public byte[] ToBytes()
         {
             BytesBuilder bb = new BytesBuilder();
-            bb.Append(RequestCertificateValid);
-            bb.Append(Certificate.ToBytes());
-            bb.Append(EcdhPublicKey);
-            bb.Append(Signature);
+            bb.Append((int)ResponseStatus);
+            bb.Append(this.Message.EphemeralPublicKey);
+            bb.Append(this.Message.IdentityPublicKey);
+            bb.Append(this.Message.Signature);
+            bb.Append(this.Message.Timestamp);
+            bb.Append(this.Message.Salt);
             return bb.GetBytes();
         }
     }

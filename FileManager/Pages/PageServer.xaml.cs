@@ -24,11 +24,11 @@ using FileManager.ViewModels;
 using FileManager.Models;
 using FileManager.Models.SocketLib.SocketServer.Main;
 using FileManager.Models.SocketLib.Enums;
-using FileManager.Models.Config;
 using Microsoft.Extensions.DependencyInjection;
 using FileManager.Utils.Storage;
 using FileManager.Models.Log;
 using Color = System.Windows.Media.Color;
+using FileManager.Services.Config;
 
 namespace FileManager.Pages
 {

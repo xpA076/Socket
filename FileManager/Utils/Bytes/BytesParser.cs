@@ -1,4 +1,4 @@
-﻿using FileManager.Models.SocketLib;
+﻿using FileManager.Models.Serializable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,13 +77,14 @@ namespace FileManager.Utils.Bytes
 
         public static List<T> GetListSerializable<T>(byte[] value, ref int startIndex) where T : ISocketSerializable, new()
         {
+            throw new NotImplementedException();
             int len = BitConverter.ToInt32(value, startIndex);
             startIndex += 4;
             List<T> slist = new List<T>();
             for (int i = 0; i < len; ++i)
             {
                 T t = new T();
-                t.BuildFromBytes(value, ref startIndex);
+                //t.BuildFromBytes(value, ref startIndex);
                 slist.Add(t);
             }
             return slist;

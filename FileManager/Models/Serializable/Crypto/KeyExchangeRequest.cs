@@ -1,4 +1,4 @@
-﻿using FileManager.Models.SocketLib;
+﻿using FileManager.Models.EncryptLib;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;
@@ -10,32 +10,22 @@ namespace FileManager.Models.Serializable.Crypto
 {
     public class KeyExchangeRequest : ISocketSerializable
     {
-        public SocketCertificate Certificate { get; set; } = new SocketCertificate();
+        public required KeyExchangeMessage Message { get; set; }
 
-        public byte[] EcdhPublicKey { get; set; }
 
-        public byte[] Signature { get; set; }
-
-        public static KeyExchangeRequest FromBytes(byte[] bytes, int idx = 0)
+        public static KeyExchangeRequest Build(ReadOnlySpan<byte> byteSpan)
         {
-            KeyExchangeRequest obj = new KeyExchangeRequest();
-            obj.BuildFromBytes(bytes, ref idx);
-            return obj;
-        }
-
-        public void BuildFromBytes(byte[] bytes, ref int idx)
-        {
-            this.Certificate = SocketCertificate.FromBytes(BytesParser.GetBytes(bytes, ref idx));
-            this.EcdhPublicKey = BytesParser.GetBytes(bytes, ref idx);
-            this.Signature = BytesParser.GetBytes(bytes, ref idx);
+            return new KeyExchangeRequest { Message = KeyExchangeMessage.Build(byteSpan) };
         }
 
         public byte[] ToBytes()
         {
             BytesBuilder bb = new BytesBuilder();
-            bb.Append(Certificate.ToBytes());
-            bb.Append(EcdhPublicKey);
-            bb.Append(Signature);
+            bb.Append(this.Message.EphemeralPublicKey);
+            bb.Append(this.Message.IdentityPublicKey);
+            bb.Append(this.Message.Signature);
+            bb.Append(this.Message.Timestamp);
+            bb.Append(this.Message.Salt);
             return bb.GetBytes();
         }
     }

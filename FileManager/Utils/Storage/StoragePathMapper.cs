@@ -24,7 +24,8 @@ namespace FileManager.Utils.Storage
                 string main_dir;
                 if (IsDebug)
                 {
-                    main_dir = Directory.GetParent(System.Environment.CurrentDirectory).Parent.Parent.FullName;
+                    var cur_dir = System.Environment.CurrentDirectory;
+                    main_dir = Directory.GetParent(cur_dir).Parent.Parent.Parent.FullName;
                     
                 }
                 else

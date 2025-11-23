@@ -24,7 +24,7 @@
 ## Receive 解析流程
 
 ## todo
-1. SocketIO重写
-2. SocketEndpoint规范化
-3. 单次传输不允许只有SendHeader
-4. TestMethod
+1. SocketClientDispatcher 中 Shutdown()方法验证
+2. PageBrowser 相关request
+3. SocketServer实现中替换原有SocketSession为新类SocketIdentity
+

@@ -16,6 +16,7 @@ using FileManager.Models.SocketLib.Models;
 using FileManager.Utils.Bytes;
 using Microsoft.VisualBasic;
 using System.Reflection.Metadata.Ecma335;
+using FileManager.Models.EncryptLib;
 
 
 namespace FileManager.Models.SocketLib.SocketIO
@@ -38,6 +39,10 @@ namespace FileManager.Models.SocketLib.SocketIO
         {
             get
             {
+                if (socket == null)
+                {
+                    return false;
+                }
                 return this.socket.Connected;
             }
         }
@@ -55,10 +60,9 @@ namespace FileManager.Models.SocketLib.SocketIO
             socket.ReceiveTimeout = receive_timeout;
         }
 
-        public void SetSymmetricKeys(byte[] keys)
+        public void SetSymmetricKeys(ReadOnlySpan<byte> key)
         {
-            this.AesKeys = new byte[keys.Length];
-            Array.Copy(keys, this.AesKeys, keys.Length);
+            this.AesKeys = key.ToArray();
         }
 
 
@@ -135,7 +139,7 @@ namespace FileManager.Models.SocketLib.SocketIO
             bb.Append((uint)bytes.Length);
             bb.Append(result);
             bb.Append(encrypted);
-            bb.Append(new byte[3]);
+            bb.Concatenate(new byte[3]);
             socket.Send(new ArraySegment<byte>(bb.GetBytes()), SocketFlags.None);
 
             /// Send content
@@ -250,19 +254,9 @@ namespace FileManager.Models.SocketLib.SocketIO
         {
             if (this.AesKeys != null)
             {
-                AesEncryptedBytes enc = new AesEncryptedBytes();
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = this.AesKeys;
-                    enc.IV = aes.IV;
-                    using (MemoryStream cipherText = new MemoryStream())
-                    using (CryptoStream cs = new CryptoStream(cipherText, aes.CreateEncryptor(), CryptoStreamMode.Write))
-                    {
-                        cs.Write(bytes, 0, bytes.Length);
-                        cs.Close();
-                        enc.EncryptedBytes = cipherText.ToArray();
-                    }
-                }
+                AesGcmEncryptedBytes enc = new AesGcmEncryptedBytes();
+                var encrypted = AesGcmManager.EncryptWithAesGcm(bytes, this.AesKeys, enc.AssociatedData);
+                enc.EncryptedBytes = encrypted;
                 await SendBytesIOAsync(enc.ToBytes(), true);
             }
             else
@@ -271,23 +265,14 @@ namespace FileManager.Models.SocketLib.SocketIO
             }
         }
 
-        public void SendBytes(byte[] bytes)
+        public void SendBytes(byte[] bytes, bool encrypt = true)
         {
-            if (this.AesKeys != null)
+            if (encrypt && this.AesKeys != null)
             {
-                AesEncryptedBytes enc = new AesEncryptedBytes();
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = this.AesKeys;
-                    enc.IV = aes.IV;
-                    using (MemoryStream cipherText = new MemoryStream())
-                    using (CryptoStream cs = new CryptoStream(cipherText, aes.CreateEncryptor(), CryptoStreamMode.Write))
-                    {
-                        cs.Write(bytes, 0, bytes.Length);
-                        cs.Close();
-                        enc.EncryptedBytes = cipherText.ToArray();
-                    }
-                }
+                AesGcmEncryptedBytes enc = new AesGcmEncryptedBytes();
+                var encryptedBytes = AesGcmManager.EncryptWithAesGcm(bytes, this.AesKeys, enc.AssociatedData);
+                enc.EncryptedBytes = encryptedBytes;
+                var a = enc.ToBytes();
                 SendBytesIO(enc.ToBytes(), true);
             }
             else
@@ -302,19 +287,9 @@ namespace FileManager.Models.SocketLib.SocketIO
             if (encrypted)
             {
                 if (this.AesKeys == null) throw new SocketConnectionException(SocketStatus.DecryptExcepton, "Need decrpypt before AES key setup");
-                AesEncryptedBytes enc = AesEncryptedBytes.FromBytes(bytes);
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = this.AesKeys;
-                    aes.IV = enc.IV;
-                    using (MemoryStream plainText = new MemoryStream())
-                    using (CryptoStream cs = new CryptoStream(plainText, aes.CreateDecryptor(), CryptoStreamMode.Write))
-                    {
-                        cs.Write(enc.EncryptedBytes, 0, enc.EncryptedBytes.Length);
-                        cs.Close();
-                        return plainText.ToArray();
-                    }
-                }
+                AesGcmEncryptedBytes enc = AesGcmEncryptedBytes.FromBytes(bytes);
+                var decrypted = AesGcmManager.DecryptWithAesGcm(bytes, this.AesKeys, enc.AssociatedData);
+                return decrypted;
             }
             else
             {
@@ -328,138 +303,15 @@ namespace FileManager.Models.SocketLib.SocketIO
             if (encrypted)
             {
                 if (this.AesKeys == null) throw new SocketConnectionException(SocketStatus.DecryptExcepton, "Need decrpypt before AES key setup");
-                AesEncryptedBytes enc = AesEncryptedBytes.FromBytes(bytes);
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = this.AesKeys;
-                    aes.IV = enc.IV;
-                    using (MemoryStream plainText = new MemoryStream())
-                    using (CryptoStream cs = new CryptoStream(plainText, aes.CreateDecryptor(), CryptoStreamMode.Write))
-                    {
-                        cs.Write(enc.EncryptedBytes, 0, enc.EncryptedBytes.Length);
-                        cs.Close();
-                        return plainText.ToArray();
-                    }
-                }
+                AesGcmEncryptedBytes enc = AesGcmEncryptedBytes.FromBytes(bytes);
+                var decrypted = AesGcmManager.DecryptWithAesGcm(enc.EncryptedBytes, this.AesKeys, enc.AssociatedData);
+                return decrypted;
             }
             else
             {
                 return bytes;
             }
         }
-        /*
-
-        private void SendBytesIO(UInt32 u32h, byte[] bytes, int truncateLength)
-        {
-            /// Assert : bytes.Length > 0
-            HB16Header header = new HB16Header();
-            header.U32Header = u32h;
-            header.TotalByteLength = bytes.Length;
-            for (int offset = 0; offset < bytes.Length; offset += truncateLength)
-            {
-                int valid = Math.Min(bytes.Length - offset, truncateLength);
-                int remain = bytes.Length - offset - valid;
-                header.ValidByteLength = valid;
-                header.RemainByteLength = remain;
-                byte[] toSend = new byte[HB16Header.Length + valid];
-                Array.Copy(header.GetBytes(), toSend, HB16Header.Length);
-                Array.Copy(bytes, offset, toSend, HB16Header.Length, valid);
-                this.socket.Send(toSend);
-                if (remain > 0)
-                {
-                    this.ReceiveBuffer(new byte[2]);
-                }
-            }
-        }
-
-        private void ReceiveBytesIO(out byte[] bytes, out UInt32 u32h)
-        {
-            /// Receive header
-            byte[] headerBytes = new byte[HB16Header.Length];
-            this.ReceiveBuffer(headerBytes);
-            HB16Header header = new HB16Header(headerBytes);
-            u32h = header.U32Header;
-
-            /// Receive bytes
-            bytes = new byte[header.TotalByteLength];
-            for (int offset = 0; ;)
-            {
-                int valid = header.ValidByteLength;
-                int remain = header.RemainByteLength;
-                this.ReceiveBuffer(bytes, valid, offset);
-                offset += valid;
-                if (remain == 0)
-                {
-                    break;
-                }
-                else
-                {
-                    this.socket.Send(new byte[2]);
-                    this.ReceiveBuffer(headerBytes);
-                    header = new HB16Header(headerBytes);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Send by HB16 protocol
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <param name="truncateLength"></param>
-        /// <param name="encryptText"></param>
-        public void SendBytes(byte[] bytes, int truncateLength = 4096, bool encryptText = true)
-        {
-            if (encryptText)
-            {
-                if (this.AesKeys == null) { throw new Exception("AES encrypt without key setup"); }
-                AesEncryptedBytes enc = new AesEncryptedBytes();
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = this.AesKeys;
-                    enc.IV = aes.IV;
-                    using (MemoryStream cipherText = new MemoryStream())
-                    using (CryptoStream cs = new CryptoStream(cipherText, aes.CreateEncryptor(), CryptoStreamMode.Write))
-                    {
-                        cs.Write(bytes, 0, bytes.Length);
-                        cs.Close();
-                        enc.EncryptedBytes = cipherText.ToArray();
-                    }
-                }
-                SendBytesIO((UInt32)PacketType.TextEncrypted, enc.ToBytes(), truncateLength);
-            }
-            else
-            {
-                SendBytesIO((UInt32)PacketType.TextPlain, bytes, truncateLength);
-            }
-            
-        }
-
-        /// <summary>
-        /// Receive by HB16 protocol
-        /// </summary>
-        /// <returns></returns>
-        public byte[] ReceiveBytes()
-        {
-            ReceiveBytesIO(out byte[] bytes, out UInt32 u32h);
-            if (u32h == (UInt32)PacketType.TextPlain) { return bytes; }
-            if (u32h != (UInt32)PacketType.TextEncrypted) { throw new Exception("Invalid header in receive bytes"); }
-            if (this.AesKeys == null) { throw new Exception("Need decrpypt before AES key setup"); }
-            /// Decrpyt bytes
-            AesEncryptedBytes enc = AesEncryptedBytes.FromBytes(bytes);
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = this.AesKeys;
-                aes.IV = enc.IV;
-                using (MemoryStream plainText = new MemoryStream())
-                using (CryptoStream cs = new CryptoStream(plainText, aes.CreateDecryptor(), CryptoStreamMode.Write))
-                {
-                    cs.Write(enc.EncryptedBytes, 0, enc.EncryptedBytes.Length);
-                    cs.Close();
-                    return plainText.ToArray();
-                }
-            }
-        }
-        */
         #endregion
 
         #region Send / Receive
@@ -553,7 +405,10 @@ namespace FileManager.Models.SocketLib.SocketIO
 
         public void Shutdown()
         {
-            this.socket.Shutdown(SocketShutdown.Both);
+            if (socket != null)
+            {
+                this.socket.Shutdown(SocketShutdown.Both);
+            }
         }
 
         public void Dispose()

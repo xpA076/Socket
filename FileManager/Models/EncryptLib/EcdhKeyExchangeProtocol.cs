@@ -9,15 +9,6 @@ namespace FileManager.Models.EncryptLib
 {
     public class EcdhKeyExchangeProtocol
     {
-        public class KeyExchangeMessage
-        {
-            public required byte[] EphemeralPublicKey { get; set; }
-            public required byte[] IdentityPublicKey { get; set; }
-            public required byte[] Signature { get; set; }
-            public required byte[] Timestamp { get; set; }
-            public required byte[] Salt { get; set; }
-        }
-
         public class EncryptedMessage
         {
             public required byte[] Data { get; set; }

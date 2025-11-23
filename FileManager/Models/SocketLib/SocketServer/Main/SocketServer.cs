@@ -13,9 +13,9 @@ using FileManager.Exceptions;
 using FileManager.Models;
 using FileManager.Models.Serializable;
 using FileManager.Models.SocketLib.Enums;
-using FileManager.Models.SocketLib.Services;
 using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Models.SocketLib.SocketServer.Services;
+using FileManager.Services.Certificate;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FileManager.Models.SocketLib.SocketServer.Main
@@ -33,7 +33,6 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
 
         private readonly CertificateService CertificateService = Program.Provider.GetService<CertificateService>();
 
-        //protected SocketServer() { }
 
         public SocketServer(IPAddress ip) : base(ip)
         {
@@ -57,7 +56,9 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         protected override void ReceiveData(object responderObject)
         {
             //this.ReceiveData_HB32(responderObject);
-            this.ReceiveData_HB16(responderObject);
+            //this.ReceiveData_HB16(responderObject);
+            SocketResponder responder = responderObject as SocketResponder;
+            this.ReceiveData_Protocol(responder);
         }
 
 

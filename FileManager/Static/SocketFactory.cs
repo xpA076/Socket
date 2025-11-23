@@ -15,14 +15,13 @@ using FileManager.Exceptions.Server;
 using FileManager.Models.Serializable.Crypto;
 using FileManager.Utils.Bytes;
 using FileManager.Models.SocketLib.SocketIO;
-using FileManager.Models.SocketLib;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.HbProtocol;
 using FileManager.Models.SocketLib.Models;
 using FileManager.Events;
-using FileManager.Models.SocketLib.Services;
 using Microsoft.Extensions.DependencyInjection;
-using FileManager.Models.Config;
+using FileManager.Services.Config;
+using FileManager.Services.Certificate;
 
 namespace FileManager.Static
 {
@@ -162,20 +161,22 @@ namespace FileManager.Static
         {
             using (ECDiffieHellmanCng ecdh_client = new ECDiffieHellmanCng())
             {
+                /*
                 ecdh_client.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
                 ecdh_client.HashAlgorithm = CngAlgorithm.Sha256;
                 byte[] publicKey = ecdh_client.PublicKey.ToByteArray();
 
                 /// Build request
                 KeyExchangeRequest request = new KeyExchangeRequest();
-                request.Certificate = CertificateService.ClientCertificate;
-                request.EcdhPublicKey = publicKey;
-                request.Signature = CertificateService.ClientSign(publicKey);
+                //request.Certificate = CertificateService.ClientCertificate;
+                //request.EcdhPublicKey = publicKey;
+                //request.Signature = CertificateService.ClientSign(publicKey);
 
                 /// Socket request
                 byte[] recv_bytes = this.Request(client, request, encryptText: false);
-
+                */
                 /// Verify server data
+                /*
                 KeyExchangeResponse response = KeyExchangeResponse.FromBytes(recv_bytes, 4);
                 if (!response.RequestCertificateValid)
                 {
@@ -189,11 +190,11 @@ namespace FileManager.Static
                 {
                     throw new SocketConnectionException("Server certificate verification fail");
                 }
-
+                */
                 /// Generate shared key
-                CngKey serverKey = CngKey.Import(response.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
-                byte[] sharedKey = ecdh_client.DeriveKeyMaterial(serverKey);
-                client.SetSymmetricKeys(sharedKey);
+                //CngKey serverKey = CngKey.Import(response.EcdhPublicKey, CngKeyBlobFormat.EccPublicBlob);
+                //byte[] sharedKey = ecdh_client.DeriveKeyMaterial(serverKey);
+                //client.SetSymmetricKeys(sharedKey);
             }
         }
 

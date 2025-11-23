@@ -1,7 +1,22 @@
-﻿using System;
+﻿using FileManager.Events;
+using FileManager.Models;
+using FileManager.Models.Log;
+using FileManager.Models.Serializable.HeartBeat;
+using FileManager.Models.SocketLib.Enums;
+using FileManager.Models.SocketLib.Models;
+using FileManager.Models.SocketLib.SocketClient;
+using FileManager.Models.SocketLib.SocketIO;
+using FileManager.Services.Config;
+using FileManager.Static;
+using FileManager.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,20 +27,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Threading;
-using System.Net;
-using System.Collections.ObjectModel;
-
-using FileManager.Windows;
-using FileManager.Models;
-using FileManager.Static;
-using FileManager.Models.SocketLib.SocketIO;
-using FileManager.Events;
-using FileManager.Models.SocketLib.Models;
-using FileManager.Models.SocketLib.Enums;
-using FileManager.Models.Config;
-using Microsoft.Extensions.DependencyInjection;
-using FileManager.Models.Log;
 
 namespace FileManager.Pages
 {
@@ -35,14 +36,16 @@ namespace FileManager.Pages
     public partial class PageConnect : Page
     {
 
-        private LogService logService = Program.Provider.GetService<LogService>();
-        private ConfigService configService = Program.Provider.GetService<ConfigService>();
-        private ClientConfigStorage clientConfig = Program.Provider.GetService<ClientConfigStorage>();
+        private LogService logService = Program.Provider.GetRequiredService<LogService>();
+        private ConfigService configService = Program.Provider.GetRequiredService<ConfigService>();
+        private ClientConfigStorage clientConfig = Program.Provider.GetRequiredService<ClientConfigStorage>();
+        private readonly SocketClientDispatcher socketClientDispatcher = Program.Provider.GetRequiredService<SocketClientDispatcher>();
+
 
         private FileManagerMainWindow parent = null;
 
 
-        private bool IsConnecting { get; set; } = false;
+        private bool _isConnecting { get; set; } = false;
 
         private string _lastFocusListView = "";
 
@@ -155,12 +158,14 @@ namespace FileManager.Pages
 
 
 
-        private void ButtonConnect_Click(object sender, RoutedEventArgs e)
+        private async void ButtonConnect_Click(object sender, RoutedEventArgs e)
         {
-            if (IsConnecting) { return; }
+            if (_isConnecting) { return; }
             try
             {
-                SocketFactory.Instance.CurrentRoute = ConnectionRoute.FromString(this.TextBoxIP.Text, this.TextBoxProxy.Text, configService.DefaultServerPort, configService.DefaultProxyPort);
+                var address = TCPAddress.Build(this.TextBoxIP.Text, configService.DefaultServerPort);
+                socketClientDispatcher.SetHostAddress(address);
+                
             }
             catch (Exception)
             {
@@ -171,60 +176,40 @@ namespace FileManager.Pages
             }
             try
             {
-                IsConnecting = true;
+                /// Before connect
+                _isConnecting = true;
                 logService.Log("Start connection to " + this.TextBoxIP.Text, LogLevel.Info);
                 this.ButtonConnect.Content = "Connecting ...";
-                //SocketIdentity identity = SocketFactory.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
-                SocketFactory.Instance.AsyncConnectForIdentity(AsyncConnect_OnSuccess, AsyncConnect_OnException);
-            }
-            catch (Exception ex)
-            {
-                /// AsyncConnect 的异常在上面的 SocketAsyncExceptionCallback 中处理
-                /// 这里的代码应该不会执行
-                SocketFactory.Instance.CurrentRoute = null;
-                logService.Log("[Not expected exception] Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
-                System.Windows.MessageBox.Show(ex.Message);
-                IsConnecting = false;
-            }
-            /// 这里如果写 finally 的话, 会执行于异步代码 AsyncConnect 之前
-            /// 所以不应在这里用 finally 处理, 后续处理应该写进 AysncConnect 的代理方法内
-        }
 
-        private void AsyncConnect_OnSuccess(object sender, EventArgs e)
-        {
-            /// 因为异步执行AsyncConnect在新线程, 所以所有this的UI更新都要通过BeginInvoke进行
-            this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                this.ButtonConnect.Content = "Connect";
+                /// Connect
+                socketClientDispatcher.Initialize();
+                var resp = await socketClientDispatcher.RequestAsync(HeartBeatRequest.Single);
+
+                /// After connect
                 logService.Log("Connection to " + this.TextBoxIP.Text + " success", LogLevel.Info);
                 clientConfig.InsertHistory(new ConnectionRecord
                 {
                     Info = this.TextBoxIP.Text
                 });
-                //this.parent.StartConnectionMonitor();
                 this.parent.RedirectPage("Browser");
-                System.Threading.Thread.Sleep(100);
                 this.parent.SubPageBrowser.ResetRemoteDirectory();
                 this.parent.SubPageBrowser.ButtonRefresh_Click(null, null);
-            }));
-            IsConnecting = false;
-        }
-
-
-        private void AsyncConnect_OnException(object sender, SocketAsyncExceptionEventArgs e)
-        {
-            SocketFactory.Instance.CurrentRoute = null;
-            this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
+            }
+            catch (Exception ex)
             {
-                this.ButtonConnect.Content = "Connect";
-            }));
-            System.Windows.MessageBox.Show("Build connection failed : " + e.ExceptionMessage);
-            IsConnecting = false;
+                socketClientDispatcher.ShutDown();
+                logService.Log("[Not expected exception] Connection to " + this.TextBoxIP.Text + " failed. " + ex.Message, LogLevel.Info);
+                System.Windows.MessageBox.Show(ex.Message);
+                _isConnecting = false;
+            }
+            finally
+            {
+                await this.ButtonConnect.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    this.ButtonConnect.Content = "Connect";
+                }));
+            }
         }
-
-
-
-
 
         private void TextBoxIP_LostFocus(object sender, RoutedEventArgs e)
         {

@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using FileManager.Models.Config;
+using FileManager.Services.Config;
 using FileManager.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Button = System.Windows.Controls.Button;

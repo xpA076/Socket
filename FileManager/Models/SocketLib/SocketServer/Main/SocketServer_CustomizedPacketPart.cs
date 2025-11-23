@@ -49,7 +49,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         private void ResponseHeartBeat(SocketResponder responder, HeartBeatRequest request)
         {
             HeartBeatResponse response = new HeartBeatResponse();
-            this.Response(responder, response);
+            this.Response(responder, PacketType.HeartBeatResponse, response);
         }
 
     }

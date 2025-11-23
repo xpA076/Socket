@@ -20,6 +20,7 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
     {
         private Dictionary<int, SocketServerFileStreamInfo> ServerFileSet = new Dictionary<int, SocketServerFileStreamInfo>();
 
+        
 
         /// <summary>
         /// 响应对方的 Directory 列表查询, 文件夹不存在或权限异常返回message字符串处理

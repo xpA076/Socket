@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.Config
+namespace FileManager.Services.Config
 {
     internal class ConfigService
     {
@@ -54,7 +54,7 @@ namespace FileManager.Models.Config
 
         public int DefaultProxyPort { get; set; } = 12139;
 
-        public int BuildConnectionTimeout { get; set; } = 2000;
+        public int BuildConnectionTimeout { get; set; } = 5000;
 
         public int SocketSendTimeout { get; set; } = 5000;
 

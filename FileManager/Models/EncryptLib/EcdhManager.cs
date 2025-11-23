@@ -21,6 +21,29 @@ namespace FileManager.Models.EncryptLib
             _identityKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         }
 
+        public EcdhManager(byte[] identityPrivateKeyBytesPkcs8)
+        {
+            _ephemeralKeyPair = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+            _identityKey = ECDsa.Create();
+            _identityKey.ImportPkcs8PrivateKey(identityPrivateKeyBytesPkcs8, out _);
+        }
+
+        public byte[] IdentityPrivateKeyBytesPkcs8
+        {
+            get
+            {
+                //ECParameters ecParams = _identityKey.ExportParameters(true);
+                //return ecParams.D;
+                return _identityKey.ExportPkcs8PrivateKey();
+            }
+        }
+
+        public static byte[] GeneratePrivateKeyBytesPkcs8()
+        {
+            using var em = new EcdhManager();
+            return em.IdentityPrivateKeyBytesPkcs8;
+        }
+
         /// <summary>
         /// 获取公钥
         /// </summary>

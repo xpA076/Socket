@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.SocketLib
+namespace FileManager.Models.Serializable
 {
-    public interface ISocketSerializable : IBytesSerializable
+    public interface ISocketSerializable
     {
-
+        public byte[] ToBytes();
     }
 }

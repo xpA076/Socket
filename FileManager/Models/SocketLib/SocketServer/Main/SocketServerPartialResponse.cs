@@ -1,18 +1,18 @@
 ﻿using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.SocketIO;
 using FileManager.Utils.Bytes;
-using FileManager.Models.SocketLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FileManager.Models.Serializable;
 
 namespace FileManager.Models.SocketLib.SocketServer.Main
 {
     public partial class SocketServer : SocketServerBase
     {
-        private void Response(SocketResponder responder, ISocketSerializable response, bool encryptText = true)
+        private void Response(SocketResponder responder, ISocketSerializable response)
         {
             BytesBuilder bb = new BytesBuilder();
             switch (response.GetType().Name)
@@ -41,6 +41,16 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
             }
             bb.Concatenate(response.ToBytes());
             //responder.SendBytes(bb.GetBytes(), encryptText: encryptText);
+        }
+
+
+        private void Response(SocketResponder responder, PacketType packetType, ISocketSerializable response, bool encrypt = true)
+        {
+            BytesBuilder bb = new BytesBuilder();
+            bb.Append(responder.CurrentGuid);
+            bb.Append((int)packetType);
+            bb.Concatenate(response.ToBytes());
+            responder.SendBytes(bb.GetBytes(), encrypt);
         }
     }
 }

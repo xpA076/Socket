@@ -22,9 +22,9 @@ using FileManager.Pages;
 using FileManager.ViewModels;
 using System.Net.Sockets;
 using FileManager.Models.SocketLib.Models;
-using FileManager.Models.Config;
 using Microsoft.Extensions.DependencyInjection;
 using FileManager.Models.HeartBeatLib;
+using FileManager.Services.Config;
 
 namespace FileManager
 {

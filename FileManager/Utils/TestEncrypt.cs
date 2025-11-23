@@ -125,11 +125,11 @@ namespace FileManager.Utils
             var associatedData = Encoding.UTF8.GetBytes("验证数据");
 
             // 使用修复后的方法加密
-            var encrypted = EcdhManager.EncryptWithAesGcm(plaintext, testKey, associatedData);
+            var encrypted = AesGcmManager.EncryptWithAesGcm(plaintext, testKey, associatedData);
             Console.WriteLine($"加密完成，数据长度: {encrypted.Length} 字节");
 
             // 解密
-            var decrypted = EcdhManager.DecryptWithAesGcm(encrypted, testKey, associatedData);
+            var decrypted = AesGcmManager.DecryptWithAesGcm(encrypted, testKey, associatedData);
             var decryptedMessage = Encoding.UTF8.GetString(decrypted);
             Console.WriteLine($"解密消息: {decryptedMessage}");
 

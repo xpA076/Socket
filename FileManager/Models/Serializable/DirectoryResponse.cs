@@ -1,5 +1,4 @@
 ﻿using FileManager.Exceptions;
-using FileManager.Models.SocketLib;
 using FileManager.Utils.Bytes;
 using System;
 using System.Collections.Generic;
@@ -72,6 +71,7 @@ namespace FileManager.Models.Serializable
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
+            throw new NotImplementedException();
             this.Type = (ResponseType)BytesParser.GetInt(bytes, ref idx);
             this.FileInfos = BytesParser.GetListSerializable<SocketFileInfo>(bytes, ref idx);
             this.AdditionalBytes = BytesParser.GetBytes(bytes, ref idx);

@@ -8,8 +8,8 @@ using System.Text.RegularExpressions;
 
 using FileManager.Static;
 using System.Configuration;
-using FileManager.Models.Config;
 using Microsoft.Extensions.DependencyInjection;
+using FileManager.Services.Config;
 
 namespace FileManager.ViewModels
 {

@@ -68,10 +68,13 @@ namespace FileManager.Models.SocketLib.SocketServer
                 {
                     Socket client = server.Accept();
                     SocketResponder responder = new SocketResponder(client);
+                    ThreadPool.QueueUserWorkItem(ReceiveData, responder);
+                    /*
                     Thread th_receive = new Thread(ReceiveData);
                     th_receive.IsBackground = true;
                     th_receive.Start(responder);
                     Thread.Sleep(20);
+                    */
                 }
             }
             catch (Exception ex)

@@ -1,8 +1,12 @@
 ﻿using FileManager.Exceptions;
-using FileManager.Models.Config;
+using FileManager.Models.EncryptLib;
+using FileManager.Models.Serializable;
+using FileManager.Models.Serializable.Crypto;
 using FileManager.Models.SocketLib.Enums;
 using FileManager.Models.SocketLib.Models;
 using FileManager.Models.SocketLib.SocketIO;
+using FileManager.Services.Certificate;
+using FileManager.Services.Config;
 using FileManager.Utils.Bytes;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -31,19 +35,21 @@ namespace FileManager.Models.SocketLib.SocketClient
         }
 
 
-        private readonly ConfigService ConfigService = Program.Provider.GetRequiredService<ConfigService>();
+        private readonly ConfigService configService = Program.Provider.GetRequiredService<ConfigService>();
+        private readonly CertificateService certificateService = Program.Provider.GetRequiredService<CertificateService>();
 
         public TCPAddress HostAddress { get; private set; }
 
         /// some private utils
         private SocketRequester? _requester;
         private readonly object _connectionLock = new object();
+        private bool _initialized = false;
         private bool _isConnected = false;
         private bool _disposed = false;
 
         /// Send & receive queue
-        private readonly BlockingCollection<SendItem> _sendQueue = new BlockingCollection<SendItem>();
-        private readonly ConcurrentDictionary<Guid, TaskCompletionSource<byte[]>> _pendingRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<byte[]>>();
+        private BlockingCollection<SendItem> _sendQueue;
+        private ConcurrentDictionary<Guid, TaskCompletionSource<byte[]>> _pendingRequests;
 
         /// Working thread
         private Thread _sendThread;
@@ -52,9 +58,22 @@ namespace FileManager.Models.SocketLib.SocketClient
 
         public DateTime LastHandShake { get; private set; } = DateTime.MinValue;
 
-        public SocketClientDispatcher(TCPAddress hostAddress)
+        public SocketClientDispatcher()
         {
-            this.HostAddress = hostAddress;
+
+        }
+
+        public void SetHostAddress(TCPAddress address)
+        {
+            this.HostAddress = address;
+        }
+
+        public void Initialize()
+        {
+            if (_initialized) { return; }
+            /// Initailize parameters
+            _sendQueue = new BlockingCollection<SendItem>();
+            _pendingRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<byte[]>>();
 
             /// Start worker threads
             _cancellationTokenSource = new CancellationTokenSource();
@@ -70,14 +89,41 @@ namespace FileManager.Models.SocketLib.SocketClient
             };
             _sendThread.Start();
             _receiveThread.Start();
+            _initialized = true;
         }
 
+        public void ShutDown()
+        {
+            _initialized = false;
+            _cancellationTokenSource?.Cancel();
+
+            // 完成所有等待的请求
+            foreach (var pending in _pendingRequests)
+            {
+                pending.Value.TrySetCanceled();
+            }
+            _pendingRequests.Clear();
+
+            _sendQueue?.CompleteAdding();
+
+            // 等待工作线程结束
+            _sendThread?.Join(1000);
+            _receiveThread?.Join(1000);
+
+            Disconnect();
+
+            _sendQueue?.Dispose();
+            _cancellationTokenSource?.Dispose();
+        }
 
 
         public async Task<byte[]> RequestAsync(ISocketSerializable request)
         {
-            byte[] receivedBytes;
             /// assertion
+            if (!_initialized)
+            {
+                throw new InvalidOperationException("Dispatcher not initialized");
+            }
             ObjectDisposedException.ThrowIf(_disposed, this);
             ArgumentNullException.ThrowIfNull(request);
 
@@ -107,7 +153,7 @@ namespace FileManager.Models.SocketLib.SocketClient
                 _sendQueue.Add(sendItem);
 
                 /// 设置超时和完成监控
-                using var timeoutCts = new CancellationTokenSource(ConfigService.SocketReceiveTimeout);
+                using var timeoutCts = new CancellationTokenSource(configService.SocketReceiveTimeout);
                 using var completionCts = new CancellationTokenSource();
 
                 /// 当任务完成时取消完成令牌
@@ -122,7 +168,7 @@ namespace FileManager.Models.SocketLib.SocketClient
                 /// 注册取消回调：只有超时才会取消任务
                 using (linkedCts.Token.Register(() =>
                 {
-                    // 检查是否是超时导致的取消
+                    /// 检查是否是超时导致的取消
                     if (timeoutCts.Token.IsCancellationRequested && !tcs.Task.IsCompleted)
                         tcs.TrySetCanceled();
                 }))
@@ -140,17 +186,6 @@ namespace FileManager.Models.SocketLib.SocketClient
                 _pendingRequests.TryRemove(requestId, out _);
                 throw;
             }
-
-
-            /// Assert packet type
-            PacketType get_type = (PacketType)BitConverter.ToInt32(receivedBytes, 0);
-            if (aimType != get_type)
-            {
-                throw new SocketTypeException(aimType, get_type);
-            }
-
-            /// return response (PacketType 4B + response)
-            return receivedBytes;
         }
 
         private (byte[], PacketType) BuildRequestBytes(Guid guid, ISocketSerializable request)
@@ -206,9 +241,6 @@ namespace FileManager.Models.SocketLib.SocketClient
                     try
                     {
                         EnsureConnected();
-
-
-                        // 发送格式：[长度(4字节)][请求ID][数据]
                         lock (_connectionLock)
                         {
                             if (_isConnected && _requester != null)
@@ -253,6 +285,7 @@ namespace FileManager.Models.SocketLib.SocketClient
                         if (_pendingRequests.TryRemove(requestId, out var tcs))
                         {
                             tcs.TrySetResult(responseData);
+                            this.LastHandShake = DateTime.Now;
                         }
                     }
                     else
@@ -288,13 +321,12 @@ namespace FileManager.Models.SocketLib.SocketClient
         private void Connect()
         {
             Disconnect();
-
             try
             {
                 _requester = new SocketRequester(HostAddress);
-                _requester.ConnectWithTimeout(this.ConfigService.BuildConnectionTimeout);
+                _requester.ConnectWithTimeout(this.configService.BuildConnectionTimeout);
                 /// Exchange keys
-
+                ExchangeKeys();
                 _isConnected = true;
             }
             catch (Exception ex)
@@ -304,6 +336,47 @@ namespace FileManager.Models.SocketLib.SocketClient
                 _requester = null;
                 throw new InvalidOperationException($"Failed to connect", ex);
             }
+        }
+
+        public async Task ConnectAsync()
+        {
+            await Task.Run(() => { Connect(); });
+        }
+
+        private void ExchangeKeys()
+        {
+            ArgumentNullException.ThrowIfNull(_requester);
+            /// Build request
+            var clientMesage = certificateService.CreateKeyExchangeMessage(CertificateService.Side.Client);
+            var request = new KeyExchangeRequest() { Message = clientMesage };
+            var requestId = Guid.NewGuid();
+            var (requestBytes, _) = BuildRequestBytes(requestId, request);
+            _requester.SendBytes(requestBytes, encrypt: false);
+
+            /// Get response
+            var allResponseData = _requester.ReceiveBytes();
+            //Thread.Sleep(600 * 1000);
+            //var allResponseData = new byte[500];
+            var response = KeyExchangeResponse.Build(allResponseData.AsSpan(16 + 4));
+
+            /// Check response
+            if (response.ResponseStatus != KeyExchangeResponse.Status.Success)
+            {
+                throw new ArgumentException(response.ResponseStatus.ToString());
+            }
+            if (!certificateService.IsTrustedEndPoint(response.Message.IdentityPublicKey, CertificateService.Side.Server))
+            {
+                throw new Exception("server untrusted");
+            }
+            if (!CertificateService.VerifyKeyExchangeMessage(response.Message))
+            {
+                throw new Exception("server message unverified");
+            }
+
+            /// Setup keys
+            var key = certificateService.DeriveAes256Key(response.Message, CertificateService.Side.Client, request.Message.Salt);
+            _requester.SetSymmetricKeys(key);
+
         }
 
         /// <summary>

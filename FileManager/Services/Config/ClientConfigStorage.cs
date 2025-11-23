@@ -1,4 +1,5 @@
-﻿using FileManager.Utils.Storage;
+﻿using FileManager.Models;
+using FileManager.Utils.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace FileManager.Models.Config
+namespace FileManager.Services.Config
 {
     internal class ClientConfigStorage
     {

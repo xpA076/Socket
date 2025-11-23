@@ -5,34 +5,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace FileManager.Models.Serializable.Crypto
 {
-    public class AesEncryptedBytes : ISocketSerializable
+    public class AesGcmEncryptedBytes
     {
-        public byte[] IV { get; set; } = Array.Empty<byte>();
+        public byte[] EncryptedBytes = [];
 
-        public byte[] EncryptedBytes { get; set; } = Array.Empty<byte>();
+        public byte[] AssociatedData = Encoding.UTF8.GetBytes("AES-GCM-PROTOCOL-251118");
 
-        public static AesEncryptedBytes FromBytes(byte[] bytes)
+        public static AesGcmEncryptedBytes FromBytes(byte[] bytes)
         {
             int idx = 0;
-            AesEncryptedBytes obj = new AesEncryptedBytes();
+            AesGcmEncryptedBytes obj = new AesGcmEncryptedBytes();
             obj.BuildFromBytes(bytes, ref idx);
             return obj;
         }
 
         public void BuildFromBytes(byte[] bytes, ref int idx)
         {
-            this.IV = BytesParser.GetBytes(bytes, ref idx);
             this.EncryptedBytes = BytesParser.GetBytes(bytes, ref idx);
+            this.AssociatedData = BytesParser.GetBytes(bytes, ref idx);
         }
 
         public byte[] ToBytes()
         {
             BytesBuilder bb = new BytesBuilder();
-            bb.Append(this.IV);
             bb.Append(this.EncryptedBytes);
+            bb.Append(this.AssociatedData);
             return bb.GetBytes();
         }
     }

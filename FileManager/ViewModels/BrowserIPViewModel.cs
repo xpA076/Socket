@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 using FileManager.Static;
 using FileManager.Models.SocketLib.Models;
-using FileManager.Models.Config;
 using Microsoft.Extensions.DependencyInjection;
+using FileManager.Services.Config;
 
 namespace FileManager.ViewModels
 {

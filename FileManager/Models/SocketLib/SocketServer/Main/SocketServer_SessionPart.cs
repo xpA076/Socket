@@ -126,6 +126,12 @@ namespace FileManager.Models.SocketLib.SocketServer.Main
         }
 
 
+        private SocketSession CreateEmptySession()
+        {
+            SocketSession ss = new SocketSession(null);
+            return ss;
+        }
+
 
         /*
 

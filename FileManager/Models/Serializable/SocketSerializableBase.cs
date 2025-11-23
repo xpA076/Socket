@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FileManager.Models.SocketLib.Enums
+namespace FileManager.Models.Serializable
 {
-    public enum TransferTypeDeprecated: int
+    public abstract class SocketSerializableBase
     {
-        Download,
-        Upload
+        public abstract byte[] ToBytes();
     }
 }

@@ -1,5 +1,4 @@
-﻿using FileManager.Models.SocketLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +8,15 @@ namespace FileManager.Models.Serializable.HeartBeat
 {
     public class HeartBeatRequest : ISocketSerializable
     {
+        public static HeartBeatRequest Single
+        {
+            get
+            {
+                return new HeartBeatRequest();
+            }
+        }
+
+
         public static HeartBeatRequest FromBytes(byte[] bytes, int idx = 0)
         {
             HeartBeatRequest obj = new HeartBeatRequest();
@@ -23,7 +31,7 @@ namespace FileManager.Models.Serializable.HeartBeat
 
         public byte[] ToBytes()
         {
-            return new byte[4];
+            return new byte[4] { 0x1, 0x2, 0x3, 0x4 };
         }
     }
 }

@@ -13,6 +13,18 @@ namespace FileManager.Models.SocketLib.Models
         public int Port { get; set; } = 0;
 
 
+        public static TCPAddress Build(string ip_str, int default_port)
+        {
+            if (ip_str.Contains(":"))
+            {
+                return TCPAddress.FromString(ip_str);
+            }
+            else
+            {
+                return TCPAddress.FromString(ip_str + ":" + default_port.ToString());
+            }
+        }
+
         public override string ToString()
         {
             return string.Format("{0}:{1}", IP, Port);

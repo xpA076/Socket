@@ -1,6 +1,6 @@
-﻿using FileManager.Models.Config;
-using FileManager.Models.TransferLib.Info;
+﻿using FileManager.Models.TransferLib.Info;
 using FileManager.Models.TransferLib.Services;
+using FileManager.Services.Config;
 using FileManager.Static;
 using FileManager.ViewModels.PageTransfer;
 using Microsoft.Extensions.DependencyInjection;
